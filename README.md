@@ -201,11 +201,11 @@ blood-sugar-backend/
    ```env
    DB_HOST=127.0.0.1
    DB_USER=root
-   DB_PASSWORD=your_password
+   DB_PASSWORD=
    DB_NAME=blood_sugar_db
    
-   SMTP_USERNAME=your_email@gmail.com
-   SMTP_PASSWORD=your_app_password
+   SMTP_USERNAME=tanishqwadhwanitanu@gmail.com
+   SMTP_PASSWORD=qzxs dtzt sczj jaaz
    SMTP_SERVER=smtp.gmail.com
    SMTP_PORT=587
    ```
