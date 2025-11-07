@@ -201,11 +201,19 @@ blood-sugar-backend/
    ```env
    DB_HOST=127.0.0.1
    DB_USER=root
+<<<<<<< HEAD
    DB_PASSWORD=
    DB_NAME=blood_sugar_db
    
    SMTP_USERNAME=tanishqwadhwanitanu@gmail.com
    SMTP_PASSWORD=qzxs dtzt sczj jaaz
+=======
+   DB_PASSWORD=your_password
+   DB_NAME=blood_sugar_db
+   
+   SMTP_USERNAME=your_email@gmail.com
+   SMTP_PASSWORD=your_app_password
+>>>>>>> c941539 (Update: README tweaks - Nov 06 2025)
    SMTP_SERVER=smtp.gmail.com
    SMTP_PORT=587
    ```
@@ -406,4 +414,8 @@ APScheduler==3.10.4
 
 ## Contact
 
+<<<<<<< HEAD
 For backend issues or questions, check console logs or review `app.py` for endpoint details.# BloodSugarMonitoringSystem
+=======
+For backend issues or questions, check console logs or review `app.py` for endpoint details.
+>>>>>>> c941539 (Update: README tweaks - Nov 06 2025)
