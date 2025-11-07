@@ -1,0 +1,115 @@
+{
+  "info": {
+    "name": "Blood Sugar API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Register Patient",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test@test.com\",\n  \"password\": \"test123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"role\": \"patient\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/users/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "users", "register"]
+        }
+      }
+    },
+    {
+      "name": "Get User",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/users/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "users", "1"]
+        }
+      }
+    },
+    {
+      "name": "Add Reading",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 1,\n  \"value\": 165,\n  \"unit\": \"mg/dL\",\n  \"fasting\": false,\n  \"foodIntake\": \"pasta\",\n  \"activity\": \"walking\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/readings",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "readings"]
+        }
+      }
+    },
+    {
+      "name": "Get Readings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/readings/1?days=7",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "readings", "1"],
+          "query": [{"key": "days", "value": "7"}]
+        }
+      }
+    },
+    {
+      "name": "Get Insights",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/insights/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "insights", "1"]
+        }
+      }
+    },
+    {
+      "name": "Specialist Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/specialist/2/dashboard",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "specialist", "2", "dashboard"]
+        }
+      }
+    }
+  ]
+}

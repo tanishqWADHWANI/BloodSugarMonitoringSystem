@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 24, 2025 at 11:11 AM
+-- Generation Time: Nov 07, 2025 at 03:59 AM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -41,7 +41,10 @@ CREATE TABLE `aiinsights` (
 --
 
 INSERT INTO `aiinsights` (`insight_id`, `user_id`, `pattern`, `suggestion`, `confidence`, `created_at`) VALUES
-(1, 1, 'Post-breakfast spikes observed this week (150–170 mg/dL).', 'Lower-GI breakfast (eggs + veggies), hydrate, 10–15 min walk after eating.', 0.82, '2025-10-23 07:23:24');
+(1, 1, 'Post-breakfast spikes observed this week (150–170 mg/dL).', 'Lower-GI breakfast (eggs + veggies), hydrate, 10–15 min walk after eating.', 0.82, '2025-10-23 07:23:24'),
+(2, 1, 'Reading: 155 mg/dL - prediabetic', 'Reading is in prediabetic range (155 mg/dL). Lifestyle changes may help.', 0.90, '2025-10-27 05:42:43'),
+(3, 1, 'Reading: 145 mg/dL - prediabetic', 'Reading is in prediabetic range (145 mg/dL). Lifestyle changes may help.', 0.90, '2025-11-06 02:32:02'),
+(4, 1, 'Reading: 220 mg/dL - high', 'Blood sugar is elevated (220 mg/dL). Monitor and consult doctor.', 0.90, '2025-11-06 02:45:35');
 
 -- --------------------------------------------------------
 
@@ -64,8 +67,11 @@ CREATE TABLE `alerts` (
 
 INSERT INTO `alerts` (`alert_id`, `user_id`, `specialist_id`, `date_sent`, `reason`, `created_at`) VALUES
 (1, 1, NULL, '2025-10-23 00:25:46', 'Blood sugar reading (165 mg/dL) exceeded normal threshold.', '2025-10-23 07:25:46'),
-(2, 1, 2, '2025-10-24 00:09:10', 'Abnormal reading detected: 190.00 mg/dL', '2025-10-24 07:09:10'),
-(3, 1, 2, '2025-10-24 00:21:56', 'Abnormal reading detected: 145.00 mg/dL', '2025-10-24 07:21:56');
+(2, 1, NULL, '2025-10-24 00:09:10', 'Abnormal reading detected: 190.00 mg/dL', '2025-10-24 07:09:10'),
+(3, 1, NULL, '2025-10-24 00:21:56', 'Abnormal reading detected: 145.00 mg/dL', '2025-10-24 07:21:56'),
+(4, 1, NULL, '2025-10-26 22:42:43', 'Abnormal reading detected: 155.00 mg/dL', '2025-10-27 05:42:43'),
+(5, 1, NULL, '2025-11-05 18:32:02', 'Abnormal reading detected: 145.00 mg/dL', '2025-11-06 02:32:02'),
+(6, 1, NULL, '2025-11-05 18:45:35', 'Abnormal reading detected: 220.00 mg/dL', '2025-11-06 02:45:35');
 
 -- --------------------------------------------------------
 
@@ -99,7 +105,9 @@ INSERT INTO `bloodsugarreadings` (`reading_id`, `user_id`, `date_time`, `value`,
 (2, 1, '2025-10-24 00:09:10', 190.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'abnormal', '2025-10-24 07:09:10', '2025-10-24 07:09:10'),
 (3, 1, '2025-10-24 00:21:56', 145.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'abnormal', '2025-10-24 07:21:56', '2025-10-24 07:21:56'),
 (4, 1, '2025-10-24 00:27:27', 110.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'normal', '2025-10-24 07:27:27', '2025-10-24 07:27:27'),
-(5, 1, '2025-10-24 00:33:21', 125.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'normal', '2025-10-24 07:33:21', '2025-10-24 07:33:21');
+(6, 1, '2025-10-26 22:42:43', 140.00, 'mg/dL', 0, 'rice instead of pasta', 'None', 'After meal', 'Feeling better now', NULL, 'abnormal', '2025-10-27 05:42:43', '2025-11-06 03:42:14'),
+(7, 1, '2025-11-05 18:32:02', 145.00, 'mg/dL', 0, 'pasta with sauce', '30 min walking', 'After lunch exercise', 'Felt slightly dizzy', 'Forgot morning medication', 'abnormal', '2025-11-06 02:32:02', '2025-11-06 02:32:02'),
+(8, 1, '2025-11-05 18:45:35', 220.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'abnormal', '2025-11-06 02:45:35', '2025-11-06 02:45:35');
 
 --
 -- Triggers `bloodsugarreadings`
@@ -13796,7 +13804,10 @@ CREATE TABLE `patients` (
 --
 
 INSERT INTO `patients` (`patient_id`, `user_id`, `health_care_number`, `created_at`) VALUES
-(1, 1, 'HCN001', '2025-10-23 07:18:54');
+(1, 1, 'HCN001', '2025-10-23 07:18:54'),
+(3, 11, 'HCN123477', '2025-11-05 22:16:57'),
+(4, 18, 'HCN123456', '2025-11-06 04:07:02'),
+(5, 20, 'OHIP123456', '2025-11-06 04:54:48');
 
 -- --------------------------------------------------------
 
@@ -13809,13 +13820,6 @@ CREATE TABLE `specialistpatient` (
   `patient_id` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `specialistpatient`
---
-
-INSERT INTO `specialistpatient` (`specialist_id`, `patient_id`, `created_at`) VALUES
-(2, 1, '2025-10-23 07:31:55');
 
 -- --------------------------------------------------------
 
@@ -13835,7 +13839,25 @@ CREATE TABLE `specialists` (
 --
 
 INSERT INTO `specialists` (`specialist_id`, `user_id`, `working_id`, `created_at`) VALUES
-(2, 2, 'SP001', '2025-10-23 07:28:19');
+(3, 12, 'SP002', '2025-11-05 22:24:52'),
+(4, 14, NULL, '2025-11-06 02:23:42'),
+(5, 17, NULL, '2025-11-06 02:27:29'),
+(6, 10, NULL, '2025-11-06 04:54:31');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `specialist_feedback`
+--
+
+CREATE TABLE `specialist_feedback` (
+  `feedback_id` int(11) NOT NULL,
+  `specialist_id` int(11) NOT NULL,
+  `patient_id` int(11) NOT NULL,
+  `reading_id` int(11) DEFAULT NULL,
+  `feedback_text` text NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -13855,7 +13877,7 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`staff_id`, `user_id`, `working_id`, `created_at`) VALUES
-(3, 3, 'ST001', '2025-10-23 07:37:59');
+(4, 13, 'ST002', '2025-11-05 22:25:34');
 
 -- --------------------------------------------------------
 
@@ -13870,7 +13892,7 @@ CREATE TABLE `thresholds` (
   `min_value` decimal(5,2) DEFAULT NULL,
   `max_value` decimal(5,2) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `thresholds`
@@ -13904,9 +13926,16 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `role`, `first_name`, `last_name`, `email`, `phone`, `date_of_birth`, `password_hash`, `profile_image`, `created_at`, `updated_at`) VALUES
-(1, 'patient', 'Demo', 'User', 'demo.patient@example.com', '6041234567', '2000-01-01', 'demo1234', NULL, '2025-10-23 07:17:27', '2025-10-23 07:17:27'),
-(2, 'specialist', 'Alex', 'Smith', 'alex.smith@example.com', '7789967234', '1992-09-09', 'spec123', NULL, '2025-10-24 06:10:26', '2025-10-24 06:10:26'),
-(3, 'staff', 'Lana', 'Reed', 'lana.reed@clinic.com', '6045673456', '1986-01-01', 'staff123', NULL, '2025-10-23 07:36:54', '2025-10-23 07:36:54');
+(1, 'patient', 'Demo', 'User', 'newemail@test.com', '604-999-8888', '2000-01-01', 'demo1234', NULL, '2025-10-23 07:17:27', '2025-11-05 22:56:09'),
+(4, 'patient', 'John', 'Doe', 'test@example.com', NULL, NULL, 'pass123', NULL, '2025-10-27 05:41:28', '2025-10-27 05:41:28'),
+(10, 'specialist', 'Sarah', 'Smith', 'dr.smith@example.com', NULL, NULL, 'secret', NULL, '2025-11-06 04:54:31', '2025-11-06 04:54:31'),
+(11, 'patient', 'Tanishq', 'Wadhwani', 'tanishq@gmail.com', '604-555-1234', '2004-10-11', 'password123', NULL, '2025-11-05 22:16:57', '2025-11-05 22:16:57'),
+(12, 'specialist', 'Dr. Sarah', 'Johnson', 'specialist2@test.com', '604-555-5678', NULL, 'spec123', NULL, '2025-11-05 22:24:52', '2025-11-05 22:24:52'),
+(13, 'staff', 'Jane', 'Smith', 'staff2@test.com', '604-555-9012', NULL, 'staff123', NULL, '2025-11-05 22:25:34', '2025-11-05 22:25:34'),
+(14, 'specialist', 'Jia', 'Rana', 'demo.patient@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:23:42', '2025-11-06 02:23:42'),
+(17, 'specialist', 'Jia', 'Rana', 'kavya.rana@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:27:29', '2025-11-06 02:27:29'),
+(18, 'patient', 'John', 'Doe', 'patient1@test.com', '604-555-1234', '1990-05-15', 'pass123', NULL, '2025-11-06 04:07:02', '2025-11-06 04:07:02'),
+(20, 'patient', 'John', 'Doe', 'john.doe@example.com', NULL, NULL, 'pass123', NULL, '2025-11-06 04:54:48', '2025-11-06 04:54:48');
 
 -- --------------------------------------------------------
 
@@ -14155,6 +14184,15 @@ ALTER TABLE `specialists`
   ADD KEY `idx_spec_user` (`user_id`);
 
 --
+-- Indexes for table `specialist_feedback`
+--
+ALTER TABLE `specialist_feedback`
+  ADD PRIMARY KEY (`feedback_id`),
+  ADD KEY `specialist_id` (`specialist_id`),
+  ADD KEY `patient_id` (`patient_id`),
+  ADD KEY `reading_id` (`reading_id`);
+
+--
 -- Indexes for table `staff`
 --
 ALTER TABLE `staff`
@@ -14187,19 +14225,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `aiinsights`
 --
 ALTER TABLE `aiinsights`
-  MODIFY `insight_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `insight_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `alerts`
 --
 ALTER TABLE `alerts`
-  MODIFY `alert_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `alert_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `bloodsugarreadings`
 --
 ALTER TABLE `bloodsugarreadings`
-  MODIFY `reading_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `reading_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `dietrecommendations`
@@ -14211,31 +14249,37 @@ ALTER TABLE `dietrecommendations`
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `patient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `patient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `specialists`
 --
 ALTER TABLE `specialists`
-  MODIFY `specialist_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `specialist_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `specialist_feedback`
+--
+ALTER TABLE `specialist_feedback`
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `staff`
 --
 ALTER TABLE `staff`
-  MODIFY `staff_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `staff_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `thresholds`
 --
 ALTER TABLE `thresholds`
-  MODIFY `threshold_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `threshold_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- Constraints for dumped tables
@@ -14280,6 +14324,14 @@ ALTER TABLE `specialistpatient`
 --
 ALTER TABLE `specialists`
   ADD CONSTRAINT `specialists_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `specialist_feedback`
+--
+ALTER TABLE `specialist_feedback`
+  ADD CONSTRAINT `specialist_feedback_ibfk_1` FOREIGN KEY (`specialist_id`) REFERENCES `specialists` (`specialist_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `specialist_feedback_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`patient_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `specialist_feedback_ibfk_3` FOREIGN KEY (`reading_id`) REFERENCES `bloodsugarreadings` (`reading_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `staff`

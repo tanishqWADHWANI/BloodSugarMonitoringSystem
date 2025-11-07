@@ -49,7 +49,9 @@ def register_user():
             last_name=data['lastName'],
             role=data['role'],
             date_of_birth=data.get('dateOfBirth'),
-            phone=data.get('phone')
+            phone=data.get('phone'),
+            health_care_number=data.get('healthCareNumber')
+
         )
         
         return jsonify({"userId": user_id, "message": "User registered successfully"}), 201
@@ -80,22 +82,35 @@ def get_user(user_id):
 def update_user(user_id):
     """Update user information"""
     try:
-        data = request.json
+        data = request.json or {}
         
         # Check if user exists
         user = db.get_user(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
         
-        # Update user
-        db.update_user(user_id, **data)
-        
+        # Only pass known fields
+        updated = db.update_user(
+            user_id,
+            email=data.get('email'),
+            password=data.get('password'),
+            first_name=data.get('firstName'),
+            last_name=data.get('lastName'),
+            role=data.get('role'),
+            date_of_birth=data.get('dateOfBirth'),
+            phone=data.get('phone'),
+            health_care_number=data.get('healthCareNumber')
+        )
+
+        if not updated:
+            return jsonify({"error": "No changes made or user not found"}), 400
+
         return jsonify({"message": "User updated successfully"}), 200
     
     except Exception as e:
-        logger.error(f"Error updating user: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
+        logger.error(f"Error updating user {user_id}: {str(e)}")
+        return jsonify({"error": "Failed to update user"}), 500
+    
 @app.route('/api/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     """Delete a user"""
@@ -104,15 +119,52 @@ def delete_user(user_id):
         user = db.get_user(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
-        
-        # Delete user (CASCADE will delete related records)
-        db.delete_user(user_id)
-        
+
+        # Delete user (CASCADE handles related tables)
+        deleted = db.delete_user(user_id)
+        if not deleted:
+            return jsonify({"error": "User not found"}), 404
+
         return jsonify({"message": "User deleted successfully"}), 200
-    
+
     except Exception as e:
-        logger.error(f"Error deleting user: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error deleting user {user_id}: {str(e)}")
+        return jsonify({"error": "Failed to delete user"}), 500
+    
+# Admin creates Specialist/Staff
+@app.route('/api/admin/users', methods=['POST'])
+def admin_create_user():
+    """Admin creates specialist or staff"""
+    data = request.json
+    
+    user_id = db.create_user(
+        email=data['email'],
+        password=data['password'],
+        first_name=data['firstName'],
+        last_name=data['lastName'],
+        role=data['role'],
+        phone=data.get('phone')
+    )
+    
+    # Add working ID
+    if data['role'] == 'specialist':
+        cursor = db._get_cursor()
+        cursor.execute(
+            "UPDATE specialists SET working_id = %s WHERE user_id = %s",
+            (data['workingId'], user_id)
+        )
+        db.connection.commit()
+        cursor.close()
+    elif data['role'] == 'staff':
+        cursor = db._get_cursor()
+        cursor.execute(
+            "UPDATE staff SET working_id = %s WHERE user_id = %s",
+            (data['workingId'], user_id)
+        )
+        db.connection.commit()
+        cursor.close()
+    
+    return jsonify({"userId": user_id}), 201
 
 # Blood Sugar Readings
 @app.route('/api/readings', methods=['POST'])
@@ -189,7 +241,209 @@ def get_readings(user_id):
     except Exception as e:
         logger.error(f"Error fetching readings: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+# Update readings
+@app.route('/api/readings/<int:reading_id>', methods=['PUT'])
+def update_readings(reading_id):
+    """Update blood sugar readings for a user"""
+    try:
+        data = request.json
+            
+        # Check if reading exists
+        reading = db.get_reading_by_id(reading_id)
+        if not reading:
+            return jsonify({"error": "Reading not found"}), 404
+            
+        # Update reading
+        db.update_reading(reading_id, **data)
+            
+        return jsonify({
+            "readingId": reading_id,
+            "message": "Reading updated successfully"
+        }), 200
+           
+        
+    except Exception as e:
+        logger.error(f"Error updating reading: {str(e)}")
+        return jsonify({"error": "Failed to update reading"}), 500
 
+
+# Delete reading
+@app.route('/api/readings/<int:reading_id>', methods=['DELETE'])
+def delete_reading(reading_id):
+    """Delete a blood sugar reading"""
+    try:
+        # Check if reading exists
+        reading = db.get_reading_by_id(reading_id)
+        if not reading:
+            return jsonify({"error": "Reading not found"}), 404
+        
+        # Delete reading
+        db.delete_reading(reading_id)
+        
+        return jsonify({
+            "message": "Reading deleted successfully",
+            "readingId": reading_id
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error deleting reading: {str(e)}")
+        return jsonify({"error": "Failed to delete reading"}), 500
+
+
+# User login
+@app.route('/api/login', methods=['POST'])
+def login():
+    """User login"""
+    data = request.json
+    
+    user = db.get_user_by_email(data['email'])
+    
+    if not user:
+        return jsonify({"error": "Invalid credentials"}), 401
+    
+    # Simple password check (improve with hashing later)
+    if user['password_hash'] != data['password']:
+        return jsonify({"error": "Invalid credentials"}), 401
+    
+    # Remove password from response
+    del user['password_hash']
+    
+    return jsonify({
+        "message": "Login successful",
+        "user": user
+    }), 200
+
+@app.route('/api/specialist/<int:specialist_id>/readings/search', methods=['GET'])
+def specialist_search_readings(specialist_id):
+    """Specialist search and filter patient readings"""
+    try:
+        # Get query parameters
+        patient_name = request.args.get('patientName')
+        start_date = request.args.get('startDate')
+        end_date = request.args.get('endDate')
+        status_filter = request.args.get('status')  # 'normal' or 'abnormal'
+        
+        # Get all patients for this specialist
+        patients = db.get_specialist_patients(specialist_id)
+        
+        all_readings = []
+        for patient in patients:
+            # Filter by patient name if provided
+            if patient_name:
+                full_name = f"{patient['first_name']} {patient['last_name']}"
+                if patient_name.lower() not in full_name.lower():
+                    continue
+            
+            # Get readings
+            readings = db.get_user_readings(patient['user_id'], days=365)
+            
+            for reading in readings:
+                # Add patient info
+                reading['patient_name'] = f"{patient['first_name']} {patient['last_name']}"
+                reading['patient_id'] = patient['user_id']
+                
+                # Filter by date range
+                if start_date and reading['date_time'] < start_date:
+                    continue
+                if end_date and reading['date_time'] > end_date:
+                    continue
+                
+                # Filter by status
+                if status_filter:
+                    if status_filter == 'abnormal' and reading['status'] not in ['abnormal', 'borderline']:
+                        continue
+                    if status_filter == 'normal' and reading['status'] != 'normal':
+                        continue
+                
+                all_readings.append(reading)
+        
+        return jsonify({
+            "specialistId": specialist_id,
+            "readings": all_readings,
+            "count": len(all_readings)
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error searching readings: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# Specialist Feedback
+@app.route('/api/specialist/feedback', methods=['POST'])
+def add_specialist_feedback():
+    """Specialist provides feedback to patient"""
+    try:
+        data = request.json
+        
+        # Validate required fields
+        if not data.get('specialistId') or not data.get('patientId') or not data.get('feedbackText'):
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        cursor = db._get_cursor()
+        
+        # Get patient_id from user_id
+        cursor.execute(
+            "SELECT patient_id FROM patients WHERE user_id = %s", 
+            (data['patientId'],)
+        )
+        patient = cursor.fetchone()
+        
+        # If patient record doesn't exist, create it
+        if not patient:
+            logger.info(f"Creating patient record for user_id {data['patientId']}")
+            cursor.execute(
+                "INSERT INTO patients (user_id) VALUES (%s)",
+                (data['patientId'],)
+            )
+            db.connection.commit()
+            patient_id = cursor.lastrowid
+        else:
+            patient_id = patient['patient_id']
+        
+        # Insert feedback
+        sql = """
+            INSERT INTO specialist_feedback 
+            (specialist_id, patient_id, reading_id, feedback_text)
+            VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(sql, (
+            data['specialistId'],
+            patient_id,
+            data.get('readingId'),
+            data['feedbackText']
+        ))
+        db.connection.commit()
+        feedback_id = cursor.lastrowid
+        cursor.close()
+        
+        return jsonify({
+            "feedbackId": feedback_id,
+            "message": "Feedback added successfully"
+        }), 201
+    
+    except Exception as e:
+        logger.error(f"Error adding feedback: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+# patient get feedback
+@app.route('/api/patient/<int:patient_id>/feedback', methods=['GET'])
+def get_patient_feedback(patient_id):
+    """Get all feedback for a patient"""
+    try:
+        feedback = db.get_specialist_feedback(patient_id)
+
+        return jsonify({
+            "patientId": patient_id,
+            "feedback": feedback,
+            "count": len(feedback)
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error in get_patient_feedback({patient_id}): {e}")
+        return jsonify({"error": "Internal server error"}), 500
+    
 # AI Insights
 @app.route('/api/insights/<int:user_id>', methods=['GET'])
 def get_insights(user_id):
@@ -456,6 +710,206 @@ def generate_report(user_id):
     
     except Exception as e:
         logger.error(f"Error generating report: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+# Admin Reports Annually/ Monthly
+# Add to app.py
+
+@app.route('/api/admin/reports/monthly', methods=['GET'])
+def get_monthly_report():
+    """Generate monthly report for admin"""
+    try:
+        month = request.args.get('month')  # Format: YYYY-MM
+        year = request.args.get('year')
+        
+        if not month and not year:
+            return jsonify({"error": "Month or year parameter required"}), 400
+        
+        cursor = db._get_cursor()
+        
+        # Get active patients count
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'patient'")
+        total_patients = cursor.fetchone()['count']
+        
+        # Get readings for the period
+        if month:
+            date_filter = f"DATE_FORMAT(date_time, '%Y-%m') = '{month}'"
+        else:
+            date_filter = f"YEAR(date_time) = {year}"
+        
+        # Get patient statistics
+        sql = f"""
+            SELECT 
+                u.user_id,
+                u.first_name,
+                u.last_name,
+                COUNT(r.reading_id) as total_readings,
+                AVG(r.value) as avg_value,
+                MAX(r.value) as max_value,
+                MIN(r.value) as min_value,
+                SUM(CASE WHEN r.status IN ('abnormal', 'borderline') THEN 1 ELSE 0 END) as abnormal_count
+            FROM users u
+            LEFT JOIN bloodsugarreadings r ON u.user_id = r.user_id AND {date_filter}
+            WHERE u.role = 'patient'
+            GROUP BY u.user_id
+        """
+        cursor.execute(sql)
+        patient_stats = cursor.fetchall()
+        
+        # Convert Decimal to float
+        for stat in patient_stats:
+            if stat.get('avg_value'):
+                stat['avg_value'] = float(stat['avg_value'])
+            if stat.get('max_value'):
+                stat['max_value'] = float(stat['max_value'])
+            if stat.get('min_value'):
+                stat['min_value'] = float(stat['min_value'])
+        
+        # Get top food triggers
+        sql = f"""
+            SELECT 
+                food_intake,
+                COUNT(*) as trigger_count,
+                AVG(value) as avg_value
+            FROM bloodsugarreadings
+            WHERE {date_filter}
+                AND status IN ('abnormal', 'borderline')
+                AND food_intake IS NOT NULL
+                AND food_intake != ''
+            GROUP BY food_intake
+            ORDER BY trigger_count DESC
+            LIMIT 10
+        """
+        cursor.execute(sql)
+        food_triggers = cursor.fetchall()
+        
+        for trigger in food_triggers:
+            if trigger.get('avg_value'):
+                trigger['avg_value'] = float(trigger['avg_value'])
+        
+        # Get top activity triggers
+        sql = f"""
+            SELECT 
+                activity,
+                COUNT(*) as trigger_count,
+                AVG(value) as avg_value
+            FROM bloodsugarreadings
+            WHERE {date_filter}
+                AND status IN ('abnormal', 'borderline')
+                AND activity IS NOT NULL
+                AND activity != ''
+            GROUP BY activity
+            ORDER BY trigger_count DESC
+            LIMIT 10
+        """
+        cursor.execute(sql)
+        activity_triggers = cursor.fetchall()
+        
+        for trigger in activity_triggers:
+            if trigger.get('avg_value'):
+                trigger['avg_value'] = float(trigger['avg_value'])
+        
+        cursor.close()
+        
+        return jsonify({
+            "period": month or year,
+            "total_active_patients": total_patients,
+            "patient_statistics": patient_stats,
+            "top_food_triggers": food_triggers,
+            "top_activity_triggers": activity_triggers,
+            "generated_at": datetime.now().isoformat()
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error generating report: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin/reports/annual', methods=['GET'])
+def get_annual_report():
+    """Generate annual report for admin"""
+    try:
+        year = request.args.get('year')
+        
+        if not year:
+            return jsonify({"error": "Year parameter required"}), 400
+        
+        cursor = db._get_cursor()
+        
+        # Get monthly trends
+        sql = f"""
+            SELECT 
+                DATE_FORMAT(date_time, '%Y-%m') as month,
+                COUNT(DISTINCT user_id) as active_patients,
+                COUNT(*) as total_readings,
+                AVG(value) as avg_value,
+                SUM(CASE WHEN status IN ('abnormal', 'borderline') THEN 1 ELSE 0 END) as abnormal_count
+            FROM bloodsugarreadings
+            WHERE YEAR(date_time) = {year}
+            GROUP BY DATE_FORMAT(date_time, '%Y-%m')
+            ORDER BY month
+        """
+        cursor.execute(sql)
+        monthly_trends = cursor.fetchall()
+        
+        for trend in monthly_trends:
+            if trend.get('avg_value'):
+                trend['avg_value'] = float(trend['avg_value'])
+        
+        # Get overall statistics
+        sql = f"""
+            SELECT 
+                COUNT(DISTINCT user_id) as total_patients,
+                COUNT(*) as total_readings,
+                AVG(value) as avg_value,
+                MAX(value) as max_value,
+                MIN(value) as min_value
+            FROM bloodsugarreadings
+            WHERE YEAR(date_time) = {year}
+        """
+        cursor.execute(sql)
+        overall_stats = cursor.fetchone()
+        
+        if overall_stats.get('avg_value'):
+            overall_stats['avg_value'] = float(overall_stats['avg_value'])
+        if overall_stats.get('max_value'):
+            overall_stats['max_value'] = float(overall_stats['max_value'])
+        if overall_stats.get('min_value'):
+            overall_stats['min_value'] = float(overall_stats['min_value'])
+        
+        # Get top food triggers for the year
+        sql = f"""
+            SELECT 
+                food_intake,
+                COUNT(*) as trigger_count,
+                AVG(value) as avg_value
+            FROM bloodsugarreadings
+            WHERE YEAR(date_time) = {year}
+                AND status IN ('abnormal', 'borderline')
+                AND food_intake IS NOT NULL
+                AND food_intake != ''
+            GROUP BY food_intake
+            ORDER BY trigger_count DESC
+            LIMIT 10
+        """
+        cursor.execute(sql)
+        food_triggers = cursor.fetchall()
+        
+        for trigger in food_triggers:
+            if trigger.get('avg_value'):
+                trigger['avg_value'] = float(trigger['avg_value'])
+        
+        cursor.close()
+        
+        return jsonify({
+            "year": year,
+            "overall_statistics": overall_stats,
+            "monthly_trends": monthly_trends,
+            "top_food_triggers": food_triggers,
+            "generated_at": datetime.now().isoformat()
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error generating annual report: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 # Test Endpoints

@@ -54,7 +54,7 @@ class Database:
         finally:
             cursor.close()
     
-    def create_user(self, email, password, first_name, last_name, role, date_of_birth=None, phone=None):
+    def create_user(self, email, password, first_name, last_name, role, date_of_birth=None, phone=None, health_care_number =None):
         """Create a new user (password stored as-is for demo, hash in production)"""
         cursor = self._get_cursor()
         try:
@@ -70,8 +70,8 @@ class Database:
             # Create patient record if role is patient
             if role == 'patient':
                 cursor.execute(
-                    "INSERT INTO patients (user_id) VALUES (%s)",
-                    (user_id,)
+                    "INSERT INTO patients (user_id, health_care_number) VALUES (%s,%s)",
+                    (user_id,health_care_number)
                 )
                 self.connection.commit()
             # Create specialist record if role is specialist
@@ -96,6 +96,138 @@ class Database:
             raise
         finally:
             cursor.close()
+
+    def update_user(self, user_id, *, email: str | None = None, password: str | None = None, first_name: str | None = None, last_name: str | None = None, role: str | None = None, date_of_birth: str | None = None, phone: str | None = None, health_care_number: str | None = None)-> bool:
+        """
+        Update user. Only provided fields are updated.
+        Password is stored in plain text (demo only).
+        """
+        cursor = self._get_cursor()
+        try:
+            # Build updates for `users` table
+            updates = {}
+            if email is not None:          updates["email"] = email
+            if password is not None:       updates["password_hash"] = password  # plain text
+            if first_name is not None:     updates["first_name"] = first_name
+            if last_name is not None:      updates["last_name"] = last_name
+            if role is not None:           updates["role"] = role
+            if date_of_birth is not None:  updates["date_of_birth"] = date_of_birth
+            if phone is not None:          updates["phone"] = phone
+
+            if not updates:
+                return False  # nothing to update
+
+            set_clause = ", ".join(f"{col} = %s" for col in updates)
+            values = list(updates.values())
+            values.append(user_id)
+
+            sql = f"UPDATE users SET {set_clause} WHERE user_id = %s"
+            cursor.execute(sql, values)
+
+            if cursor.rowcount == 0:
+                return False  # user not found
+
+            # === Role-specific logic ===
+            if role is not None:
+                # Get old role
+                cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
+                old_role = cursor.fetchone()[0]
+
+                # Clean up old role table
+                if old_role == "patient":
+                    cursor.execute("DELETE FROM patients WHERE user_id = %s", (user_id,))
+                elif old_role == "specialist":
+                    cursor.execute("DELETE FROM specialists WHERE user_id = %s", (user_id,))
+                elif old_role == "staff":
+                    cursor.execute("DELETE FROM staff WHERE user_id = %s", (user_id,))
+
+                # Insert into new role table
+                if role == "patient":
+                    cursor.execute(
+                        "INSERT INTO patients (user_id, health_care_number) VALUES (%s, %s)",
+                        (user_id, health_care_number)
+                    )
+                elif role == "specialist":
+                    cursor.execute("INSERT INTO specialists (user_id) VALUES (%s)", (user_id,))
+                elif role == "staff":
+                    cursor.execute("INSERT INTO staff (user_id) VALUES (%s)", (user_id,))
+
+            # === Update health care number (even if role didn't change) ===
+            elif health_care_number is not None:
+                cursor.execute(
+                    "UPDATE patients SET health_care_number = %s WHERE user_id = %s",
+                    (health_care_number, user_id)
+                )
+
+            self.connection.commit()
+            return True
+
+        except Exception as e:
+            self.connection.rollback()
+            logger.error(f"Error updating user {user_id}: {e}")
+            raise
+        finally:
+            cursor.close()
+
+    def delete_user(self,user_id)-> bool:
+            
+        """
+        Delete a user and all associated records.
+        Relies on ON DELETE CASCADE in the database.
+
+        Returns
+        -------
+        bool
+            True if user was deleted, False if user not found.
+        """
+
+        cursor = self._get_cursor()
+        try:
+
+            # Delete from users table (CASCADE handles patients/specialists/staff)
+            cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+            self.connection.commit()
+
+            return cursor.rowcount > 0 # True if a row is deleted
+        except Exception as e:
+            self.connection.rollback()
+            logger.error("Error Deleting the user {user_id}: {e} ")
+            raise
+        finally:
+            cursor.close()
+
+    def get_specialist_feedback(self, patient_id):
+        """Get all feedback for a patient"""
+        cursor = self._get_cursor()
+        try:
+            sql = """
+                SELECT 
+                    sf.*, 
+                    s.user_id, 
+                    u.first_name, 
+                    u.last_name
+                FROM specialist_feedback sf
+                JOIN specialists s ON sf.specialist_id = s.specialist_id
+                JOIN users u ON s.user_id = u.user_id
+                WHERE sf.patient_id = %s
+                ORDER BY sf.created_at DESC
+            """
+            cursor.execute(sql, (patient_id,))
+            rows = cursor.fetchall()
+
+            feedback = []
+            for row in rows:
+                r = dict(row)
+                if 'created_at' in r and r['created_at']:
+                    r['createdAt'] = r['created_at'].isoformat()
+                feedback.append(r)
+            return feedback
+        finally:
+            cursor.close()
+
+
+
+
     
     # Blood Sugar Readings
     def create_reading(self, user_id, value, unit='mg/dL', fasting=None, food_intake=None, 
