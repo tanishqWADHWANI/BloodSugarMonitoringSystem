@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>View Patient Info</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  
+  h1 { color: #004080; margin-bottom: 20px; }
+  .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .card h2 { margin-top: 0; color: #004080; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
+  th { background: #004080; color: white; }
+  .btn { display: inline-block; margin: 10px 10px 0 0; padding: 10px 15px; background: #004080; color: white; border-radius: 8px; text-decoration: none; }
+  .btn:hover { background: #0066cc; }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>Patient Information</h1>
+
+  <div class="card">
+    <h2>Patient Details</h2>
+    <table>
+      <tr>
+        <th>Patient Number</th>
+        <td>001</td>
+      </tr>
+      <tr>
+        <th>Full Name</th>
+        <td>John Doe</td>
+      </tr>
+      <tr>
+        <th>Age</th>
+        <td>45</td>
+      </tr>
+      <tr>
+        <th>Gender</th>
+        <td>Male</td>
+      </tr>
+      <tr>
+        <th>Contact</th>
+        <td>+1 234 567 890</td>
+      </tr>
+      <tr>
+        <th>Medical History</th>
+        <td>Type 2 Diabetes, Hypertension</td>
+      </tr>
+      <tr>
+        <th>Last Test Results</th>
+        <td>Blood Sugar: 130 mg/dL, BP: 140/90 mmHg</td>
+      </tr>
+    </table>
+
+    <div style="margin-top:20px;">
+      <a class="btn" href="update_medical.html">Update Medical Info</a>
+      <a class="btn" href="upload_test.html">Upload Test Results</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+<p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

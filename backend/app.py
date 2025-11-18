@@ -13,7 +13,14 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://127.0.0.1:5500",
+            "http://localhost:5500"
+        ]
+    }
+})
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -59,6 +66,24 @@ def register_user():
     except Exception as e:
         logger.error(f"Error registering user: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
+
+# for admin to view all users 
+@app.route('/api/admin/users/all', methods=['GET'])
+def get_all_users():
+    """Get all users for the Admin Dashboard."""
+    
+    try:
+        # Assumes db.get_all_users() method exists in models.py
+        users = db.get_all_users() 
+        
+        return jsonify({"users": users}), 200
+    except Exception as e:
+        # CRITICAL FIX: Add exc_info=True to print the full traceback
+        logger.error(f"CRASH REPORT: Database query failed.", exc_info=True) 
+        return jsonify({"error": "Failed to fetch users. CHECK TERMINAL LOGS."}), 500
+    
 
 @app.route('/api/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
@@ -130,42 +155,62 @@ def delete_user(user_id):
     except Exception as e:
         logger.error(f"Error deleting user {user_id}: {str(e)}")
         return jsonify({"error": "Failed to delete user"}), 500
+
+# Admin login
+@app.route('/api/auth/login', methods=['POST'])
+def handle_auth_login():
+    data = request.json
+    user = db.get_user_by_email(data['email'])
+    if not user or not db.verify_password(user, data['password']):
+        return jsonify({"error": "Invalid credentials"}), 401
+    return jsonify({"userId": user['id'], "role": user['role']}), 200
+
     
 # Admin creates Specialist/Staff
 @app.route('/api/admin/users', methods=['POST'])
-def admin_create_user():
-    """Admin creates specialist or staff"""
+def create_user_admin():
+    """Admin endpoint to create users"""
     data = request.json
     
-    user_id = db.create_user(
-        email=data['email'],
-        password=data['password'],
-        first_name=data['firstName'],
-        last_name=data['lastName'],
-        role=data['role'],
-        phone=data.get('phone')
-    )
-    
-    # Add working ID
-    if data['role'] == 'specialist':
-        cursor = db._get_cursor()
-        cursor.execute(
-            "UPDATE specialists SET working_id = %s WHERE user_id = %s",
-            (data['workingId'], user_id)
+    try:
+        # Extract data
+        email = data.get('email')
+        password = data.get('password')
+        first_name = data.get('firstName')
+        last_name = data.get('lastName')
+        role = data.get('role')
+        phone = data.get('phone')
+        date_of_birth = data.get('dateOfBirth')
+        working_id = data.get('workingId')  # For specialists/staff
+        health_care_number = data.get('healthCareNumber')  # For patients
+        
+        # Validate required fields
+        if not all([email, password, first_name, last_name, role]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Create user
+        user_id = db.create_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            date_of_birth=date_of_birth,
+            phone=phone,
+            health_care_number=health_care_number,
+            working_id=working_id
         )
-        db.connection.commit()
-        cursor.close()
-    elif data['role'] == 'staff':
-        cursor = db._get_cursor()
-        cursor.execute(
-            "UPDATE staff SET working_id = %s WHERE user_id = %s",
-            (data['workingId'], user_id)
-        )
-        db.connection.commit()
-        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'userId': user_id,
+            'message': 'User created successfully'
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error creating user: {e}")
+        return jsonify({'error': str(e)}), 500
     
-    return jsonify({"userId": user_id}), 201
-
 # Blood Sugar Readings
 @app.route('/api/readings', methods=['POST'])
 def add_reading():
@@ -764,7 +809,11 @@ def get_monthly_report():
                 stat['max_value'] = float(stat['max_value'])
             if stat.get('min_value'):
                 stat['min_value'] = float(stat['min_value'])
-        
+            if stat.get('total_readings'):
+                stat['total_readings'] = int(stat['total_readings'])
+            if stat.get('abnormal_count'):
+                stat['abnormal_count'] = int(stat['abnormal_count'])
+                
         # Get top food triggers
         sql = f"""
             SELECT 
@@ -911,6 +960,30 @@ def get_annual_report():
     except Exception as e:
         logger.error(f"Error generating annual report: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+# patient assignment to doctor api route
+# In app.py
+
+@app.route('/api/assignments/assign', methods=['POST'])
+def assign_patient_api():
+    """API endpoint to assign a patient user_id to a specialist user_id."""
+    try:
+        data = request.json
+        patient_user_id = data.get('patientId')
+        specialist_user_id = data.get('specialistId')
+
+        if not patient_user_id or not specialist_user_id:
+            return jsonify({"error": "Missing patientId or specialistId"}), 400
+
+        db.assign_patient_to_specialist(patient_user_id, specialist_user_id)
+
+        return jsonify({"message": "Assignment successful"}), 200
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        logger.error(f"Error in assignment API: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to complete assignment."}), 500
 
 # Test Endpoints
 @app.route('/api/test/database', methods=['GET'])

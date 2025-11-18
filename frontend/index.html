@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Online Blood Sugar Monitoring Clinic</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* New Section Styles for Services and Reviews */
+    .section-box {
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    /* Section Header Style */
+    .section-box h2 {
+      font-size: 2rem;
+      color: #004080;
+      margin-bottom: 15px;
+    }
+
+    /* Services List */
+    .services ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .services li {
+      font-size: 1.1rem;
+      margin: 10px 0;
+    }
+
+    .services li strong {
+      color: #004080;
+    }
+
+    /* Reviews Section */
+    .review-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    .review-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease;
+    }
+
+    .review-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .review-text {
+      font-size: 1.2rem;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .review-author {
+      font-weight: bold;
+      color: #004080;
+    }
+
+    .review-rating {
+      color: gold;
+    }
+
+    /* Optional Image Placeholder for Sections */
+    .section-box img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 20px;
+      /* Uncomment below line to add an image inside each section */
+      /* width: 80%; height: auto; display: block; margin: 0 auto; */
+    }
+
+    /* Hero Section Styling */
+    .hero-section {
+      background-color: #e3f3ff;
+      padding: 50px 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .hero-section h1 {
+      font-size: 2.5rem;
+      color: #004080;
+    }
+
+    .hero-section p {
+      font-size: 1.1rem;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER SECTION -->
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="patient.html">Patient</a></li>
+        <li><a href="specialist.html">Specialist</a></li>
+        <li><a href="clinic.html">Clinic</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="container">
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+      <h1>Welcome to the Online Blood Sugar Monitoring Clinic</h1>
+      <p>Providing personalized diabetes care and real-time blood sugar tracking from the comfort of your home. Our mission is to help you live healthier and manage your diabetes effectively.</p>
+    </section>
+
+    <!-- ABOUT THE CLINIC -->
+    <section class="section-box about-clinic">
+      <h2>About Us</h2>
+      <p>Founded in 2023, our clinic combines advanced technology with compassionate care to support individuals living with diabetes. Our team of certified specialists and nutritionists work together to provide comprehensive health monitoring and lifestyle guidance.</p>
+      <p>We focus on patient-centered care, empowering you to understand your health, set realistic goals, and maintain your blood sugar within recommended ranges.</p>
+      <!-- Optional Image -->
+      <!-- <img src="path/to/image.jpg" alt="About Clinic"> -->
+    </section>
+
+    <!-- SERVICES OFFERED -->
+    <section class="section-box services">
+      <h2>Our Services</h2>
+      <ul>
+        <li><strong>Remote Blood Sugar Monitoring:</strong> Track your readings via our secure online portal.</li>
+        <li><strong>Personalized Reports:</strong> Receive weekly and monthly summaries tailored to your health needs.</li>
+        <li><strong>Nutrition & Lifestyle Guidance:</strong> Access diet plans and exercise recommendations from certified specialists.</li>
+        <li><strong>Specialist Consultations:</strong> Connect with endocrinologists and diabetes educators remotely.</li>
+        <li><strong>Alerts & Reminders:</strong> Stay on track with automated notifications for glucose checks and appointments.</li>
+      </ul>
+      <!-- Optional Image -->
+      <!-- <img src="path/to/image.jpg" alt="Services Offered"> -->
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="section-box reviews">
+      <h2>What Our Patients Say</h2>
+      <div class="review-cards">
+        <div class="review-card">
+          <p class="review-text">"This clinic has transformed how I manage my diabetes. The real-time updates and personalized advice make it so easy to stay on top of my health."</p>
+          <p class="review-author">— Emily R.</p>
+          <p class="review-rating">⭐⭐⭐⭐⭐</p>
+        </div>
+
+        <div class="review-card">
+          <p class="review-text">"Excellent service and friendly staff. I feel more confident monitoring my blood sugar at home."</p>
+          <p class="review-author">— David M.</p>
+          <p class="review-rating">⭐⭐⭐⭐⭐</p>
+        </div>
+
+        <div class="review-card">
+          <p class="review-text">"The lifestyle guidance and meal planning tools have been incredibly helpful. Highly recommend this clinic!"</p>
+          <p class="review-author">— Sophia L.</p>
+          <p class="review-rating">⭐⭐⭐⭐⭐</p>
+        </div>
+      </div>
+      <!-- Optional Image -->
+      <!-- <img src="path/to/image.jpg" alt="Patient Reviews"> -->
+    </section>
+
+  </main>
+
+  <!-- FOOTER SECTION -->
+  <footer>
+    <div class="footer-container">
+
+      <!-- Social Media -->
+      <div class="footer-section">
+        <h3>Follow Us</h3>
+        <ul class="social-media">
+          <li><a href="#">Facebook</a></li>
+          <li><a href="#">Twitter</a></li>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">LinkedIn</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/api.js"></script>
+ 
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient.html">Patient</a></li>
+        <li><a href="specialist.html">Specialist</a></li>
+        <li><a href="clinic.html">Clinic</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="login-section">
+      <h2>Admin Login</h2>
+      <form id="adminLoginForm" class="form-grid">
+        <div class="form-field">
+          <label for="adminEmail">Username or Email</label>
+          <input id="adminEmail" name="email" type="text" placeholder="admin@x.com" required />
+        </div>
+        <div class="form-field">
+          <label for="adminPassword">Password</label>
+          <input id="adminPassword" name="password" type="password" placeholder="••••••••" required />
+        </div>
+  
+        <p id="adminMsg" style="color: red; text-align: center; grid-column: 1 / -1;"></p> 
+
+        <div class="form-actions">
+          <button type="submit">Login</button>
+          <button type="button" id="demoLogin">Demo Admin Login</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Admin Panel</h2>
+      <p class="subtext">Manage users, permissions, system settings, and audit logs.</p>
+      <ul>
+        <li>After logging in, you’ll be redirected to <code>admin_dashboard.html</code>.</li>
+        <li>Create users with phone, DOB, image, and role.</li>
+        <li>Assign patients to specialists.</li>
+        <li>View audit reports and system settings.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  
+  <!-- JS Logic -->
+  <script>
+    // 1. ADD: Wrap all logic inside DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // 2. MOVE: Element references inside the wrapper
+      const form = document.getElementById('adminLoginForm');
+      const emailEl = document.getElementById('adminEmail');
+      const passEl = document.getElementById('adminPassword');
+      const demoBtn = document.getElementById('demoLogin');
+      const msgEl = document.getElementById('adminMsg');
+
+      // 3. CRITICAL CHECK: Ensure form exists before binding events
+      if (!form) {
+          console.error("Initialization Error: adminLoginForm not found.");
+          return; 
+      }
+
+      // This block is inside admin.html's <script> tag
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        msgEl.textContent = '';
+
+        const email = emailEl.value.trim();
+        const pass = passEl.value.trim();
+
+        if (!email || !pass) {
+          msgEl.textContent = 'Please enter email and password.';
+          return;
+        }
+
+        msgEl.textContent = 'Signing in…';
+
+        try {
+          // Call the new, centralized loginUser function from api.js
+          const response = await loginUser(email, pass);
+          
+          // Extract the 'user' object from the backend response structure
+          const userData = response.user; 
+
+          // CRITICAL CHECK: Ensure the role is appropriate for this page
+          if (userData.role !== 'admin' && userData.role !== 'staff') {
+              throw new Error(`Access Denied: Role is ${userData.role}. This is an Admin page.`);
+          }
+
+          //  Store the extracted user data
+          localStorage.setItem('loggedInAdmin', JSON.stringify(userData));
+          
+          // Success redirect
+          window.location.href = 'admin_dashboard.html';
+
+        } catch (err) {
+          console.error(err);
+          msgEl.textContent = err.message || 'Login failed. Check server status or credentials.';
+        }
+      });
+
+      demoBtn.addEventListener('click', function () {
+        const demo = {
+          email: 'demo@admin.com',
+          role: 'admin',
+          id: 999,
+          firstName: 'Demo',
+          lastName: 'Admin'
+        };
+        localStorage.setItem('loggedInAdmin', JSON.stringify(demo));
+        window.location.href = 'admin_dashboard.html';
+      });
+    }); // 4. CLOSE: End of DOMContentLoaded listener
+  </script>
+</body>
+
+</html>

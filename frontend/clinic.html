@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinic Access - Blood Sugar Monitor Clinic</title>
+  <link rel="stylesheet" href="css/style.css" />
+  
+  <!-- Page-specific styles -->
+  <style>
+    /* Container for the login form */
+    .login-container {
+      max-width: 450px;
+      margin: 50px auto;
+      background: #f8fcff; /* Light blue for elderly-friendly look */
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #004080; /* Clinic blue */
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+      color: #003366;
+    }
+
+    select, input[type="text"], input[type="password"], button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #bcd4e6;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #3b7ec4;
+    }
+
+    /* Initially hidden continue section */
+    .login-form {
+      display: none;
+    }
+
+    #continueBtn {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      padding: 12px 24px;
+      border-radius: 6px;
+      width: 100%;
+    }
+
+    #continueBtn:hover {
+      background-color: #3b7ec4;
+    }
+
+    #continueBtn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================
+       Navigation Header
+       ========================= -->
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient.html">Patient</a></li>
+        <li><a href="specialist.html">Specialist</a></li>
+        <li><a href="clinic.html" class="active">Clinic</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- =========================
+       Main Clinic Login Section
+       ========================= -->
+  <main>
+    <div class="login-container">
+      <h2>Clinic Access Portal</h2>
+      <p style="text-align: center; color: #666; margin-bottom: 20px;">Select your role to continue to the appropriate login page</p>
+
+      <!-- Role selection dropdown -->
+      <label for="roleSelect">Select Role:</label>
+      <select id="roleSelect">
+        <option value="">-- Choose Role --</option>
+        <option value="staff">Staff</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <!-- Continue button to proceed to selected role page -->
+      <div id="continueSection" class="login-form">
+        <button id="continueBtn">Continue to Login</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- =========================
+       Role Selection Script
+       ========================= -->
+  <script>
+    const roleSelect = document.getElementById('roleSelect');
+    const continueSection = document.getElementById('continueSection');
+    const continueBtn = document.getElementById('continueBtn');
+
+    // Show continue button when a role is selected
+    roleSelect.addEventListener('change', function () {
+      if (this.value === 'staff' || this.value === 'admin') {
+        continueSection.style.display = 'block';
+      } else {
+        continueSection.style.display = 'none';
+      }
+    });
+
+    // Handle navigation to appropriate login page
+    continueBtn.addEventListener('click', function () {
+      const selectedRole = roleSelect.value;
+      if (selectedRole === 'staff') {
+        window.location.href = 'staff.html';
+      } else if (selectedRole === 'admin') {
+        window.location.href = 'admin.html';
+      }
+    });
+  </script>
+</body>
+</html>

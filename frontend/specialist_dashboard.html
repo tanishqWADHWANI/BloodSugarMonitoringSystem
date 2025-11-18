@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specialist Dashboard - Online Blood Sugar Monitor</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+   
+    .logout-btn {
+      background: #cc0000; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer;
+    }
+    .logout-btn:hover { background: #ff3333; }
+
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+    h1, h2, h3, h4, p { margin: 0 0 15px 0; }
+    .dashboard-section { margin-top: 30px; }
+
+    .patient-search { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+    .patient-search input, .patient-search button {
+      padding: 8px; border-radius: 5px; border: 1px solid #ccc;
+    }
+    .patient-search button {
+      background: #004080; color: white; border: none; cursor: pointer;
+    }
+    .patient-search button:hover { background: #0066cc; }
+
+    table {
+      width: 100%; border-collapse: collapse; background: white; border-radius: 10px;
+      overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #004080; color: white; }
+    tr:hover { background: #f1f1f1; cursor: pointer; }
+
+    footer { background: #004080; color: white; text-align: center; padding: 10px; margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="specialist.html" class="active">Specialist</a></li>
+		<li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li style="margin-left:auto;">
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Welcome, <span id="specialistNameDisplay">Specialist</span></h1>
+    <p>View your patients’ latest updates and access their detailed health records.</p>
+
+    <div class="dashboard-section">
+      <h2>Patient List</h2>
+      <div class="patient-search">
+        <input type="text" id="search-name" placeholder="Search by Name">
+        <input type="text" id="search-number" placeholder="Search by Patient ID">
+        <input type="date" id="start-date">
+        <input type="date" id="end-date">
+        <button id="search-btn">Search</button>
+        <button id="reset-btn">Reset</button>
+      </div>
+
+      <table id="patient-table">
+        <thead>
+          <tr>
+            <th>Patient Number</th>
+            <th>Name</th>
+            <th>Last Checked</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+  // ================================
+  // Secure Access
+  // ================================
+  const loggedInSpecialist = localStorage.getItem('specialistUsername');
+  if (!loggedInSpecialist) {
+    window.location.href = 'specialist.html';
+  }
+  const specialistName = localStorage.getItem('specialistFullName') || "Dr. John Smith";
+  document.getElementById("specialistNameDisplay").textContent = specialistName;
+
+  // ================================
+  // Patient Data
+  // ================================
+  let patients = JSON.parse(localStorage.getItem('patients')) || [
+    { number: 'P001', name: 'Alice Johnson', lastChecked: '2025-10-14' },
+    { number: 'P002', name: 'Bob Smith', lastChecked: '2025-10-13' },
+    { number: 'P003', name: 'Charlie Lee', lastChecked: '2025-10-11' },
+    { number: 'P004', name: 'Diana King', lastChecked: '2025-10-10' },
+    { number: 'P005', name: 'Ethan Brown', lastChecked: '2025-10-12' }
+  ];
+
+  const tableBody = document.querySelector('#patient-table tbody');
+
+  // Render Patient Table
+  function renderTable(data) {
+    tableBody.innerHTML = '';
+    data.forEach(p => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${p.number}</td>
+        <td>${p.name}</td>
+        <td>${p.lastChecked}</td>
+      `;
+      row.addEventListener('click', () => {
+        localStorage.setItem('viewingPatientNumber', p.number);
+        localStorage.setItem('viewingPatientName', p.name);
+        window.location.href = 'specialist_patient_view.html';
+      });
+      tableBody.appendChild(row);
+    });
+  }
+  renderTable(patients);
+
+  // Search and Reset
+  document.getElementById('search-btn').addEventListener('click', () => {
+    const nameVal = document.getElementById('search-name').value.toLowerCase();
+    const numberVal = document.getElementById('search-number').value.toLowerCase();
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+
+    const filtered = patients.filter(p => {
+      const matchName = p.name.toLowerCase().includes(nameVal);
+      const matchNumber = p.number.toLowerCase().includes(numberVal);
+      const matchDate = (!startDate || p.lastChecked >= startDate) && (!endDate || p.lastChecked <= endDate);
+      return matchName && matchNumber && matchDate;
+    });
+    renderTable(filtered);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    document.getElementById('search-name').value = '';
+    document.getElementById('search-number').value = '';
+    document.getElementById('start-date').value = '';
+    document.getElementById('end-date').value = '';
+    renderTable(patients);
+  });
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', e => {
+    e.preventDefault();
+    localStorage.removeItem('specialistUsername');
+    localStorage.removeItem('specialistFullName');
+    alert("You have been logged out.");
+    window.location.href = 'specialist.html';
+  });
+  </script>
+</body>
+</html>

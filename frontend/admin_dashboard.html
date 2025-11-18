@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dasshboard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="patient.html">Patient</a></li>
+                <li><a href="specialist.html">Specialist</a></li>
+                <li><a href="clinic.html">Clinic</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="dashboard-header">
+            <h1>Administrator – User Management & Reports</h1>
+            <p class="subtext">
+                Create and manage users, assign patients to specialists, and view a simple operational report.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Create User</h2>
+            <form id="createUserForm" class="form-grid">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="firstName">First name</label>
+                        <input id="firstName" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="lastName">Last name</label>
+                        <input id="lastName" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="email">Email</label>
+                        <input id="email" type="email" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="password">Password</label>
+                        <input id="password" type="password" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="phone">Phone</label>
+                        <input id="phone" type="tel" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="dob">Date of birth</label>
+                        <input id="dob" type="date" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field" id="workingIdContainer" style="display: none;">
+                        <label for="workingId">Working ID</label>
+                        <input id="workingId" placeholder="Required for Specialist/Staff" />
+                    </div>
+                    <div class="form-field">
+                        <label for="role">Role</label>
+                        <select id="role" required>
+                            <option value="patient">Patient</option>
+                            <option value="specialist">Specialist</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field" style="width:100%">
+                        <label for="imageUrl">Profile Image URL (optional)</label>
+                        <input id="imageUrl" type="url" placeholder="https://..." />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit">Create</button>
+                    <button type="button" id="seedDemoBtn" class="secondary">Seed Demo Users</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Users</h2>
+            <div class="table-wrapper">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>DOB</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Assign Patient to Specialist</h2>
+            <form id="assignForm" class="form-grid">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="patientSelect">Patient</label>
+                        <select id="patientSelect"></select>
+                    </div>
+                    <div class="form-field">
+                        <label for="specialistSelect">Specialist</label>
+                        <select id="specialistSelect"></select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Assign</button>
+                </div>
+            </form>
+
+            <h3 style="margin-top:12px">Current Assignments</h3>
+            <div class="table-wrapper">
+                <table id="assignTable">
+                    <thead>
+                        <tr>
+                            <th>Assignment ID</th>
+                            <th>Patient</th>
+                            <th>Specialist</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Simple Report</h2>
+            <p class="hint">
+                Based on users and readings from the last 7 days. Status is computed using thresholds
+                (SystemDefault or overrides if present). Defaults: Normal ≤ <b>130</b>, Borderline ≤ <b>180</b>,
+                Abnormal otherwise; AbnormalLow default <b>70</b>.
+            </p>
+            <div id="reportArea">
+                <ul>
+                    <li>Total users: <strong id="totalUsers">0</strong></li>
+                    <li>By role — Patients: <strong id="countPatients">0</strong>,
+                        Specialists: <strong id="countSpecialists">0</strong>,
+                        Staff: <strong id="countStaff">0</strong>,
+                        Admins: <strong id="countAdmins">0</strong></li>
+                    <li>Assignments — Patients assigned: <strong id="assignedPatients">0</strong>,
+                        Unassigned: <strong id="unassignedPatients">0</strong></li>
+                    <li>Readings last 7 days — Total: <strong id="r7Total">0</strong>,
+                        <span style="color:#b91c1c">Abnormal</span>:
+                        <strong id="r7Abnormal">0</strong> (<strong id="r7AbnormalPct">0%</strong>)
+                    </li>
+                </ul>
+            </div>
+            <div class="form-actions">
+                <button type="button" id="recalcBtn">Recalculate</button>
+                <button type="button" id="exportBtn" class="secondary">Export JSON</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // =========================================================================
+        // ADMIN DASHBOARD - Single Script Block
+        // =========================================================================
+
+        // Global State
+        let USERS_CACHE = [];
+        const ASSIGN_KEY = 'assignments';
+
+        // Element References
+        let createForm, usersTableBody, assignForm, patientSelect, specialistSelect, assignTableBody;
+        let elTotalUsers, elCP, elCS, elCSt, elCA, elAssigned, elUnassigned, elR7Total, elR7Abn, elR7Pct;
+        let roleSelect, workingIdContainer;
+
+        // ===== Utility Functions =====
+        
+        
+        function loadAssignments() {
+            try { return JSON.parse(localStorage.getItem(ASSIGN_KEY) || '[]'); }
+            catch { return []; }
+        }
+
+        function saveAssignments(arr) {
+            localStorage.setItem(ASSIGN_KEY, JSON.stringify(arr));
+        }
+
+        // ===== API Functions =====
+        async function fetchUsersFromAPI() {
+            try {
+                const response = await getAllUsers();
+                USERS_CACHE = response.users || [];
+                return USERS_CACHE;
+            } catch (e) {
+                console.error("Failed to fetch users from API:", e);
+                alert("Error: Could not load users from the server.");
+                return [];
+            }
+        }
+
+        // ===== Render Functions =====
+        async function renderUsers() {
+            const users = USERS_CACHE.length ? USERS_CACHE : await fetchUsersFromAPI();
+
+            usersTableBody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.user_id}</td>
+                    <td>${u.first_name} ${u.last_name}</td>
+                    <td>${u.email}</td>
+                    <td>${u.phone || 'N/A'}</td>
+                    <td>${u.date_of_birth || ''}</td>
+                    <td>${u.role}</td>
+                    <td>Active</td>
+                    <td>
+                        <button type="button" class="btn-sm btn-delete" data-id="${u.user_id}">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            const patients = users.filter(u => u.role === 'patient');
+            const specialists = users.filter(u => u.role === 'specialist');
+
+            patientSelect.innerHTML = patients.map(p => `
+                <option value="${p.user_id}">${p.first_name} ${p.last_name} (${p.email})</option>
+            `).join('');
+            specialistSelect.innerHTML = specialists.map(s => `
+                <option value="${s.user_id}">${s.first_name} ${s.last_name} (${s.email})</option>
+            `).join('');
+        }
+
+        function renderAssignments() {
+            const users = USERS_CACHE;
+            const assigns = loadAssignments();
+
+            function fmtUser(id) {
+                const u = users.find(x => x.user_id === id);
+                return u ? `${u.first_name} ${u.last_name} (${u.email})` : '—';
+            }
+
+            assignTableBody.innerHTML = assigns.map(a => `
+                <tr>
+                    <td>${a.id}</td>
+                    <td>${fmtUser(a.patientId)}</td>
+                    <td>${fmtUser(a.specialistId)}</td>
+                    <td><button type="button" class="remove-assign" data-id="${a.id}">Remove</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function renderReport() {
+            const users = USERS_CACHE;
+            const assigns = loadAssignments();
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const currentMonth = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            try {
+                const reportData = await getAdminMonthlyReport(currentMonth, year);
+
+                const allPatientStats = reportData.patient_statistics || [];
+
+                elTotalUsers.textContent = users.length;
+                elCP.textContent = users.filter(u => u.role === 'patient').length;
+                elCS.textContent = users.filter(u => u.role === 'specialist').length;
+                elCSt.textContent = users.filter(u => u.role === 'staff').length;
+                elCA.textContent = users.filter(u => u.role === 'admin').length;
+
+                const patients = users.filter(u => u.role === 'patient');
+                const assignedSet = new Set(assigns.map(a => a.patientId));
+                const assignedCount = patients.filter(p => assignedSet.has(p.user_id)).length;
+                elAssigned.textContent = assignedCount;
+                elUnassigned.textContent = Math.max(0, patients.length - assignedCount);
+
+                
+
+                // Calculate global totals from the list of patient statistics
+                const totalReadings = allPatientStats.reduce((sum, p) => sum + (p.total_readings || 0), 0);
+                const totalAbnormal = allPatientStats.reduce((sum, p) => sum + (p.abnormal_count || 0), 0);
+
+                elR7Total.textContent = totalReadings;
+                elR7Abn.textContent = totalAbnormal;
+                elR7Pct.textContent = totalReadings > 0 
+                    ? Math.round((totalAbnormal / totalReadings) * 100) + '%' 
+                    : '0%';
+
+            } catch (error) {
+                console.error("Failed to load report from backend:", error);
+                elR7Total.textContent = elR7Abn.textContent = '0';
+                elR7Pct.textContent = '0%';
+            }
+        }
+
+        // ===== Event Handlers =====
+        async function handleCreateUser(e) {
+            e.preventDefault();
+
+            const role = document.getElementById('role').value;
+
+            const payload = {
+                firstName: document.getElementById('firstName').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value.trim(),
+                role: role,
+                phone: document.getElementById('phone').value.trim(),
+                dateOfBirth: document.getElementById('dob').value,
+            };
+
+            if (role === 'specialist' || role === 'staff') {
+                const workingId = document.getElementById('workingId').value.trim();
+                if (!workingId) {
+                    alert(`Working ID is required for role: ${role}`);
+                    return;
+                }
+                payload.workingId = workingId;
+            }
+
+            try {
+                const response = await apiRequest('/api/admin/users', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                alert(`User created successfully! ID: ${response.userId}`);
+
+                createForm.reset();
+                await fetchUsersFromAPI();
+                await renderUsers();
+                await renderReport();
+            } catch (error) {
+                console.error("User creation failed:", error);
+                alert('Error creating user: ' + error.message);
+            }
+        }
+
+        function handleAssignSubmit(e) {
+            e.preventDefault();
+            const patientId = Number(patientSelect.value);
+            const specialistId = Number(specialistSelect.value);
+            if (!patientId || !specialistId) return;
+
+            const assigns = loadAssignments();
+            const rest = assigns.filter(a => a.patientId !== patientId);
+            rest.push({ id: Date.now(), patientId, specialistId });
+            saveAssignments(rest);
+            renderAssignments();
+            renderReport();
+            alert('Assigned (Local).');
+        }
+
+        function handleRemoveAssignment(e) {
+            const btn = e.target.closest('.remove-assign');
+            if (!btn) return;
+            const id = Number(btn.dataset.id);
+            const left = loadAssignments().filter(a => a.id !== id);
+            saveAssignments(left);
+            renderAssignments();
+            renderReport();
+        }
+
+        // ===== Initialization =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Bind Elements
+            createForm = document.getElementById('createUserForm');
+            usersTableBody = document.querySelector('#usersTable tbody');
+            assignForm = document.getElementById('assignForm');
+            patientSelect = document.getElementById('patientSelect');
+            specialistSelect = document.getElementById('specialistSelect');
+            assignTableBody = document.querySelector('#assignTable tbody');
+
+            elTotalUsers = document.getElementById('totalUsers');
+            elCP = document.getElementById('countPatients');
+            elCS = document.getElementById('countSpecialists');
+            elCSt = document.getElementById('countStaff');
+            elCA = document.getElementById('countAdmins');
+            elAssigned = document.getElementById('assignedPatients');
+            elUnassigned = document.getElementById('unassignedPatients');
+            elR7Total = document.getElementById('r7Total');
+            elR7Abn = document.getElementById('r7Abnormal');
+            elR7Pct = document.getElementById('r7AbnormalPct');
+
+            roleSelect = document.getElementById('role');
+            workingIdContainer = document.getElementById('workingIdContainer');
+
+            // Working ID Visibility Logic
+            if (roleSelect && workingIdContainer) {
+                roleSelect.addEventListener('change', (e) => {
+                    const role = e.target.value;
+                    if (role === 'specialist' || role === 'staff') {
+                        workingIdContainer.style.display = 'block';
+                        document.getElementById('workingId').setAttribute('required', 'required');
+                    } else {
+                        workingIdContainer.style.display = 'none';
+                        document.getElementById('workingId').removeAttribute('required');
+                    }
+                });
+            }
+
+            // Event Listeners
+            if (createForm) createForm.addEventListener('submit', handleCreateUser);
+            if (assignForm) assignForm.addEventListener('submit', handleAssignSubmit);
+            if (assignTableBody) assignTableBody.addEventListener('click', handleRemoveAssignment);
+
+            const recalcBtn = document.getElementById('recalcBtn');
+            if (recalcBtn) recalcBtn.addEventListener('click', renderReport);
+
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('loggedInAdmin');
+                    window.location.href = 'index.html';
+                });
+            }
+
+            // Initial Load
+            await fetchUsersFromAPI();
+            renderUsers();
+            renderAssignments();
+            renderReport();
+        });
+    </script>
+</body>
+
+</html>

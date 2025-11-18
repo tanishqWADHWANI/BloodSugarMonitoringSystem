@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specialist Dashboard - Blood Sugar Monitor Clinic</title>
+
+  <!-- External CSS file for unified style and layout -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    /* Specialists Table/Grid */
+    .specialists {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .specialist-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 250px;
+      text-align: center;
+      padding: 20px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .specialist-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .specialist-card img {
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      margin-bottom: 15px;
+    }
+
+    .specialist-card h3 {
+      margin: 10px 0 5px 0;
+      color: #004080;
+    }
+
+    .specialist-card p {
+      font-size: 0.9rem;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    /* Reviews Section */
+    .reviews {
+      text-align: center;
+      padding: 50px 20px;
+      background-color: #f5f9fc;
+    }
+
+    .reviews h2 {
+      font-size: 2rem;
+      margin-bottom: 30px;
+      color: #004080;
+    }
+
+    .review-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .review-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .review-card p {
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .review-author {
+      font-weight: bold;
+      margin-top: 10px;
+      color: #004080;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- ===================================================
+       HEADER SECTION
+       Contains the site-wide navigation bar
+       =================================================== -->
+  <header>
+    <nav>
+      <ul>
+		  <li><a href="index.html">Home</a></li>
+		  <li><a href="patient.html">Patient</a></li>
+		  <li><a href="specialist.html" class="active">Specialist</a></li>
+		  <li><a href="clinic.html">Clinic</a></li>
+		  <li><a href="contact.html">Contact Us</a></li>
+
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ===================================================
+       MAIN CONTENT AREA
+       Includes login section and specialist tools overview
+       =================================================== -->
+  <main class="container">
+
+    <!-- =============================================
+         SPECIALIST LOGIN SECTION
+         Used for specialist authentication
+         Can later connect to backend or database
+         ============================================= -->
+    <section class="login-section">
+      <h2>Specialist Login</h2>
+      <form id="loginForm" method="post" action="">
+        <label for="username">Username or Email</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+
+        <input type="submit" value="Login">
+      </form>
+
+      <!-- Error message container -->
+      <div id="error" style="color:red; margin-top:10px;"></div>
+
+      <!-- Optional: show demo credentials -->
+      <p class="note">Demo accounts: jsmith/smith123 · ajones/jones123 · clee/lee123</p>
+    </section>
+
+    <h1>Meet Our Specialists</h1>
+    <p>Our team of expert doctors provides personalized guidance to help you manage your diabetes effectively.</p>
+
+    <!-- SPECIALISTS CARDS -->
+    <section class="specialists">
+      <div class="specialist-card">
+        <img src="pics/smith.jpg" alt="Dr. John Smith">
+        <h3>Dr. John Smith</h3>
+        <p>Endocrinologist</p>
+        <p>10+ years experience helping patients manage diabetes with personalized care plans.</p>
+      </div>
+      <div class="specialist-card">
+        <img src="pics/jones.jpg" alt="Dr. Alex Jones">
+        <h3>Dr. Alex Jones</h3>
+        <p>Diabetes Specialist</p>
+        <p>Expert in lifestyle modification, glucose monitoring, and diet planning.</p>
+      </div>
+      <div class="specialist-card">
+        <img src="pics/lee.jpg" alt="Dr. Christina Lee">
+        <h3>Dr. Christina Lee</h3>
+        <p>Nutritionist & Endocrinologist</p>
+        <p>Helps patients balance diet, exercise, and medication for optimal glucose control.</p>
+      </div>
+    </section>
+
+    <!-- REVIEWS SECTION -->
+    <section class="reviews">
+      <h2>What Patients Say About Our Specialists</h2>
+      <div class="review-cards">
+        <div class="review-card">
+          <p>"Dr. Smith guided me through every step of my diabetes management. I feel more confident and in control."</p>
+          <p class="review-author">— Emily R.</p>
+        </div>
+        <div class="review-card">
+          <p>"Dr. Jones' advice on diet and lifestyle has made a huge difference in my daily routine."</p>
+          <p class="review-author">— David M.</p>
+        </div>
+        <div class="review-card">
+          <p>"Dr. Lee is approachable and provides detailed explanations for every question I have."</p>
+          <p class="review-author">— Sophia L.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===============================
+         LOGIN SCRIPT
+         =============================== -->
+    <script>
+      const demoSpecialists = [
+        { username: 'jsmith', password: 'smith123', fullName: 'Dr. John Smith', specialty: 'Endocrinologist' },
+        { username: 'ajones', password: 'jones123', fullName: 'Dr. Alex Jones', specialty: 'Diabetes Specialist' },
+        { username: 'clee', password: 'lee123', fullName: 'Dr. Christina Lee', specialty: 'Nutritionist & Endocrinologist' }
+      ];
+
+      const form = document.getElementById('loginForm');
+      const errEl = document.getElementById('error');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errEl.textContent = '';
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        const found = demoSpecialists.find(s => s.username === username && s.password === password);
+
+        if (found) {
+          localStorage.setItem('specialistUsername', found.username);
+          localStorage.setItem('specialistFullName', found.fullName);
+          localStorage.setItem('specialistSpecialty', found.specialty);
+
+          window.location.href = 'specialist_dashboard.html';
+        } else {
+          errEl.textContent = 'Invalid username or password. Try one of the demo accounts shown below.';
+        }
+      });
+
+      if (localStorage.getItem('specialistUsername')) {
+        window.location.href = 'specialist_dashboard.html';
+      }
+	  
+	  //logout
+	  const logoutBtn = document.getElementById('logoutBtn');
+
+		if(logoutBtn){
+		  logoutBtn.addEventListener('click', function(e) {
+			e.preventDefault();
+			// Clear specialist login info only
+			localStorage.removeItem('specialistUsername');
+			localStorage.removeItem('specialistFullName');
+			localStorage.removeItem('specialistSpecialty');
+
+			// Redirect back to specialist login page
+			window.location.href = 'specialist.html';
+		  });
+		}
+
+    </script>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2025 Blood Sugar Monitor Clinic. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
