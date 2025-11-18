@@ -24,6 +24,15 @@ async function apiRequest(path, { method = 'GET', headers = {}, body = null } = 
 // 3) Semantic wrappers (match README endpoints)  ────────────────
 // Users
 const getUser = (id) => apiRequest(`/api/users/${encodeURIComponent(id)}`);
+
+// NEW: Generic login function for all roles
+// Assuming your backend uses /api/auth/login (check app.py for the exact route)
+const loginUser = (email, password) => apiRequest('/api/login', {
+  method: 'POST',
+  body: JSON.stringify({ email, password })
+});
+
+
 const registerUser = (payload) => apiRequest('/api/users/register', {
   method: 'POST', body: JSON.stringify(payload)
 });
@@ -32,7 +41,7 @@ const updateUser = (id, payload) => apiRequest(`/api/users/${encodeURIComponent(
 });
 const deleteUser = (id) => apiRequest(`/api/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
-// shared login helper
+// shared login helper (mainly used for patient pages)
 const login = (email, password, role) =>
   apiRequest('/api/login', {
     method: 'POST',
@@ -96,6 +105,20 @@ const getSavedInsights = (userId) => apiRequest(`/api/aiinsights/${encodeURIComp
 // Alerts
 const getAlerts = (userId) => apiRequest(`/api/alerts/${encodeURIComponent(userId)}`);
 const dismissAlert = (alertId) => apiRequest(`/api/alerts/${encodeURIComponent(alertId)}`, { method: 'DELETE' });
+
+// Admin
+// In api.js
+const getAllUsers = () => apiRequest('/api/admin/users/all'); 
+const getAdminMonthlyReport = (month, year) => apiRequest(`/api/admin/reports/monthly?month=${month}&year=${year}`);
+
+// Staff Dashboard - Assign Patients to Doctors
+const assignPatientToSpecialist = (patientUserId, specialistUserId) => apiRequest('/api/assignments/assign', {
+    method: 'POST', 
+    body: JSON.stringify({ 
+        patientId: patientUserId, 
+        specialistId: specialistUserId 
+    })
+});
 
 // Specialist
 const getSpecialistPatients = (specId) => apiRequest(`/api/specialist/${encodeURIComponent(specId)}/patients`);

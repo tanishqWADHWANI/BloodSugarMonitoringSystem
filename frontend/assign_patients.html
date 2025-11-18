@@ -1,128 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Assign Patients to Doctors</title>
-  <link rel="stylesheet" href="css/style.css">
-  <style>
-    h1 { color: #004080; margin-bottom: 20px; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
-    th { background: #004080; color: white; }
-    select { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; }
-    button.assign-btn { padding: 8px 12px; background: #004080; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    button.assign-btn:hover { background: #0066cc; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Patients to Doctors</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js"></script>
+    <style>
+        h1 { color: #004080; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
+        th { background: #004080; color: white; }
+        select { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; }
+        button.assign-btn { padding: 8px 12px; background: #004080; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button.assign-btn:hover { background: #0066cc; }
+        button.assigned { background: #10b981; } /* Green for assigned status */
+    </style>
 </head>
 <body>
 
 <header>
-  <nav>
-    <ul>
-      <li><a href="staff_dashboard.html">Dashboard</a></li>
-      <li><a href="patient_records.html">Patient Records</a></li>
-      <li><a href="staff.html">Logout</a></li>
-    </ul>
-  </nav>
+    <nav>
+        <ul>
+            <li><a href="staff_dashboard.html">Dashboard</a></li>
+            <li><a href="patient_records.html">Patient Records</a></li>
+            <li><a href="staff.html">Logout</a></li>
+        </ul>
+    </nav>
 </header>
 
 <main class="container">
-  <h1>Assign Patients to Doctors</h1>
+    <h1>Assign Patients to Doctors</h1>
 
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Patient ID</th>
-          <th>Name</th>
-          <th>Age</th>
-          <th>Gender</th>
-          <th>Assign Doctor</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="patientTableBody">
-        <tr>
-          <td>001</td>
-          <td>John Doe</td>
-          <td>35</td>
-          <td>Male</td>
-          <td>
-            <select>
-              <option value="">Select Doctor</option>
-              <option value="Dr. Smith">Dr. John Smith</option>
-              <option value="Dr. Johnson">Dr. Alex Jones</option>
-              <option value="Dr. Lee">Dr. Christina Lee</option>
-            </select>
-          </td>
-          <td><button class="assign-btn">Assign</button></td>
-        </tr>
-        <tr>
-          <td>002</td>
-          <td>Jane Smith</td>
-          <td>28</td>
-          <td>Female</td>
-          <td>
-            <select>
-              <option value="">Select Doctor</option>
-              <option value="Dr. Smith">Dr. John Smith</option>
-              <option value="Dr. Johnson">Dr. Alex Jones</option>
-              <option value="Dr. Lee">Dr. Christina Lee</option>
-            </select>
-          </td>
-          <td><button class="assign-btn">Assign</button></td>
-        </tr>
-        <tr>
-          <td>003</td>
-          <td>Mark Lee</td>
-          <td>42</td>
-          <td>Male</td>
-          <td>
-            <select>
-              <option value="">Select Doctor</option>
-              <option value="Dr. Smith">Dr. John Smith</option>
-              <option value="Dr. Johnson">Dr. Alex Jones</option>
-              <option value="Dr. Lee">Dr. Christina Lee</option>
-            </select>
-          </td>
-          <td><button class="assign-btn">Assign</button></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Assign Doctor</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="patientTableBody">
+                <tr><td colspan="6" style="text-align: center;">Loading patient and specialist data...</td></tr>
+            </tbody>
+        </table>
+    </div>
 </main>
 
 <footer>
-  <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
 </footer>
 
 <script>
-  const assignButtons = document.querySelectorAll('.assign-btn');
-  assignButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const row = btn.closest('tr');
-      const patientId = row.cells[0].innerText;
-      const patientName = row.cells[1].innerText;
-      const doctorSelect = row.querySelector('select');
-      const doctorName = doctorSelect.value;
+    // --- Helper to calculate age ---
+    function calculateAge(dateOfBirth) {
+        if (!dateOfBirth) return 'N/A';
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
+    
+    // --- Fetches all users and separates them ---
+    async function loadData() {
+        try {
+            const response = await getAllUsers(); 
+            const allUsers = response.users || [];
 
-      if (!doctorName) {
-        alert('Please select a doctor before assigning.');
-        return;
-      }
+            const patients = allUsers.filter(u => u.role === 'patient');
+            const specialists = allUsers.filter(u => u.role === 'specialist');
+            
+            return { patients, specialists };
+        } catch (e) {
+            console.error("Failed to load user data:", e);
+            document.getElementById('patientTableBody').innerHTML = `
+                <tr><td colspan="6" style="color:red; text-align:center;">Failed to load data from server. Check API connection.</td></tr>
+            `;
+            return { patients: [], specialists: [] };
+        }
+    }
 
-      // Store assignment in localStorage (or send to backend)
-      let assignments = JSON.parse(localStorage.getItem('patientAssignments')) || [];
-      assignments.push({ patientId, patientName, doctorName });
-      localStorage.setItem('patientAssignments', JSON.stringify(assignments));
+    // --- Renders the entire table with live data ---
+    function renderAssignmentTable(patients, specialists) {
+        const patientTableBody = document.getElementById('patientTableBody');
+        
+        if (patients.length === 0) {
+            patientTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No patients found or assignment already complete.</td></tr>`;
+            return;
+        }
+        
+        // Build the specialist options once
+        const specialistOptions = specialists.map(s => `
+            <option value="${s.user_id}">Dr. ${s.first_name} ${s.last_name} (${s.email})</option>
+        `).join('');
 
-      alert(`${patientName} has been assigned to ${doctorName}`);
-      doctorSelect.value = ''; // reset dropdown
+        patientTableBody.innerHTML = patients.map(p => `
+            <tr data-patient-id="${p.user_id}" data-patient-name="${p.first_name} ${p.last_name}">
+                <td>${p.user_id}</td>
+                <td>${p.first_name} ${p.last_name}</td>
+                <td>${calculateAge(p.date_of_birth)}</td>
+                <td>N/A</td> 
+                <td>
+                    <select class="doctor-select" id="select-${p.user_id}">
+                        <option value="">Select Doctor</option>
+                        ${specialistOptions}
+                    </select>
+                </td>
+                <td><button class="assign-btn" data-patient-id="${p.user_id}">Assign</button></td>
+            </tr>
+        `).join('');
+    }
+
+    // --- Handles the button click and API call ---
+    async function handleAssignment(event) {
+        const btn = event.target.closest('.assign-btn');
+        if (!btn) return;
+        
+        const patientUserId = Number(btn.dataset.patientId);
+        const doctorSelect = document.getElementById(`select-${patientUserId}`);
+        const specialistUserId = Number(doctorSelect.value);
+        const patientName = btn.closest('tr').dataset.patientName;
+
+        if (!specialistUserId) {
+            alert('Please select a doctor before assigning.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Assigning...';
+
+        try {
+            // CALL NEW API ENDPOINT (Defined in api.js)
+            await assignPatientToSpecialist(patientUserId, specialistUserId);
+
+            alert(`${patientName} has been assigned to a specialist!`);
+            
+            // Mark the assignment as complete visually
+            btn.textContent = 'Assigned';
+            btn.classList.remove('assign-btn');
+            btn.classList.add('assigned');
+        } catch (error) {
+            alert('Assignment failed: ' + error.message);
+            btn.textContent = 'Assign';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Fetch live data
+        const { patients, specialists } = await loadData();
+        
+        // 2. Render table and dropdowns
+        renderAssignmentTable(patients, specialists);
+        
+        // 3. Attach assignment handler to the table body (Event Delegation)
+        document.getElementById('patientTableBody').addEventListener('click', handleAssignment);
     });
-  });
-</script>
 
-</body>
-</html>
+</script>
