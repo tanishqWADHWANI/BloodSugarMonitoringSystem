@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assign Patients to Doctors</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    h1 { color: #004080; margin-bottom: 20px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
+    th { background: #004080; color: white; }
+    select { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; }
+    button.assign-btn { padding: 8px 12px; background: #004080; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    button.assign-btn:hover { background: #0066cc; }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>Assign Patients to Doctors</h1>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient ID</th>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Assign Doctor</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="patientTableBody">
+        <tr>
+          <td>001</td>
+          <td>John Doe</td>
+          <td>35</td>
+          <td>Male</td>
+          <td>
+            <select>
+              <option value="">Select Doctor</option>
+              <option value="Dr. Smith">Dr. John Smith</option>
+              <option value="Dr. Johnson">Dr. Alex Jones</option>
+              <option value="Dr. Lee">Dr. Christina Lee</option>
+            </select>
+          </td>
+          <td><button class="assign-btn">Assign</button></td>
+        </tr>
+        <tr>
+          <td>002</td>
+          <td>Jane Smith</td>
+          <td>28</td>
+          <td>Female</td>
+          <td>
+            <select>
+              <option value="">Select Doctor</option>
+              <option value="Dr. Smith">Dr. John Smith</option>
+              <option value="Dr. Johnson">Dr. Alex Jones</option>
+              <option value="Dr. Lee">Dr. Christina Lee</option>
+            </select>
+          </td>
+          <td><button class="assign-btn">Assign</button></td>
+        </tr>
+        <tr>
+          <td>003</td>
+          <td>Mark Lee</td>
+          <td>42</td>
+          <td>Male</td>
+          <td>
+            <select>
+              <option value="">Select Doctor</option>
+              <option value="Dr. Smith">Dr. John Smith</option>
+              <option value="Dr. Johnson">Dr. Alex Jones</option>
+              <option value="Dr. Lee">Dr. Christina Lee</option>
+            </select>
+          </td>
+          <td><button class="assign-btn">Assign</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+</footer>
+
+<script>
+  const assignButtons = document.querySelectorAll('.assign-btn');
+  assignButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr');
+      const patientId = row.cells[0].innerText;
+      const patientName = row.cells[1].innerText;
+      const doctorSelect = row.querySelector('select');
+      const doctorName = doctorSelect.value;
+
+      if (!doctorName) {
+        alert('Please select a doctor before assigning.');
+        return;
+      }
+
+      // Store assignment in localStorage (or send to backend)
+      let assignments = JSON.parse(localStorage.getItem('patientAssignments')) || [];
+      assignments.push({ patientId, patientName, doctorName });
+      localStorage.setItem('patientAssignments', JSON.stringify(assignments));
+
+      alert(`${patientName} has been assigned to ${doctorName}`);
+      doctorSelect.value = ''; // reset dropdown
+    });
+  });
+</script>
+
+</body>
+</html>

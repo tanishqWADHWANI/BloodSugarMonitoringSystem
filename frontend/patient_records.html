@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patient Records</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  h1 { color: #004080; margin-bottom: 20px; }
+  .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .card h2 { margin-top: 0; color: #004080; }
+  .btn { display: inline-block; margin: 5px 5px 0 0; padding: 8px 12px; background: #004080; color: white; border-radius: 6px; text-decoration: none; }
+  .btn:hover { background: #0066cc; }
+  form input[type="text"] { padding: 8px; width: 200px; margin-right: 10px; border-radius: 6px; border: 1px solid #ccc; }
+  form button { padding: 8px 15px; border-radius: 6px; background: #004080; color: white; border: none; cursor: pointer; }
+  form button:hover { background: #0066cc; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
+  th { background: #004080; color: white; }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html" class="active">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>Patient Records</h1>
+
+  <!-- Search Form -->
+  <div class="card">
+    <h2>Search Patients</h2>
+    <form id="searchForm">
+      <input type="text" id="patientNumber" placeholder="Patient Number">
+      <input type="text" id="patientName" placeholder="Patient Name">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+
+  <!-- Patient Table -->
+  <div class="card">
+    <h2>Patient List</h2>
+    <table id="patientTable">
+      <thead>
+        <tr>
+          <th>Number</th>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Contact</th>
+          <th>Medical History</th>
+          <th>Last Test</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>001</td>
+          <td>John Doe</td>
+          <td>35</td>
+          <td>Male</td>
+          <td>555-1234</td>
+          <td>Diabetes, Hypertension</td>
+          <td>Blood Sugar: 140 mg/dL</td>
+          <td>
+            <a href="#" class="btn actionBtn" data-action="view">View</a>
+            <a href="#" class="btn actionBtn" data-action="update">Update</a>
+            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
+          </td>
+        </tr>
+        <tr>
+          <td>002</td>
+          <td>Jane Smith</td>
+          <td>28</td>
+          <td>Female</td>
+          <td>555-5678</td>
+          <td>Pre-diabetes</td>
+          <td>Blood Sugar: 110 mg/dL</td>
+          <td>
+            <a href="#" class="btn actionBtn" data-action="view">View</a>
+            <a href="#" class="btn actionBtn" data-action="update">Update</a>
+            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
+          </td>
+        </tr>
+        <tr>
+          <td>003</td>
+          <td>Mark Lee</td>
+          <td>42</td>
+          <td>Male</td>
+          <td>555-9876</td>
+          <td>Hypertension</td>
+          <td>Blood Sugar: 125 mg/dL</td>
+          <td>
+            <a href="#" class="btn actionBtn" data-action="view">View</a>
+            <a href="#" class="btn actionBtn" data-action="update">Update</a>
+            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+<p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+</footer>
+
+<script>
+  // Search functionality
+  const searchForm = document.getElementById('searchForm');
+  const table = document.getElementById('patientTable').getElementsByTagName('tbody')[0];
+
+  searchForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const number = document.getElementById('patientNumber').value.toLowerCase();
+    const name = document.getElementById('patientName').value.toLowerCase();
+
+    for (let row of table.rows) {
+      const rowNumber = row.cells[0].innerText.toLowerCase();
+      const rowName = row.cells[1].innerText.toLowerCase();
+      if ((number && !rowNumber.includes(number)) || (name && !rowName.includes(name))) {
+        row.style.display = 'none';
+      } else {
+        row.style.display = '';
+      }
+    }
+  });
+
+  // Handle action buttons
+  const actionButtons = document.querySelectorAll('.actionBtn');
+  actionButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const row = this.closest('tr');
+      const patient = {
+        id: row.cells[0].innerText,
+        name: row.cells[1].innerText,
+        age: row.cells[2].innerText,
+        gender: row.cells[3].innerText,
+        contact: row.cells[4].innerText,
+        medicalHistory: row.cells[5].innerText,
+        lastTestResults: row.cells[6].innerText
+      };
+      localStorage.setItem('selectedPatient', JSON.stringify(patient));
+
+      // Redirect based on action
+      const action = this.getAttribute('data-action');
+      if (action === 'view') window.location.href = 'staff_view.html';
+      if (action === 'update') window.location.href = 'update_medical.html';
+      if (action === 'upload') window.location.href = 'upload_documents.html';
+    });
+  });
+</script>
+
+</body>
+</html>

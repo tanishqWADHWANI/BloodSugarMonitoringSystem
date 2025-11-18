@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Portal</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/dasshboard.css" />
+  <style>
+    /* New Section Styles for Patient Portal */
+    .section-box {
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    /* Login Form Styles */
+    .login-section {
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+	  margin-bottom: 20px;
+    }
+
+    .login-section h2 {
+      font-size: 2rem;
+      color: #004080;
+      margin-bottom: 20px;
+    }
+
+    .login-section label {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+      display: inline-block;
+    }
+
+    .login-section input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .login-section input[type="submit"] {
+      background-color: #004080;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .login-section input[type="submit"]:hover {
+      background-color: #003366;
+    }
+
+    .note {
+      margin-top: 10px;
+    }
+
+    .note a {
+      color: #004080;
+      text-decoration: none;
+    }
+
+    .note a:hover {
+      text-decoration: underline;
+    }
+
+    /* Info Section Styles */
+    .info-section {
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .info-section h2 {
+      font-size: 1.8rem;
+      color: #004080;
+      margin-bottom: 15px;
+    }
+
+    .info-section ul {
+      list-style: disc;
+      padding-left: 20px;
+    }
+
+    .info-section li {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    /* Optional Image for Sections */
+    .info-section img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- HEADER / NAV -->
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient.html" class="active">Patient</a></li>
+        <li><a href="specialist.html">Specialist</a></li>
+        <li><a href="clinic.html">Clinic</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- MAIN -->
+  <main class="container">
+    <!-- LOGIN SECTION -->
+    <section class="section-box login-section">
+      <h2>Patient Login</h2>
+      <!-- LOGIN FORM -->
+      <form id="loginForm" method="post" action="">
+        <label for="loginEmail">Email</label>
+        <input type="text" id="loginEmail" name="loginEmail" placeholder="e.g., alice@x.com" required>
+
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" name="loginPassword" placeholder="Enter your password" required>
+
+        <input type="submit" value="Sign In">
+      </form>
+
+      <div id="loginMsg" style="color:red; margin-top:10px;"></div>
+
+      <p class="note">
+        Don’t have an account? 
+        <a href="create_account.html" id="showRegisterLink">Create one here</a>
+      </p>
+
+      <!-- REGISTER FORM (hidden by default) -->
+      <form id="registerForm" method="post" action="" style="display:none; margin-top:20px;">
+        <h3>Create Account</h3>
+
+        <label for="regEmail">Email</label>
+        <input type="email" id="regEmail" name="regEmail" placeholder="e.g., alice@x.com" required>
+
+        <label for="regPassword">Password</label>
+        <input type="password" id="regPassword" name="regPassword" placeholder="Choose a password" required>
+
+        <input type="submit" value="Register">
+      </form>
+
+      <div id="registerMsg" style="color:red; margin-top:10px;"></div>
+    </section>
+
+    <!-- INFO SECTION: About Patient Portal -->
+    <section class="section-box">
+      <h2>About the Patient Portal</h2>
+      <p>
+        Log daily readings, add event & notes, view status (Normal / Borderline / Abnormal),
+        and track history & charts. Your clinic staff can adjust thresholds, and specialists can review feedback.
+      </p>
+      <!-- Optional Image -->
+      <!-- <img src="path/to/image.jpg" alt="About the Portal"> -->
+    </section>
+
+    <!-- INFO SECTIONS -->
+    <section class="section-box info-section">
+      <h2>Understanding Blood Sugar Management</h2>
+      <p>
+        Managing blood sugar is essential for preventing diabetes complications and maintaining energy, focus,
+        and overall health. This system helps you record readings, view trends, and share results with healthcare providers.
+      </p>
+      <!-- Optional Image -->
+      <!-- <img src="path/to/image.jpg" alt="Blood Sugar Management"> -->
+    </section>
+
+    <section class="section-box info-section">
+      <h2>Daily Monitoring</h2>
+      <p>
+        Regularly checking your blood glucose helps you understand how food, activity, medication, and stress affect your levels.
+      </p>
+      <ul>
+        <li>Check fasting sugar (before breakfast).</li>
+        <li>Record readings before and 2 hours after meals.</li>
+        <li>Track symptoms like dizziness, thirst, or fatigue.</li>
+      </ul>
+    </section>
+
+    <section class="section-box info-section">
+      <h2>Nutrition & Diet Tips</h2>
+      <p>
+        Diet plays a crucial role in blood sugar control. Choose balanced meals with slow-digesting carbohydrates, lean proteins, and fiber.
+      </p>
+      <ul>
+        <li>Eat whole grains, legumes, and non-starchy vegetables.</li>
+        <li>Limit sugary drinks, pastries, and processed snacks.</li>
+        <li>Stay hydrated and avoid skipping meals.</li>
+      </ul>
+    </section>
+
+    <section class="section-box info-section">
+      <h2>Physical Activity</h2>
+      <p>
+        Exercise helps your body use insulin more effectively. Aim for consistency rather than intensity.
+      </p>
+      <ul>
+        <li>30 minutes of moderate exercise (like walking) at least 5 days a week.</li>
+        <li>Check blood sugar before and after workouts if using insulin.</li>
+        <li>Stay hydrated and carry a quick sugar source in case of low blood sugar.</li>
+      </ul>
+    </section>
+
+    <section class="section-box info-section">
+      <h2>Medication & Insulin Management</h2>
+      <p>
+        Always follow your doctor’s instructions for medication timing and dosage. Never change doses without guidance.
+      </p>
+      <ul>
+        <li>Store insulin at proper temperature.</li>
+        <li>Do not skip doses, even when feeling well.</li>
+        <li>Record medication use along with readings for accurate tracking.</li>
+      </ul>
+    </section>
+
+    <section class="section-box info-section">
+      <h2>When to Contact Your Doctor</h2>
+      <ul>
+        <li>Blood sugar stays above 250 mg/dL for more than two readings.</li>
+        <li>Frequent hypoglycemia (below 70 mg/dL).</li>
+        <li>Unusual fatigue, vision problems, or slow-healing wounds.</li>
+      </ul>
+    </section>
+
+    <section class="section-box info-section">
+      <h2>Frequently Asked Questions</h2>
+      <p><strong>Q:</strong> How often should I check my sugar?  
+        <br><strong>A:</strong> At least once daily or as advised by your doctor, especially before meals or bedtime.
+      </p>
+      <p><strong>Q:</strong> Can I manage diabetes without medication?  
+        <br><strong>A:</strong> Some people can through diet and exercise, but consult your doctor before making changes.
+      </p>
+      <p><strong>Q:</strong> Does stress affect blood sugar?  
+        <br><strong>A:</strong> Yes, stress hormones can raise blood glucose. Practice relaxation techniques.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Minimal login routing (no style changes) -->
+  <script>
+    (function () {
+      var form = document.getElementById('loginForm');
+      var emailEl = document.getElementById('loginEmail');
+      var passEl = document.getElementById('loginPassword');
+      var msgEl = document.getElementById('loginMsg');
+
+      if (!form) return;
+
+      function prefixFromEmail(email) {
+        return (email || '').split('@')[0].trim().toLowerCase();
+      }
+      function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var email = (emailEl.value || '').trim();
+        var pass = (passEl.value || '').trim();
+
+        if (!email || !pass) {
+          if (msgEl) { msgEl.textContent = 'Enter email and password.'; }
+          return;
+        }
+
+        var key = prefixFromEmail(email) || 'patient';
+        try {
+          // “Log in” the patient for the other pages
+          localStorage.setItem('loggedInPatient', key);
+
+          // (Optional) create an empty readings store if none exists yet
+          var lsKey = 'readings_' + key;
+          if (!localStorage.getItem(lsKey)) {
+            localStorage.setItem(lsKey, '[]');
+          }
+        } catch (_) { }
+
+        if (msgEl) { msgEl.textContent = 'Signing in…'; }
+        // Go to the dashboard
+        setTimeout(function () {
+          window.location.href = 'patient_dashboard.html';
+        }, 200);
+      });
+    })();
+  </script>
+</body>
+
+</html>

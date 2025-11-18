@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GlucoCare – Blood Sugar Monitoring (Landing)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue: #0b4db6;
+            --blue-600: #093f95;
+            --blue-50: #eef5ff;
+            --ink: #0f172a;
+            --muted: #475569;
+            --white: #ffffff;
+            --surface: #f8fafc;
+            --ring: rgba(11, 77, 182, .22);
+            --shadow: 0 18px 50px -22px rgba(0, 0, 0, .35);
+            --radius: 18px
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            margin: 0;
+            font: 16px/1.7 Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+            color: var(--ink);
+            background: var(--surface)
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: rgba(255, 255, 255, .9);
+            backdrop-filter: saturate(180%) blur(10px);
+            border-bottom: 1px solid #e5e7eb
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            justify-content: space-between
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            color: var(--blue)
+        }
+
+        .menu {
+            display: flex;
+            gap: 18px;
+            align-items: center
+        }
+
+        .menu a {
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 600
+        }
+
+        .cta {
+            background: var(--blue);
+            color: #fff;
+            border: 0;
+            padding: 10px 14px;
+            border-radius: 999px;
+            box-shadow: var(--shadow);
+            cursor: pointer
+        }
+
+        .cta:hover {
+            background: var(--blue-600)
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px
+        }
+
+        section {
+            padding: 64px 0
+        }
+
+        h1 {
+            font-size: clamp(32px, 5vw, 56px);
+            line-height: 1.08;
+            margin: 0 0 12px
+        }
+
+        h2 {
+            font-size: clamp(26px, 4vw, 40px);
+            line-height: 1.15;
+            margin: 0 0 18px
+        }
+
+        p.lead {
+            font-size: clamp(16px, 2.2vw, 20px);
+            color: var(--muted)
+        }
+
+        .hero {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .hero .container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+            align-items: center
+        }
+
+        .hero .bubble {
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--shadow)
+        }
+
+        .hero .img {
+            border-radius: 24px;
+            overflow: hidden;
+            border: 6px solid rgba(255, 255, 255, .2)
+        }
+
+        .hero .img img {
+            width: 100%;
+            height: auto;
+            display: block
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: center
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow)
+        }
+
+        .grid3 {
+            display: grid;
+            gap: 22px;
+            grid-template-columns: repeat(3, minmax(0, 1fr))
+        }
+
+        .grid4 {
+            display: grid;
+            gap: 22px;
+            grid-template-columns: repeat(4, minmax(0, 1fr))
+        }
+
+        .feature {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 26px;
+            padding: 26px;
+            box-shadow: var(--shadow);
+            text-align: center
+        }
+
+        .feature h3 {
+            margin: 8px 0 6px
+        }
+
+        .feature p {
+            color: var(--muted)
+        }
+
+        @media (max-width:990px) {
+
+            .hero .container,
+            .split {
+                grid-template-columns: 1fr
+            }
+
+            .grid3 {
+                grid-template-columns: 1fr
+            }
+
+            .grid4 {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        .quote {
+            background: var(--blue-50);
+            border: 1px solid #e5efff;
+            border-radius: 24px;
+            padding: 22px;
+            box-shadow: var(--shadow)
+        }
+
+        .quote p {
+            font-style: italic;
+            color: #1f2d4d
+        }
+
+        .person {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px
+        }
+
+        .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover
+        }
+
+        .auth {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 26px;
+            padding: 22px;
+            box-shadow: var(--shadow)
+        }
+
+        .grid2 {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: 1fr 1fr
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--muted)
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            outline: none
+        }
+
+        input:focus,
+        select:focus {
+            box-shadow: 0 0 0 4px var(--ring);
+            border-color: var(--blue)
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .center {
+            display: flex;
+            justify-content: center
+        }
+
+        .pill {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            padding: 8px 14px;
+            box-shadow: var(--shadow)
+        }
+
+        footer {
+            padding: 32px 0;
+            color: var(--muted);
+            text-align: center;
+            border-top: 1px solid #e5e7eb
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="brand">🩺 GlucoCare – Blood Sugar Monitoring</div>
+            <div class="menu">
+                <a href="#hero">Home</a>
+                <a href="#about">About</a>
+                <a href="#why">Why Us</a>
+                <a href="#how">How It Works</a>
+                <a href="#testimonials">Testimonials</a>
+                <a href="#services">Features</a>
+                <button class="cta" onclick="document.getElementById('auth').scrollIntoView({behavior:'smooth'})">Sign
+                    In</button>
+            </div>
+        </nav>
+    </header>
+
+    <section id="hero" class="hero">
+        <div class="container">
+            <div>
+                <div class="bubble" style="display:inline-block;margin-bottom:10px"><span class="pill">For Patients ·
+                        Specialists · Staff · Admin</span></div>
+                <h1>Monitor Your Blood Sugar · Get AI Tips · Share with Your Care Team</h1>
+                <p class="lead">Log readings with event & note, see trends instantly, get AI‑powered suggestions, and
+                    securely collaborate with your specialist and clinic staff.</p>
+                <div style="display:flex;gap:12px;margin-top:14px">
+                    <button class="cta"
+                        onclick="document.getElementById('auth').scrollIntoView({behavior:'smooth'})">Get
+                        Started</button>
+                    <a class="pill" href="#how">How it works ↓</a>
+                </div>
+            </div>
+            <div class="img"><img alt="monitoring"
+                    src="https://images.unsplash.com/photo-1612538495615-c14d612d5b1a?q=80&w=1400&auto=format&fit=crop" />
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="container split">
+            <img alt="Logging" style="width:100%;border-radius:24px;box-shadow:var(--shadow)"
+                src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1600&auto=format&fit=crop" />
+            <div>
+                <h2>About the Platform</h2>
+                <p class="lead">Built from your SRS/SDD: patients record readings (value, unit, date/time) with
+                    <strong>event</strong> and <strong>additional note</strong>. The system categorizes status (Normal,
+                    Borderline, Abnormal) and surfaces insights.</p>
+                <p class="lead">Thresholds are configurable (system defaults or per‑patient overrides). Specialists are
+                    linked to patients, can search/view histories, and add feedback. Clinic staff manage thresholds;
+                    administrators manage users & reports.</p>
+                <button class="cta" onclick="document.getElementById('auth').scrollIntoView({behavior:'smooth'})">Create
+                    Your Account</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="why">
+        <div class="container center">
+            <h2>Why Use GlucoCare?</h2>
+        </div>
+        <div class="container grid3">
+            <div class="feature">
+                <div style="font-size:44px">🩸</div>
+                <h3>Fast, Structured Logging</h3>
+                <p>Add value, unit, date/time, <strong>event</strong> (fasting, post‑meal, exercise, stress) and
+                    <strong>note</strong> in seconds.</p>
+            </div>
+            <div class="feature">
+                <div style="font-size:44px">🤖</div>
+                <h3>AI Suggestions</h3>
+                <p>We highlight foods/activities linked to abnormal readings and suggest simple changes.</p>
+            </div>
+            <div class="feature">
+                <div style="font-size:44px">🚨</div>
+                <h3>Smart Thresholds & Alerts</h3>
+                <p>System defaults or per‑patient overrides. Get notified when values are out of range.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how" style="background:#fff">
+        <div class="container center">
+            <h2>How GlucoCare Works</h2>
+        </div>
+        <div class="container grid4">
+            <div class="feature">
+                <div style="font-size:40px">🧑‍💻</div>
+                <h3>Create Account</h3>
+                <p>Register with name, email, <strong>phone</strong>, and <strong>DOB</strong>.</p>
+            </div>
+            <div class="feature">
+                <div style="font-size:40px">📝</div>
+                <h3>Log Readings</h3>
+                <p>Enter value, unit, date/time, <strong>event</strong>, and <strong>note</strong>. The system
+                    auto‑categorizes status.</p>
+            </div>
+            <div class="feature">
+                <div style="font-size:40px">📈</div>
+                <h3>See Insights</h3>
+                <p>Trends + top triggers for abnormal outcomes based on AI insights.</p>
+            </div>
+            <div class="feature">
+                <div style="font-size:40px">👩‍⚕️</div>
+                <h3>Share with Specialist</h3>
+                <p>Specialists review, search readings, and add feedback. Staff manage thresholds.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="testimonials">
+        <div class="container center">
+            <h2>What Patients Say</h2>
+        </div>
+        <div class="container grid2">
+            <div class="quote">
+                <p>“Adding the event and note helped me realize white rice spiked me. The app’s suggestion to switch
+                    portions worked.”</p>
+                <div class="person"><img class="avatar"
+                        src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop"
+                        alt="Patient" />
+                    <div><strong>Mira A.</strong>
+                        <div class="muted">Patient</div>
+                    </div>
+                </div>
+            </div>
+            <div class="quote">
+                <p>“As a specialist, I can quickly search a patient’s readings and leave feedback. The per‑patient
+                    thresholds are great.”</p>
+                <div class="person"><img class="avatar"
+                        src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=300&auto=format&fit=crop"
+                        alt="Specialist" />
+                    <div><strong>Dr. Chen</strong>
+                        <div class="muted">Specialist</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="services" style="background:#fff">
+        <div class="container center">
+            <h2>What You Can Do With GlucoCare</h2>
+        </div>
+        <div class="container grid2">
+            <ul class="card" style="list-style:none;margin:0">
+                <li><strong>Track Blood Sugar</strong><br><span class="muted">Add readings with event + additional
+                        note.</span></li>
+                <hr />
+                <li><strong>Categorize & Visualize</strong><br><span class="muted">Status: Normal, Borderline, Abnormal;
+                        see trends.</span></li>
+                <hr />
+                <li><strong>Personalized Thresholds</strong><br><span class="muted">System defaults or per‑patient
+                        overrides.</span></li>
+                <hr />
+                <li><strong>Specialist Collaboration</strong><br><span class="muted">Assigned specialists can search and
+                        leave feedback.</span></li>
+            </ul>
+            <div class="card">
+                <h3>Ready to start?</h3>
+                <p>Create an account and then head to the app dashboards to manage readings, thresholds, and reports.
+                </p>
+                <button class="cta" onclick="document.getElementById('auth').scrollIntoView({behavior:'smooth'})">Create
+                    Account</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="auth">
+        <div class="container">
+            <h2 class="center" style="margin-bottom:22px">Sign In or Create an Account</h2>
+            <div class="grid2">
+                <div class="auth">
+                    <h3>Login</h3>
+                    <form id="loginForm" class="grid2">
+                        <div><label>Email</label><input id="loginEmail" type="email" required /></div>
+                        <div><label>Password</label><input id="loginPassword" type="password" required /></div>
+                        <div style="grid-column:1/-1"><button class="cta" type="submit">Sign In</button> <span
+                                id="loginMsg" class="muted"></span></div>
+                    </form>
+                </div>
+                <div class="auth">
+                    <h3>Patient Registration</h3>
+                    <form id="registerForm" class="grid2">
+                        <div><label>First name</label><input id="firstName" required /></div>
+                        <div><label>Last name</label><input id="lastName" required /></div>
+                        <div><label>Email</label><input id="regEmail" type="email" required /></div>
+                        <div><label>Password</label><input id="regPassword" type="password" required /></div>
+                        <div><label>Date of Birth</label><input id="dob" type="date" required /></div>
+                        <div><label>Phone</label><input id="phone" type="tel" required /></div>
+                        <div style="grid-column:1/-1"><label>Profile Image URL</label><input id="profileImage"
+                                type="url" placeholder="https://..." /></div>
+                        <div style="grid-column:1/-1"><button class="cta" type="submit">Create Account</button> <span
+                                id="registerMsg" class="muted"></span></div>
+                    </form>
+                </div>
+            </div>
+            <p class="muted center" style="margin-top:10px">Demo login shortcuts: use <strong>patient@x.com</strong>,
+                <strong>specialist@x.com</strong>, <strong>staff@x.com</strong>, or <strong>admin@x.com</strong> to
+                preview role‑based dashboards after login.</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">© GlucoCare · Built with HTML + CSS + JS · Public landing page for the Blood Sugar
+            Monitoring project.</div>
+    </footer>
+
+    <script>
+        // Demo-only auth routing → redirect to your SPA dashboards file (update path if needed)
+        const loginForm = document.getElementById('loginForm');
+        const loginMsg = document.getElementById('loginMsg');
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const roleMap = { 'patient': 'Patient', 'specialist': 'Specialist', 'staff': 'Staff', 'admin': 'Admin' };
+            const role = roleMap[email.split('@')[0].toLowerCase()] || 'Patient';
+            loginMsg.textContent = 'Signed in as ' + role + '. Redirecting…';
+            // Change 'app.html' to the actual filename of your SPA dashboards
+            window.location.href = 'app.html?role=' + encodeURIComponent(role);
+        });
+
+        const registerForm = document.getElementById('registerForm');
+        const registerMsg = document.getElementById('registerMsg');
+        registerForm.addEventListener('submit', (e) => { e.preventDefault(); registerMsg.textContent = 'Registered! You can now sign in.'; });
+    </script>
+</body>
+
+</html>

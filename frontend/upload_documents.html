@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Documents</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    h1 { color: #004080; margin-bottom: 20px; }
+    form { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    form label { display: block; margin: 15px 0 5px; font-weight: bold; }
+    form input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+    form button { margin-top: 20px; padding: 12px 20px; background: #004080; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    form button:hover { background: #0066cc; }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>Upload Documents</h1>
+  <form id="uploadForm">
+    <label for="patientId">Patient ID</label>
+    <input type="text" id="patientId" name="patientId" readonly>
+
+    <label for="idPicture">Patient ID Picture</label>
+    <input type="file" id="idPicture" name="idPicture" accept="image/*">
+
+    <label for="medicalRecords">Medical Records / Other Documents</label>
+    <input type="file" id="medicalRecords" name="medicalRecords" multiple>
+
+    <button type="submit">Upload</button>
+  </form>
+</main>
+
+<script>
+  // Backend base URL
+  const API_BASE_URL = 'http://127.0.0.1:5000';
+
+  // Prefill Patient ID from localStorage
+  const patientDataJson = localStorage.getItem('selectedPatient');
+  const patientData = patientDataJson ? JSON.parse(patientDataJson) : null;
+
+  if (patientData && patientData.id) {
+    document.getElementById('patientId').value = patientData.id;
+  }
+
+  // Handle form submission – ACTUAL upload
+  document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    if (!patientData || !patientData.id) {
+      alert('No patient selected. Please go back to Patient Records and choose a patient first.');
+      return;
+    }
+
+    const idPictureInput = document.getElementById('idPicture');
+    const medicalRecordsInput = document.getElementById('medicalRecords');
+
+    const idPicture = idPictureInput.files[0] || null;
+    const medicalRecords = medicalRecordsInput.files;
+
+    if (!idPicture && medicalRecords.length === 0) {
+      alert('Please select at least one document to upload.');
+      return;
+    }
+
+    // Convert "001" -> 1 for backend /patients/<int:patient_id> route
+    const patientIdForBackend = parseInt(patientData.id, 10);
+    if (Number.isNaN(patientIdForBackend)) {
+      alert('Patient ID is not a valid number for backend route.');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+
+      if (idPicture) {
+        formData.append('idPicture', idPicture);
+      }
+
+      for (let i = 0; i < medicalRecords.length; i++) {
+        formData.append('medicalRecords', medicalRecords[i]);
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/patients/${encodeURIComponent(patientIdForBackend)}/documents`,
+        {
+          method: 'POST',
+          body: formData   // IMPORTANT: no Content-Type header here
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        console.error('Upload error:', data);
+        alert(data.error || 'Failed to upload documents.');
+        return;
+      }
+
+      console.log('Uploaded documents:', data);
+      alert('Documents uploaded successfully!');
+
+      // Redirect back to patient records
+      window.location.href = 'patient_records.html';
+
+    } catch (err) {
+      console.error('Unexpected upload error:', err);
+      alert('Unexpected error while uploading documents.');
+    }
+  });
+</script>
+
+</body>
+</html>

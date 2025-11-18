@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/dasshboard.css" />
+  <style>
+    /* Form styles */
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .form-field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-field label {
+      font-weight: bold;
+    }
+
+    .form-field small {
+      font-size: 0.8rem;
+      color: #555;
+    }
+
+    .form-actions {
+      margin-top: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    .edit-btn,
+    .del-btn {
+      margin-right: 5px;
+    }
+
+    .card {
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      background: #f9f9f9;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-header p {
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    /* Navigation & Logout button */
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    nav ul li {
+      margin-right: 15px;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #333;
+      padding: 6px 8px;
+    }
+
+    nav ul li a.active {
+      font-weight: bold;
+      border-bottom: 2px solid #333;
+    }
+
+    .logout-btn {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .logout-btn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="patient_history.html">History</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li style="margin-left:auto;"><button id="logoutBtn" class="logout-btn">Logout</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="dashboard-header">
+      <h1 id="greeting">Patient Dashboard</h1>
+      <p id="specialistLine" class="subtext">Here you can track your daily health readings, medications, food intake, and activities. Keep your records up-to-date to help your specialist monitor your health trends.</p>
+    </section>
+
+    <!-- Health Entry Form -->
+    <section class="card">
+      <h2>Add Daily Health Entry</h2>
+      <form id="healthForm" class="form-grid">
+        <p>Fill out your daily readings accurately. Each entry will be saved in your history for review and trend tracking.</p>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required />
+            <small>The date of your measurement.</small>
+          </div>
+          <div class="form-field">
+            <label for="time">Time</label>
+            <input type="time" id="time" name="time" required />
+            <small>The time you took the measurement or ate your meal.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="bloodSugar">Blood Sugar (mg/dL)</label>
+            <input type="number" id="bloodSugar" name="bloodSugar" min="20" max="600" required />
+            <small>Measure your blood sugar using your device. Normal fasting: 70-99 mg/dL.</small>
+          </div>
+          <div class="form-field">
+            <label for="bloodPressure">Blood Pressure (mmHg)</label>
+            <input type="text" id="bloodPressure" name="bloodPressure" placeholder="120/80" />
+            <small>Optional. Enter as systolic/diastolic, e.g., 120/80.</small>
+          </div>
+          <div class="form-field">
+            <label for="heartRate">Heart Rate (bpm)</label>
+            <input type="number" id="heartRate" name="heartRate" min="40" max="200" />
+            <small>Optional. Your pulse rate in beats per minute.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field" style="width:100%">
+            <label for="medications">Medications Taken</label>
+            <input type="text" id="medications" name="medications" placeholder="e.g., Metformin 500mg" />
+            <small>List any medications you took, including dosage.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field" style="width:50%">
+            <label for="foodTime">Time of Food Intake</label>
+            <input type="time" id="foodTime" name="foodTime" />
+            <small>Optional. Record when you had your meal/snack.</small>
+          </div>
+          <div class="form-field" style="width:50%">
+            <label for="foodTaken">Food Consumed</label>
+            <input type="text" id="foodTaken" name="foodTaken" placeholder="e.g., 1 cup rice, 200g chicken" />
+            <small>Optional. Helps track how meals affect your sugar readings.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field" style="width:100%">
+            <label for="activity">Physical Activity / Notes</label>
+            <textarea id="activity" name="activity" rows="3" placeholder="e.g., 30-min walk, feeling dizzy"></textarea>
+            <small>Optional. Record any exercise, symptoms, or special notes.</small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">Save Entry</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Entries Table -->
+    <section class="card">
+      <h2>My Health History</h2>
+      <p>All your past entries are displayed here. You can review, edit, or delete them. Keeping a detailed history helps your specialist understand trends in your health.</p>
+      <div class="table-wrapper">
+        <table id="entriesTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Blood Sugar</th>
+              <th>Blood Pressure</th>
+              <th>Heart Rate</th>
+              <th>Medications</th>
+              <th>Food Time</th>
+              <th>Food Taken</th>
+              <th>Activity / Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const currentPatient = (localStorage.getItem('loggedInPatient') || 'patient').toLowerCase();
+    const LS_KEY = 'health_' + currentPatient;
+
+    const form = document.getElementById('healthForm');
+    const tbody = document.querySelector('#entriesTable tbody');
+    let editingIndex = null;
+
+    // Load entries
+    function loadEntries() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    // Save entries
+    function saveEntries(entries) {
+      localStorage.setItem(LS_KEY, JSON.stringify(entries));
+    }
+
+    // Render table
+    function renderTable() {
+      const rows = loadEntries();
+      tbody.innerHTML = rows.length === 0 ? `<tr><td colspan="10" style="text-align:center">No entries yet. Start by adding your daily readings above.</td></tr>` :
+        rows.map((r, i) => `
+          <tr>
+            <td>${r.date}</td>
+            <td>${r.time}</td>
+            <td>${r.bloodSugar}</td>
+            <td>${r.bloodPressure || '-'}</td>
+            <td>${r.heartRate || '-'}</td>
+            <td>${r.medications || '-'}</td>
+            <td>${r.foodTime || '-'}</td>
+            <td>${r.foodTaken || '-'}</td>
+            <td>${r.activity || '-'}</td>
+            <td>
+              <button type="button" class="edit-btn" data-index="${i}">Edit</button>
+              <button type="button" class="del-btn" data-index="${i}">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    // Handle form submit
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const entry = {
+        date: form.date.value,
+        time: form.time.value,
+        bloodSugar: form.bloodSugar.value,
+        bloodPressure: form.bloodPressure.value,
+        heartRate: form.heartRate.value,
+        medications: form.medications.value,
+        foodTime: form.foodTime.value,
+        foodTaken: form.foodTaken.value,
+        activity: form.activity.value
+      };
+
+      const rows = loadEntries();
+      if (editingIndex === null) {
+        rows.push(entry);
+      } else {
+        rows[editingIndex] = entry;
+        editingIndex = null;
+      }
+
+      saveEntries(rows);
+      form.reset();
+      renderTable();
+      alert('Your entry has been saved. You can now see it in your history below.');
+    });
+
+    // Edit / Delete
+    tbody.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const idx = Number(btn.dataset.index);
+      const rows = loadEntries();
+
+      if (btn.classList.contains('del-btn')) {
+        if (confirm('Delete this entry? This action cannot be undone.')) {
+          rows.splice(idx, 1);
+          saveEntries(rows);
+          renderTable();
+        }
+        return;
+      }
+
+      if (btn.classList.contains('edit-btn')) {
+        const r = rows[idx];
+        form.date.value = r.date;
+        form.time.value = r.time;
+        form.bloodSugar.value = r.bloodSugar;
+        form.bloodPressure.value = r.bloodPressure;
+        form.heartRate.value = r.heartRate;
+        form.medications.value = r.medications;
+        form.foodTime.value = r.foodTime;
+        form.foodTaken.value = r.foodTaken;
+        form.activity.value = r.activity;
+        editingIndex = idx;
+
+        window.scrollTo({ top: form.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+      }
+    });
+
+    // Greeting
+    const greetEl = document.getElementById('greeting');
+    if (greetEl) {
+      greetEl.textContent = 'Welcome, ' + currentPatient.charAt(0).toUpperCase() + currentPatient.slice(1);
+    }
+
+    // Specialist info
+    const line = document.getElementById('specialistLine');
+    if (line) {
+      line.textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
+    }
+
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('loggedInPatient');
+      alert('You have been logged out.');
+      window.location.href = 'index.html';
+    });
+
+    renderTable();
+  </script>
+</body>
+
+</html>

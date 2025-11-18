@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Staff Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+  
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient.html">Patient</a></li>
+        <li><a href="specialist.html">Specialist</a></li>
+        <li><a href="clinic.html">Clinic</a></li>
+        <li><a href="staff.html" class="active">Staff</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="login-section">
+      <h2>Staff Login</h2>
+      <form id="staffLoginForm" class="form-grid">
+        <div class="form-field">
+          <label for="staffEmail">Username or Email</label>
+          <input id="staffEmail" name="email" type="text" placeholder="staff@x.com" required />
+        </div>
+        <div class="form-field">
+          <label for="staffPassword">Password</label>
+          <input id="staffPassword" name="password" type="password" placeholder="••••••••" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit">Login</button>
+          <button type="button" id="demoStaffLogin">Demo Staff Login</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Staff Panel</h2>
+      <p class="subtext">Access patient records, manage appointments, and update data as permitted.</p>
+      <ul>
+        <li>After logging in, you’ll be redirected to <code>staff_dashboard.html</code>.</li>
+        <li>View and update patient records.</li>
+        <li>Manage daily tasks and schedules.</li>
+        <li>Access reports and notifications relevant to your role.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const staffForm = document.getElementById('staffLoginForm');
+    const staffEmail = document.getElementById('staffEmail');
+    const staffPassword = document.getElementById('staffPassword');
+    const demoStaffBtn = document.getElementById('demoStaffLogin');
+
+    staffForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!staffEmail.value.trim() || !staffPassword.value.trim()) {
+        alert('Please enter email and password.');
+        return;
+      }
+      localStorage.setItem('loggedInStaff', staffEmail.value.trim());
+      window.location.href = 'staff_dashboard.html';
+    });
+
+    demoStaffBtn.addEventListener('click', function () {
+      const demoEmail = 'demo@staff.com';
+      const demoPass = 'demo123';
+      staffEmail.value = demoEmail;
+      staffPassword.value = demoPass;
+      localStorage.setItem('loggedInStaff', demoEmail);
+      window.location.href = 'staff_dashboard.html';
+    });
+  </script>
+</body>
+
+</html>

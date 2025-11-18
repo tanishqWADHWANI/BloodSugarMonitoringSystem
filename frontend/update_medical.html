@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Update Medical Info</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/api.js"></script>
+<style>
+  h1 { color: #004080; margin-bottom: 20px; }
+  form { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  form label { display: block; margin: 15px 0 5px; font-weight: bold; }
+  form input, form textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+  form button { margin-top: 20px; padding: 12px 20px; background: #004080; color: white; border: none; border-radius: 8px; cursor: pointer; }
+  form button:hover { background: #0066cc; }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>Update Medical Info</h1>
+  <form id="updateForm">
+    <label for="patientId">Patient ID</label>
+    <input type="text" id="patientId" name="patientId" readonly>
+
+    <label for="fullName">Full Name</label>
+    <input type="text" id="fullName" name="fullName">
+
+    <label for="age">Age</label>
+    <input type="text" id="age" name="age">
+
+    <label for="gender">Gender</label>
+    <input type="text" id="gender" name="gender">
+
+    <label for="contact">Contact</label>
+    <input type="text" id="contact" name="contact">
+
+    <label for="medicalHistory">Medical History</label>
+    <textarea id="medicalHistory" name="medicalHistory" rows="4"></textarea>
+
+    <button type="submit">Update Info</button>
+  </form>
+</main>
+
+<footer>
+<p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+</footer>
+
+<!-- put this in the <head> or just before your own script -->
+<script src="js/api.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('updateForm');
+
+    // 1) Load selected patient from localStorage (same as before)
+    let patientData = null;
+    try {
+      patientData = JSON.parse(localStorage.getItem('selectedPatient'));
+    } catch (e) {
+      console.error('Error parsing selectedPatient:', e);
+    }
+
+    let allPatients = [];
+    try {
+      allPatients = JSON.parse(localStorage.getItem('allPatients')) || [];
+    } catch (e) {
+      console.error('Error parsing allPatients:', e);
+    }
+
+    if (!patientData) {
+      alert('No patient selected!');
+      window.location.href = 'patient_records.html';
+      return;
+    }
+
+    // 2) Prefill the form
+    document.getElementById('patientId').value = patientData.id;
+    document.getElementById('fullName').value = patientData.name || '';
+    document.getElementById('age').value = patientData.age || '';
+    document.getElementById('gender').value = patientData.gender || '';
+    document.getElementById('contact').value = patientData.contact || '';
+    document.getElementById('medicalHistory').value = patientData.medicalHistory || '';
+
+    // 3) Handle submit: update localStorage + backend
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const updatedPatient = {
+        id: document.getElementById('patientId').value.trim(),
+        name: document.getElementById('fullName').value.trim(),
+        age: document.getElementById('age').value.trim(),
+        gender: document.getElementById('gender').value.trim(),
+        contact: document.getElementById('contact').value.trim(),
+        medicalHistory: document.getElementById('medicalHistory').value.trim()
+      };
+
+      // --- Update localStorage (front-end demo data) ---
+      const idx = allPatients.findIndex(p => p.id === updatedPatient.id);
+      if (idx >= 0) {
+        allPatients[idx] = updatedPatient;
+      }
+      localStorage.setItem('allPatients', JSON.stringify(allPatients));
+      localStorage.setItem('selectedPatient', JSON.stringify(updatedPatient));
+
+      // --- Call backend to update real user record ---
+      const userId = Number(updatedPatient.id);  // this must match users.user_id in DB
+      if (Number.isNaN(userId)) {
+        alert('Patient ID is not a number, cannot update backend.');
+        return;
+      }
+
+      // Only send fields that exist in the users table.
+      // For now we map "Contact" -> phone.
+      const payload = {
+        phone: updatedPatient.contact
+        // If later you add real columns for age/gender/history,
+        // they will be saved in the DB in a separate endpoint/table.
+      };
+
+      try {
+        await updateUser(userId, payload); // from js/api.js
+        alert('Patient information updated successfully (local + database).');
+        window.location.href = 'patient_records.html';
+      } catch (err) {
+        console.error('Error from backend while updating user:', err);
+        alert('Failed to update patient info on the server: ' + err.message);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

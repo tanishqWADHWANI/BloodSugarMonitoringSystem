@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Staff Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    header nav ul {
+      list-style: none;
+      display: flex;
+      gap: 15px;
+      padding: 15px;
+      background: #004080;
+    }
+
+    header nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    header nav ul li a.active {
+      text-decoration: underline;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 50px auto;
+      padding: 0 15px;
+    }
+
+    h1 {
+      color: #004080;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      color: #004080;
+    }
+
+    .card ul {
+      padding-left: 20px;
+    }
+
+    .card ul li {
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .logout-btn {
+      display: block;
+      width: max-content;
+      margin: 20px auto 40px;
+      padding: 12px 25px;
+      background: #004080;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #0066cc;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px 0;
+      background: #004080;
+      color: white;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient.html">Patient</a></li>
+        <li><a href="specialist.html">Specialist</a></li>
+        <li><a href="clinic.html">Clinic</a></li>
+        <li><a href="staff.html" class="active">Staff</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1 id="welcomeMsg">Welcome, Staff!</h1>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <h2>Patient Records</h2>
+        <ul>
+          <li>View patient details</li>
+          <li>Update medical info</li>
+          <li>Upload test results</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Appointments</h2>
+        <ul>
+          <li>Check upcoming appointments</li>
+          <li>Schedule new visits</li>
+          <li>Manage cancellations</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Tasks & Notifications</h2>
+        <ul>
+          <li>Daily tasks assigned</li>
+          <li>System notifications</li>
+          <li>Alerts from specialists</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Reports</h2>
+        <ul>
+          <li>View reports relevant to staff</li>
+          <li>Download summaries</li>
+          <li>Track progress over time</li>
+        </ul>
+      </div>
+    </div>
+
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Display staff email from localStorage
+    const welcomeMsg = document.getElementById('welcomeMsg');
+    const loggedInStaff = localStorage.getItem('loggedInStaff');
+    if (loggedInStaff) {
+      welcomeMsg.textContent = `Welcome, ${loggedInStaff}!`;
+    } else {
+      // redirect to login if not logged in
+      window.location.href = 'staff.html';
+    }
+
+    // Logout functionality
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('loggedInStaff');
+      window.location.href = 'staff.html';
+    });
+  </script>
+</body>
+
+</html>
