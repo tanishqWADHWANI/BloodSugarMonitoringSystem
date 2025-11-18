@@ -7,13 +7,21 @@ from models import Database
 from ml_service import MLService
 from notification_service import NotificationService
 from scheduler_service import SchedulerService
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://127.0.0.1:5500",
+            "http://localhost:5500"
+        ]
+    }
+})
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -177,13 +185,23 @@ def add_reading():
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
         
+        # Determine the effective measurement datetime (from client, or now)
+        date_time = datetime.now()
+        date_time_str = data.get('date_time')
+        if date_time_str:
+            try:
+                # Expecting e.g. "2025-11-20T12:30"
+                date_time = datetime.fromisoformat(date_time_str)
+            except ValueError:
+                logger.warning("Invalid date_time '%s', falling back to now()", date_time_str)
+
         # Get AI prediction and insights
         prediction_result = ml_service.predict_status(
             value=data['value'],
             fasting=data.get('fasting', False),
             food_intake=data.get('foodIntake', ''),
             activity=data.get('activity', ''),
-            time_of_day=datetime.now().hour
+            time_of_day=date_time.hour
         )
         
         # Store reading in database (triggers will auto-classify and create alerts)
@@ -197,7 +215,7 @@ def add_reading():
             event=data.get('event'),
             symptoms_notes=data.get('symptomsNotes'),
             additional_note=data.get('additionalNote'),
-            status=prediction_result['status']
+            date_time=date_time
         )
         
         # Save AI insight if significant

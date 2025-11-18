@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specialist Dashboard - Blood Sugar Monitor Clinic</title>
+  <link rel="stylesheet" href="css/style.css"><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Details - Online Blood Sugar Monitor</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+   
+    .logout-btn { background:#cc0000; border:none; border-radius:5px; padding:8px 12px; cursor:pointer; color:white; }
+    .logout-btn:hover { background:#ff3333; }
+
+    .container { max-width:1100px; margin:20px auto; padding:0 15px; }
+    h1,h2,h3,h4,p { margin-bottom:10px; }
+
+    .section-card {
+      background:white; border-radius:8px; box-shadow:0 3px 8px rgba(0,0,0,0.1);
+      padding:20px; margin-bottom:25px;
+    }
+
+    table {
+      width:100%; border-collapse:collapse; font-size:0.9rem;
+    }
+    th, td { border:1px solid #ccc; padding:8px; text-align:left; }
+    th { background:#004080; color:white; }
+
+    .info-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr));
+      gap:10px;
+    }
+    .info-item {
+      background:#f9f9f9; border:1px solid #ddd; border-radius:6px;
+      padding:10px;
+    }
+
+    /* Comments */
+    #comment-text {
+      width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;
+      resize:vertical; min-height:80px;
+    }
+    #save-comment {
+      margin-top:10px; padding:8px 15px; background:#004080; color:white;
+      border:none; border-radius:5px; cursor:pointer;
+    }
+    #save-comment:hover { background:#0066cc; }
+    #comment-list { list-style:none; padding:0; margin-top:10px; }
+    #comment-list li {
+      background:#f2f4f8; border-left:4px solid #004080; margin-bottom:8px;
+      padding:8px; border-radius:4px;
+    }
+
+    footer { background:#004080; color:white; text-align:center; padding:10px; margin-top:40px; }
+    .back-btn { background:#999; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
+    .back-btn:hover { background:#777; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li style="margin-left:auto;"><button id="logoutBtn" class="logout-btn">Logout</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <button class="back-btn" onclick="window.location.href='specialist_dashboard.html'">&larr; Back to Dashboard</button>
+
+    <h1>Patient: <span id="patientName"></span></h1>
+    <p>Patient ID: <span id="patientNumber"></span></p>
+
+    <!-- PERSONAL INFO -->
+    <section class="section-card">
+      <h2>Personal Information</h2>
+      <div class="info-grid" id="personal-info"></div>
+    </section>
+
+    <!-- HEALTH DATA -->
+    <section class="section-card">
+      <h2>Health Data History</h2>
+      <table id="health-data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Blood Pressure</th>
+            <th>Heart Rate</th>
+            <th>Medications</th>
+            <th>Food Time</th>
+            <th>Food Taken</th>
+            <th>Activity / Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- COMMENTS -->
+    <section class="section-card">
+      <h2>Specialist Comments</h2>
+      <textarea id="comment-text" placeholder="Add a comment about this patient's readings..."></textarea>
+      <button id="save-comment">Save Comment</button>
+
+      <h3>Previous Comments</h3>
+      <ul id="comment-list"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+  // ============================
+  // LOAD SELECTED PATIENT
+  // ============================
+  const patientNumber = localStorage.getItem('viewingPatientNumber');
+  const patientName = localStorage.getItem('viewingPatientName');
+  if (!patientNumber || !patientName) {
+    alert("No patient selected. Redirecting...");
+    window.location.href = 'specialist_dashboard.html';
+  }
+  document.getElementById('patientNumber').textContent = patientNumber;
+  document.getElementById('patientName').textContent = patientName;
+
+  // ============================
+  // PERSONAL INFO (mock or saved)
+  // ============================
+  const info = JSON.parse(localStorage.getItem(`personal_${patientNumber}`)) || {
+    age: "Not provided",
+    gender: "Not provided",
+    email: "Not provided",
+    phone: "Not provided",
+    address: "Not provided"
+  };
+  document.getElementById('personal-info').innerHTML = `
+    <div class="info-item"><strong>Age:</strong> ${info.age}</div>
+    <div class="info-item"><strong>Gender:</strong> ${info.gender}</div>
+    <div class="info-item"><strong>Email:</strong> ${info.email}</div>
+    <div class="info-item"><strong>Phone:</strong> ${info.phone}</div>
+    <div class="info-item"><strong>Address:</strong> ${info.address}</div>
+  `;
+
+  // ============================
+  // HEALTH DATA
+  // ============================
+  const tbody = document.querySelector('#health-data-table tbody');
+  const healthData = JSON.parse(localStorage.getItem(`health_${patientName.toLowerCase()}`)) || [];
+
+  if (healthData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8">No health data recorded yet.</td></tr>`;
+  } else {
+    tbody.innerHTML = healthData.map(entry => `
+      <tr>
+        <td>${entry.date}</td>
+        <td>${entry.time}</td>
+        <td>${entry.bloodPressure || '-'}</td>
+        <td>${entry.heartRate || '-'}</td>
+        <td>${entry.medications || '-'}</td>
+        <td>${entry.foodTime || '-'}</td>
+        <td>${entry.foodTaken || '-'}</td>
+        <td>${entry.activity || '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ============================
+  // COMMENTS SECTION
+  // ============================
+  const specialistName = localStorage.getItem('specialistFullName') || "Dr. John Smith";
+  const commentList = document.getElementById('comment-list');
+  const commentKey = `comments_${patientNumber}`;
+
+  function loadComments() {
+    const comments = JSON.parse(localStorage.getItem(commentKey)) || [];
+    commentList.innerHTML = comments.length === 0
+      ? "<li>No comments yet.</li>"
+      : comments.map(c => `<li>${c}</li>`).join('');
+  }
+  loadComments();
+
+  document.getElementById('save-comment').addEventListener('click', () => {
+    const text = document.getElementById('comment-text').value.trim();
+    if (!text) return;
+    const comments = JSON.parse(localStorage.getItem(commentKey)) || [];
+    const timestamp = new Date().toLocaleString();
+    comments.push(`${specialistName} (${timestamp}): ${text}`);
+    localStorage.setItem(commentKey, JSON.stringify(comments));
+    document.getElementById('comment-text').value = '';
+    loadComments();
+  });
+
+  // ============================
+  // LOGOUT
+  // ============================
+  document.getElementById('logoutBtn').addEventListener('click', e => {
+    e.preventDefault();
+    localStorage.removeItem('specialistUsername');
+    localStorage.removeItem('specialistFullName');
+    alert("You have been logged out.");
+    window.location.href = 'specialist.html';
+  });
+  </script>
+</body>
+</html>

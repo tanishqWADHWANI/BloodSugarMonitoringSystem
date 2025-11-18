@@ -232,7 +232,7 @@ class Database:
     # Blood Sugar Readings
     def create_reading(self, user_id, value, unit='mg/dL', fasting=None, food_intake=None, 
                       activity=None, event=None, symptoms_notes=None, additional_note=None, 
-                      status=None, confidence=None):
+                      status=None, confidence=None, date_time=None):
         """Create a new blood sugar reading - triggers will auto-classify status"""
         cursor = self._get_cursor()
         try:
@@ -242,6 +242,9 @@ class Database:
                  event, symptoms_notes, additional_note, status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
+            # if caller did not pass a date_time, fall back to "now"
+            effective_dt = date_time or datetime.now()
+
             values = (user_id, datetime.now(), value, unit, fasting, food_intake, 
                      activity, event, symptoms_notes, additional_note, status)
             cursor.execute(sql, values)

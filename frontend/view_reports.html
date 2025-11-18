@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Reports</title>
+  <link rel="stylesheet" href="css/style.css">
+ <style>
+    
+    form { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    form label { display: block; margin: 15px 0 5px; font-weight: bold; }
+    form input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+    form button { margin-top: 20px; padding: 12px 20px; background: #004080; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    form button:hover { background: #0066cc; }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>View Reports</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Report ID</th>
+        <th>Patient Name</th>
+        <th>Date</th>
+        <th>Summary</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>001</td>
+        <td>John Doe</td>
+        <td>2025-10-28</td>
+        <td>Blood sugar levels normal</td>
+      </tr>
+      <tr>
+        <td>002</td>
+        <td>Jane Smith</td>
+        <td>2025-10-27</td>
+        <td>Requires further monitoring</td>
+      </tr>
+    </tbody>
+  </table>
+</main>
+
+</body>
+</html>

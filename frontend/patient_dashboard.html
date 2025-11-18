@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/dasshboard.css" />
+  <script src="js/api.js"></script>
+  <style>
+    /* Form styles */
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .form-field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-field label {
+      font-weight: bold;
+    }
+
+    .form-field small {
+      font-size: 0.8rem;
+      color: #555;
+    }
+
+    .form-actions {
+      margin-top: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    .edit-btn,
+    .del-btn {
+      margin-right: 5px;
+    }
+
+    .card {
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      background: #f9f9f9;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-header p {
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    /* Navigation & Logout button */
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    nav ul li {
+      margin-right: 15px;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #333;
+      padding: 6px 8px;
+    }
+
+    nav ul li a.active {
+      font-weight: bold;
+      border-bottom: 2px solid #333;
+    }
+
+    .logout-btn {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .logout-btn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="patient_history.html">History</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li style="margin-left:auto;"><button id="logoutBtn" class="logout-btn">Logout</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="dashboard-header">
+      <h1 id="greeting">Patient Dashboard</h1>
+      <p id="specialistLine" class="subtext">Here you can track your daily health readings, medications, food intake, and activities. Keep your records up-to-date to help your specialist monitor your health trends.</p>
+    </section>
+
+    <!-- Health Entry Form -->
+    <section class="card">
+      <h2>Add Daily Health Entry</h2>
+      <form id="healthForm" class="form-grid">
+        <p>Fill out your daily readings accurately. Each entry will be saved in your history for review and trend tracking.</p>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required />
+            <small>The date of your measurement.</small>
+          </div>
+          <div class="form-field">
+            <label for="time">Time</label>
+            <input type="time" id="time" name="time" required />
+            <small>The time you took the measurement or ate your meal.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="bloodSugar">Blood Sugar (mg/dL)</label>
+            <input type="number" id="bloodSugar" name="bloodSugar" min="20" max="600" required />
+            <small>Measure your blood sugar using your device. Normal fasting: 70-99 mg/dL.</small>
+          </div>
+          <div class="form-field">
+            <label for="bloodPressure">Blood Pressure (mmHg)</label>
+            <input type="text" id="bloodPressure" name="bloodPressure" placeholder="120/80" />
+            <small>Optional. Enter as systolic/diastolic, e.g., 120/80.</small>
+          </div>
+          <div class="form-field">
+            <label for="heartRate">Heart Rate (bpm)</label>
+            <input type="number" id="heartRate" name="heartRate" min="40" max="200" />
+            <small>Optional. Your pulse rate in beats per minute.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field" style="width:100%">
+            <label for="medications">Medications Taken</label>
+            <input type="text" id="medications" name="medications" placeholder="e.g., Metformin 500mg" />
+            <small>List any medications you took, including dosage.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field" style="width:50%">
+            <label for="foodTime">Time of Food Intake</label>
+            <input type="time" id="foodTime" name="foodTime" />
+            <small>Optional. Record when you had your meal/snack.</small>
+          </div>
+          <div class="form-field" style="width:50%">
+            <label for="foodTaken">Food Consumed</label>
+            <input type="text" id="foodTaken" name="foodTaken" placeholder="e.g., 1 cup rice, 200g chicken" />
+            <small>Optional. Helps track how meals affect your sugar readings.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field" style="width:100%">
+            <label for="activity">Physical Activity / Notes</label>
+            <textarea id="activity" name="activity" rows="3" placeholder="e.g., 30-min walk, feeling dizzy"></textarea>
+            <small>Optional. Record any exercise, symptoms, or special notes.</small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">Save Entry</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Entries Table -->
+    <section class="card">
+      <h2>My Health History</h2>
+      <p>All your past entries are displayed here. You can review, edit, or delete them. Keeping a detailed history helps your specialist understand trends in your health.</p>
+      <div class="table-wrapper">
+        <table id="entriesTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Blood Sugar</th>
+              <th>Blood Pressure</th>
+              <th>Heart Rate</th>
+              <th>Medications</th>
+              <th>Food Time</th>
+              <th>Food Taken</th>
+              <th>Activity / Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </div>
+  </footer>
+
+    <script>
+    // Wait until the DOM is ready
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Enforce that this is a logged-in PATIENT
+      let auth;
+      try {
+        auth = requireRole('patient');    // throws + redirects if not logged in as patient
+      } catch (err) {
+        console.error(err);
+        return; // if requireRole redirects, we just stop running code here
+      }
+
+      const userId = auth.user_id;       // this is the DB user_id from /api/login
+      const currentUser = auth;
+
+      // 2. Get references to DOM elements
+      const form = document.getElementById('healthForm');
+      const tbody = document.querySelector('#entriesTable tbody');
+
+      const avgEl = document.getElementById('avgReading');
+      const lastEl = document.getElementById('lastReading');
+      const abnormalCountEl = document.getElementById('abnormalCount');
+
+      const greetEl = document.getElementById('greeting');
+      if (greetEl) {
+        // If we know their first name, use it, otherwise fall back
+        const name = currentUser.first_name || currentUser.email || 'Patient';
+        greetEl.textContent = 'Welcome, ' + name;
+      }
+
+      // This array will hold whatever /api/readings returns
+      let readings = [];
+
+      // 3. Helper: convert an API reading into a "row" for the table
+      function readingToRow(r) {
+        // date_time is the canonical timestamp from the backend
+        const raw = r.date_time || r.timestamp || r.dateTime;
+        let date = '', time = '';
+        if (raw) {
+          const d = new Date(raw);
+          if (!Number.isNaN(d.getTime())) {
+            date = d.toISOString().slice(0, 10);       // YYYY-MM-DD
+            time = d.toTimeString().slice(0, 5);       // HH:MM
+          }
+        }
+
+        return {
+          id: r.reading_id,
+          date,
+          time,
+          value: r.value,
+          bloodPressure: r.blood_pressure || '',
+          heartRate: r.heart_rate || '',
+          medications: r.medications || '',
+          foodTime: r.food_time || '',
+          foodTaken: r.food_intake || '',
+          activity: r.activity || r.symptoms_notes || '',
+          status: (r.status || '').toLowerCase()
+        };
+      }
+
+      // 4. Load readings from the backend for this logged-in patient
+      async function loadReadings() {
+        // GET /api/readings/<userId> -> { userId, readings: [...] }
+        const data = await getReadings(userId);
+        readings = (data && Array.isArray(data.readings)) ? data.readings : (Array.isArray(data) ? data : []);
+        renderTable();
+        updateDashboardStats();
+      }
+
+      // 5. Render the table body
+      function renderTable() {
+        if (!tbody) return;
+
+        if (!readings.length) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center">No entries yet. Start by adding your daily readings above.</td></tr>`;
+          return;
+        }
+
+        // newest first
+        const rows = readings
+          .slice()
+          .sort((a, b) => new Date(b.date_time || 0) - new Date(a.date_time || 0))
+          .map(readingToRow);
+
+        tbody.innerHTML = rows.map(r => `
+          <tr>
+            <td>${r.date || '-'}</td>
+            <td>${r.time || '-'}</td>
+            <td>${r.value ?? '-'}</td>
+            <td>${r.bloodPressure || '-'}</td>
+            <td>${r.heartRate || '-'}</td>
+            <td>${r.medications || '-'}</td>
+            <td>${r.foodTime || '-'}</td>
+            <td>${r.foodTaken || '-'}</td>
+            <td>${r.activity || '-'}</td>
+            <td><!-- TODO: wire Edit/Delete to backend if endpoints exist --></td>
+          </tr>
+        `).join('');
+      }
+
+      // 6. Update the dashboard stats cards at the top
+      function updateDashboardStats() {
+        if (!readings.length) {
+          if (avgEl) avgEl.textContent = '0';
+          if (lastEl) lastEl.textContent = 'No data yet';
+          if (abnormalCountEl) abnormalCountEl.textContent = '0';
+          return;
+        }
+
+        // Latest reading
+        const sorted = readings
+          .slice()
+          .sort((a, b) => new Date(b.date_time || 0) - new Date(a.date_time || 0));
+        const last = sorted[0];
+
+        if (lastEl) {
+          const d = new Date(last.date_time || '');
+          const when = Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
+          lastEl.textContent = `${last.value} mg/dL (${last.status || 'unknown'})${when ? ' on ' + when : ''}`;
+        }
+
+        // Average blood sugar
+        const numericValues = readings
+          .map(r => Number(r.value))
+          .filter(v => Number.isFinite(v));
+        if (avgEl) {
+          const avg = numericValues.length
+            ? (numericValues.reduce((a, b) => a + b, 0) / numericValues.length).toFixed(1)
+            : '0';
+          avgEl.textContent = avg;
+        }
+
+        // Count of abnormal readings (as per backend classification)
+        if (abnormalCountEl) {
+          const abnormal = readings.filter(r => (r.status || '').toLowerCase() === 'abnormal').length;
+          abnormalCountEl.textContent = String(abnormal);
+        }
+      }
+
+      // 7. Handle the “Add Daily Health Entry” form submit
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (!userId) return;
+
+          const date = form.date.value;          // "YYYY-MM-DD"
+          const time = form.time.value;          // "HH:MM"
+          const bloodSugarVal = Number(form.bloodSugar.value);
+
+          if (!date || !time || !Number.isFinite(bloodSugarVal)) {
+            alert('Please fill in Date, Time, and Blood Sugar.');
+            return;
+          }
+
+          // Build a single datetime string the backend can store
+          // e.g. "2025-11-20 14:30:00"
+          const dateTime = `${date} ${time}:00`;
+
+          const meds = form.medications.value.trim();
+          const foodTime = form.foodTime.value.trim();
+          const foodTaken = form.foodTaken.value.trim();
+          const activity = form.activity.value.trim();
+
+          try {
+            // 1) Save the reading to the backend
+            await addReading({
+              userId: userId,
+              value: bloodSugarVal,
+              unit: 'mg/dL',
+              fasting: false,
+              foodIntake: foodTaken,
+              activity: activity,
+              event: null,
+              symptomsNotes: activity,
+              additionalNote: [
+                meds ? `Meds: ${meds}` : '',
+                foodTime ? `Food Time: ${foodTime}` : ''
+              ].filter(Boolean).join(' | '),
+
+              // NEW: tell the backend what date/time the user picked
+              dateTime: dateTime
+            });
+
+            // 2) Reload the table and dashboard stats
+            await loadReadings();
+
+            // 3) Optionally clear some fields (leave Date/Time as-is)
+            form.bloodSugar.value = '';
+            form.medications.value = '';
+            form.foodTime.value = '';
+            form.foodTaken.value = '';
+            form.activity.value = '';
+
+            alert('Entry saved to the database successfully!');
+          } catch (err) {
+            console.error('Failed to save entry:', err);
+            alert('Failed to save entry. See console for details.');
+          }
+        });
+      }
+
+      // 8. Wire the logout button using the shared helper
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          handleLogout();  // provided by api.js; clears auth + redirects
+        });
+      }
+
+      // 9. Initial load of dashboard data
+      try {
+        await loadReadings();
+      } catch (err) {
+        console.error(err);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:red">Failed to load readings: ${err.message}</td></tr>`;
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

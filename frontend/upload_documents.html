@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Documents</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    h1 { color: #004080; margin-bottom: 20px; }
+    form { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    form label { display: block; margin: 15px 0 5px; font-weight: bold; }
+    form input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+    form button { margin-top: 20px; padding: 12px 20px; background: #004080; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    form button:hover { background: #0066cc; }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>Upload Documents</h1>
+  <form id="uploadForm">
+    <label for="patientId">Patient ID</label>
+    <input type="text" id="patientId" name="patientId" readonly>
+
+    <label for="idPicture">Patient ID Picture</label>
+    <input type="file" id="idPicture" name="idPicture" accept="image/*">
+
+    <label for="medicalRecords">Medical Records / Other Documents</label>
+    <input type="file" id="medicalRecords" name="medicalRecords" multiple>
+
+    <button type="submit">Upload</button>
+  </form>
+</main>
+
+<script>
+  // Prefill Patient ID from localStorage
+  const patientData = JSON.parse(localStorage.getItem('selectedPatient'));
+  if (patientData) {
+    document.getElementById('patientId').value = patientData.id;
+  }
+
+  // Handle form submission
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const idPicture = document.getElementById('idPicture').files[0];
+    const medicalRecords = document.getElementById('medicalRecords').files;
+
+    if (!idPicture && medicalRecords.length === 0) {
+      alert('Please select at least one document to upload.');
+      return;
+    }
+
+    // For demo purposes, we just log the file names
+    console.log('Patient ID:', patientData.id);
+    if (idPicture) console.log('ID Picture:', idPicture.name);
+    if (medicalRecords.length) {
+      for (let i = 0; i < medicalRecords.length; i++) {
+        console.log('Document:', medicalRecords[i].name);
+      }
+    }
+
+    alert('Documents uploaded successfully!');
+    // Optionally redirect back to patient records
+    window.location.href = 'patient_records.html';
+  });
+</script>
+
+</body>
+</html>

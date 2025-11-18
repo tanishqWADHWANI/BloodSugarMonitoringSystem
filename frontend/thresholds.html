@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clinic Staff – Thresholds</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dasshboard.css" />
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="patient.html">Patient</a></li>
+                <li><a href="specialist.html">Specialist</a></li>
+                <li><a href="clinic.html" class="active">Clinic</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- MAIN -->
+    <main class="container">
+        <section class="dashboard-header">
+            <h1>Clinic Staff – Manage Thresholds</h1>
+            <p class="subtext">
+                Define blood sugar thresholds used to categorize readings into
+                <strong>Normal</strong>, <strong>Borderline</strong>, and <strong>Abnormal</strong>.
+                You can set <em>System Default</em> thresholds (apply to everyone) or add a
+                <em>Patient Override</em> for a specific patient.
+            </p>
+        </section>
+
+        <!-- ADD / EDIT FORM -->
+        <section class="card">
+            <h2>Add Threshold</h2>
+            <form id="thresholdForm" class="form-grid">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="thStatus">Status</label>
+                        <select id="thStatus" required>
+                            <option value="Normal">Normal (max)</option>
+                            <option value="Borderline">Borderline (max)</option>
+                            <option value="AbnormalLow">AbnormalLow (min)</option>
+                            <option value="AbnormalHigh">AbnormalHigh (max)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="thValue">Value (mg/dL)</label>
+                        <input type="number" id="thValue" min="20" max="600" step="1" required />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="thScope">Scope</label>
+                        <select id="thScope" required>
+                            <option value="SystemDefault">SystemDefault</option>
+                            <option value="PatientOverride">PatientOverride</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field" id="patientIdWrap" style="display:none">
+                        <label for="thPatientId">Patient ID (for override)</label>
+                        <input type="number" id="thPatientId" min="1" placeholder="e.g., 101" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit">Add Threshold</button>
+                    <button type="button" id="resetDefaultsBtn" class="secondary">Reset to Defaults</button>
+                </div>
+            </form>
+
+            <p class="hint">
+                <strong>Meaning:</strong> We use these to compute status on patient pages:
+                if value &lt; <em>AbnormalLow</em> or &gt; <em>Borderline</em> → <b>Abnormal</b>;
+                else if value ≤ <em>Normal</em> → <b>Normal</b>; otherwise → <b>Borderline</b>.
+                (Patient overrides take precedence over system defaults.)
+            </p>
+        </section>
+
+        <!-- TABLE -->
+        <section class="card">
+            <h2>Current Thresholds</h2>
+            <div class="table-wrapper">
+                <table id="thresholdsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Status</th>
+                            <th>Value</th>
+                            <th>Scope</th>
+                            <th>Patient</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody><!-- rows injected by JS --></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- LOGIC -->
+    <script>
+        // ====== Storage key and helpers ======
+        const LS_KEY = 'thresholds';
+
+        function loadThresholds() {
+            try {
+                const arr = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+                return Array.isArray(arr) ? arr : [];
+            } catch { return []; }
+        }
+        function saveThresholds(rows) {
+            localStorage.setItem(LS_KEY, JSON.stringify(rows));
+        }
+
+        // ====== Elements ======
+        const form = document.getElementById('thresholdForm');
+        const tbody = document.querySelector('#thresholdsTable tbody');
+        const statusEl = document.getElementById('thStatus');
+        const valueEl = document.getElementById('thValue');
+        const scopeEl = document.getElementById('thScope');
+        const patientWrap = document.getElementById('patientIdWrap');
+        const patientIdEl = document.getElementById('thPatientId');
+        const resetBtn = document.getElementById('resetDefaultsBtn');
+
+        // Show/Hide patient ID when scope changes
+        scopeEl.addEventListener('change', () => {
+            patientWrap.style.display = scopeEl.value === 'PatientOverride' ? 'block' : 'none';
+        });
+
+        // ====== Render ======
+        function render() {
+            const rows = loadThresholds();
+            tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${r.status}</td>
+          <td>${r.value}</td>
+          <td>${r.scope}</td>
+          <td>${r.patient ?? ''}</td>
+          <td>
+            <button type="button" class="del-btn" data-id="${r.id}">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+        }
+
+        // ====== Add ======
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const row = {
+                id: Date.now(),
+                status: statusEl.value,
+                value: Number(valueEl.value),
+                scope: scopeEl.value,
+                patient: scopeEl.value === 'PatientOverride' ? Number(patientIdEl.value || 0) : null
+            };
+
+            const rows = loadThresholds();
+            rows.push(row);
+            saveThresholds(rows);
+            form.reset();
+            patientWrap.style.display = 'none';
+            render();
+            alert('Threshold added.');
+        });
+
+        // ====== Delete (event delegation) ======
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('button.del-btn');
+            if (!btn) return;
+
+            const id = Number(btn.dataset.id);
+            const rows = loadThresholds().filter(r => r.id !== id);
+            saveThresholds(rows);
+            render();
+        });
+
+        // ====== Reset to defaults ======
+        resetBtn.addEventListener('click', () => {
+            if (!confirm('Reset system defaults to Normal=130, Borderline=180, AbnormalLow=70 (and clear overrides)?')) return;
+            const defaults = [
+                { id: Date.now() + 1, status: 'Normal', value: 130, scope: 'SystemDefault', patient: null },
+                { id: Date.now() + 2, status: 'Borderline', value: 180, scope: 'SystemDefault', patient: null },
+                { id: Date.now() + 3, status: 'AbnormalLow', value: 70, scope: 'SystemDefault', patient: null }
+                // AbnormalHigh is optional; Borderline is effectively the upper bound used by the patient page.
+            ];
+            saveThresholds(defaults);
+            render();
+        });
+
+        // Init
+        render();
+    </script>
+</body>
+
+</html>

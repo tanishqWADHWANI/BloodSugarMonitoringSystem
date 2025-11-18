@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient History - Blood Sugar Monitor</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/api.js"></script>
+
+  <style>
+   
+    main {
+      background: white;
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 1000px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #004080;
+      margin-bottom: 10px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .controls label {
+      font-weight: bold;
+    }
+
+    .controls select,
+    .controls input {
+      padding: 5px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #004080;
+      color: white;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 10px;
+      color: #555;
+      background: #f0f0f0;
+    }
+    
+    #logout-btn {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    } 
+
+    #logout-btn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient_dashboard.html">Dashboard</a></li>
+        <li><a href="patient_history.html" class="active">History</a></li>
+        <li style="margin-left:auto;"><button id="logoutBtn">Logout</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Patient History</h1>
+    <p>View and analyze your past health readings below. You can select a date range, or filter by daily, weekly, monthly, or yearly trends.</p>
+
+    <!-- Controls -->
+    <div class="controls">
+      <label for="viewSelect">View:</label>
+      <select id="viewSelect">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+
+      <label for="monthSelect">Month:</label>
+      <select id="monthSelect">
+        <option value="">All Months</option>
+      </select>
+
+      <label for="startDate">From:</label>
+      <input type="date" id="startDate">
+
+      <label for="endDate">To:</label>
+      <input type="date" id="endDate">
+
+      <button id="applyFilter">Apply</button>
+      <button id="resetFilter">Reset</button>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container">
+      <canvas id="bloodSugarChart"></canvas>
+    </div>
+
+    <!-- Table -->
+    <table id="historyTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Blood Sugar (mg/dL)</th>
+          <th>Blood Pressure</th>
+          <th>Heart Rate</th>
+          <th>Medications</th>
+          <th>Food Time</th>
+          <th>Food Taken</th>
+          <th>Activity / Notes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+
+  <div class="footer">
+    &copy; 2025 Online Blood Sugar Monitoring Clinic
+  </div>
+
+ <script>
+  // --- utilities ---
+  function activeUserId() {
+    const p = new URLSearchParams(window.location.search);
+    const q = p.get('user_id');
+    if (q) return q;
+    return window.prompt('Enter Patient User ID to view history:');
+  }
+
+   function mapToRows(readingArray) {
+    const arr = Array.isArray(readingArray) ? readingArray : [];
+
+    return arr.map(r => {
+      // Backend stores timestamp in "date_time" column, plus some fallbacks
+      const ts = r.date_time || r.timestamp || r.time || r.created_at;
+      let date = '', time = '';
+
+      if (ts) {
+        const d = new Date(ts);
+        if (!Number.isNaN(d.getTime())) {
+          // Normalise to YYYY-MM-DD and HH:MM
+          date = d.toISOString().slice(0, 10);
+          time = d.toTimeString().slice(0, 5);
+        }
+      }
+
+      // If backend already gave separate date/time fields, use them as fallback
+      if (!date && r.date) date = r.date;
+      if (!time && r.time) time = r.time;
+
+      // Blood sugar value is stored as "value" in DB, but we support other keys too
+      const blood = r.value
+                 ?? r.bloodSugar
+                 ?? r.blood_sugar
+                 ?? r.reading
+                 ?? '-';
+
+      return {
+        date,
+        time,
+        bloodSugar: blood,
+        bloodPressure: r.bloodPressure || '-',
+        heartRate: r.heartRate || '-',
+        medications: r.medications || '-',
+        foodTime: r.food_time || r.foodTime || '-',
+        foodTaken: r.food_intake || r.foodTaken || '-',
+        activity: r.activity || r.symptoms_notes || r.additional_note || '-'
+      };
+    }).filter(e => e.date); // ensure each row has a date for grouping/filters
+  }
+  // --- grouping for the chart only (table shows raw rows) ---
+  function startOfWeekISO(d) {
+    const copy = new Date(d);
+    const day = copy.getDay();            // 0=Sun..6=Sat
+    const diff = (day === 0 ? -6 : 1) - day; // shift to Monday as week start
+    copy.setDate(copy.getDate() + diff);
+    copy.setHours(0,0,0,0);
+    return copy;
+  }
+
+  function groupForChart(rows, view) {
+    if (!rows.length || view === 'daily') {
+      // daily: each row is a point; if multiple per day, show the last one
+      const byDay = {};
+      rows.forEach(r => {
+        if (!byDay[r.date]) byDay[r.date] = [];
+        byDay[r.date].push(Number(r.bloodSugar));
+      });
+      const labels = Object.keys(byDay).sort();
+      const data = labels.map(k => {
+        const vals = byDay[k].filter(Number.isFinite);
+        if (!vals.length) return null;
+        // average per day
+        return vals.reduce((a,b)=>a+b,0)/vals.length;
+      });
+      return { labels, data };
+    }
+
+    // weekly / monthly / yearly
+    const buckets = {};
+    rows.forEach(r => {
+      const d = new Date(r.date);
+      if (isNaN(d)) return;
+      let key;
+      if (view === 'weekly') {
+        key = startOfWeekISO(d).toISOString().slice(0,10); // week start date
+      } else if (view === 'monthly') {
+        key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      } else if (view === 'yearly') {
+        key = `${d.getFullYear()}`;
+      } else {
+        key = r.date; // fallback
+      }
+      if (!buckets[key]) buckets[key] = [];
+      const v = Number(r.bloodSugar);
+      if (Number.isFinite(v)) buckets[key].push(v);
+    });
+
+    const labels = Object.keys(buckets).sort();
+    const data = labels.map(k => {
+      const vals = buckets[k];
+      return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+    });
+    return { labels, data };
+  }
+
+  function renderTable(rows) {
+    const tbody = document.querySelector('#historyTable tbody');
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center">No readings.</td></tr>`;
+      return;
+    }
+    // sort ascending by date then time
+    const sorted = [...rows].sort((a,b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : (a.time > b.time ? 1 : -1)));
+    tbody.innerHTML = sorted.map(e => `
+      <tr>
+        <td>${e.date||'-'}</td><td>${e.time||'-'}</td>
+        <td>${e.bloodSugar}</td><td>${e.bloodPressure}</td>
+        <td>${e.heartRate}</td><td>${e.medications}</td>
+        <td>${e.foodTime}</td><td>${e.foodTaken}</td>
+        <td>${e.activity}</td>
+      </tr>`).join('');
+  }
+
+  // chart instance holder
+  let bloodSugarChartInstance = null;
+
+  function renderChart(rows, view) {
+    const ctx = document.getElementById('bloodSugarChart').getContext('2d');
+
+    // If we already have a chart instance, destroy it before creating a new one
+    if (bloodSugarChartInstance) {
+      bloodSugarChartInstance.destroy();
+    }
+
+    const { labels, data } = groupForChart(rows, view);
+
+    // Create and save the new instance
+    bloodSugarChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Average Blood Sugar (mg/dL)',
+          data,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { title: { display: true, text: 'Period' } },
+          y: { title: { display: true, text: 'mg/dL' } }
+        }
+      }
+    });
+  }
+
+    function populateMonthSelect(rows) {
+    const sel = document.getElementById('monthSelect');
+
+    const months = [...new Set(
+      rows
+        .map(r => r.date)
+        .filter(Boolean)
+        .map(d => d.slice(0, 7))      // YYYY-MM
+    )].sort();
+
+    months.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      sel.appendChild(opt);
+    });
+  }
+
+  function applyFiltersTo(rows) {
+    const start = document.getElementById('startDate').value;
+    const end   = document.getElementById('endDate').value;
+    const month = document.getElementById('monthSelect').value;
+    const view  = document.getElementById('viewSelect').value;
+
+    let f = [...rows];
+    if (start) { const S = new Date(start); f = f.filter(r => r.date && new Date(r.date) >= S); }
+    if (end)   { const E = new Date(end);   f = f.filter(r => r.date && new Date(r.date) <= E); }
+    if (month) f = f.filter(r => r.date && r.date.startsWith(month));
+
+    renderTable(f);
+    renderChart(f, view);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      let auth;
+      try {
+        auth = requireRole('patient');
+      } catch {
+        return;
+      }
+    const userId = auth.user_id;
+    const apiReadings = await getReadings(userId);
+      const rows = mapToRows(apiReadings);
+
+      populateMonthSelect(rows);
+
+      document.getElementById('applyFilter').addEventListener('click', () => applyFiltersTo(rows));
+      document.getElementById('resetFilter').addEventListener('click', () => {
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('monthSelect').value = '';
+        document.getElementById('viewSelect').value = 'daily';
+        applyFiltersTo(rows);
+      });
+
+      // Also update instantly when the view dropdown changes
+      document.getElementById('viewSelect').addEventListener('change', () => applyFiltersTo(rows));
+
+      applyFiltersTo(rows); // initial render
+    } catch (err) {
+      console.error(err);
+      const tbody = document.querySelector('#historyTable tbody');
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red">Failed to load readings: ${err.message}</td></tr>`;
+    }
+  });
+
+  //logout behavior
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('loggedInPatientId');
+      localStorage.removeItem('loggedInPatientName');
+      localStorage.removeItem(AUTH_KEY); // "authUser" in api.js
+
+      window.location.href = 'patient.html'; // back to patient login
+    });
+  }
+</script>
+</body>
+</html>
