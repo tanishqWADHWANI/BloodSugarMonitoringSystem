@@ -274,7 +274,7 @@ def add_reading():
             event=data.get('event'),
             symptoms_notes=data.get('symptomsNotes'),
             additional_note=data.get('additionalNote'),
-            date_time=date_time
+            date_time=date_time,
             status=db_status 
         )
         
