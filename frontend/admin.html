@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Login</title>
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/api.js"></script>
  
 </head>
 
@@ -34,6 +35,9 @@
           <label for="adminPassword">Password</label>
           <input id="adminPassword" name="password" type="password" placeholder="••••••••" required />
         </div>
+  
+        <p id="adminMsg" style="color: red; text-align: center; grid-column: 1 / -1;"></p> 
+
         <div class="form-actions">
           <button type="submit">Login</button>
           <button type="button" id="demoLogin">Demo Admin Login</button>
@@ -57,30 +61,77 @@
     <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
   </footer>
 
+  
+  <!-- JS Logic -->
   <script>
-    const form = document.getElementById('adminLoginForm');
-    const email = document.getElementById('adminEmail');
-    const password = document.getElementById('adminPassword');
-    const demoBtn = document.getElementById('demoLogin');
+    // 1. ADD: Wrap all logic inside DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
 
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (!email.value.trim() || !password.value.trim()) {
-        alert('Please enter email and password.');
-        return;
+      // 2. MOVE: Element references inside the wrapper
+      const form = document.getElementById('adminLoginForm');
+      const emailEl = document.getElementById('adminEmail');
+      const passEl = document.getElementById('adminPassword');
+      const demoBtn = document.getElementById('demoLogin');
+      const msgEl = document.getElementById('adminMsg');
+
+      // 3. CRITICAL CHECK: Ensure form exists before binding events
+      if (!form) {
+          console.error("Initialization Error: adminLoginForm not found.");
+          return; 
       }
-      localStorage.setItem('loggedInAdmin', email.value.trim());
-      window.location.href = 'admin_dashboard.html';
-    });
 
-    demoBtn.addEventListener('click', function () {
-      const demoEmail = 'demo@admin.com';
-      const demoPass = 'demo123';
-      email.value = demoEmail;
-      password.value = demoPass;
-      localStorage.setItem('loggedInAdmin', demoEmail);
-      window.location.href = 'admin_dashboard.html';
-    });
+      // This block is inside admin.html's <script> tag
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        msgEl.textContent = '';
+
+        const email = emailEl.value.trim();
+        const pass = passEl.value.trim();
+
+        if (!email || !pass) {
+          msgEl.textContent = 'Please enter email and password.';
+          return;
+        }
+
+        msgEl.textContent = 'Signing in…';
+
+        try {
+          // Call the new, centralized loginUser function from api.js
+          const response = await loginUser(email, pass);
+          
+          // Extract the 'user' object from the backend response structure
+          const userData = response.user; 
+
+          // CRITICAL CHECK: Ensure the role is appropriate for this page
+          if (userData.role !== 'admin' && userData.role !== 'staff') {
+              throw new Error(`Access Denied: Role is ${userData.role}. This is an Admin page.`);
+          }
+
+          //  Store the extracted user data
+          localStorage.setItem('loggedInAdmin', JSON.stringify(userData));
+          
+          // Success redirect
+          window.location.href = 'admin_dashboard.html';
+
+        } catch (err) {
+          console.error(err);
+          msgEl.textContent = err.message || 'Login failed. Check server status or credentials.';
+        }
+      });
+
+      demoBtn.addEventListener('click', function () {
+        const demo = {
+          email: 'demo@admin.com',
+          role: 'admin',
+          id: 999,
+          firstName: 'Demo',
+          lastName: 'Admin'
+        };
+        localStorage.setItem('loggedInAdmin', JSON.stringify(demo));
+        window.location.href = 'admin_dashboard.html';
+      });
+    }); // 4. CLOSE: End of DOMContentLoaded listener
   </script>
 </body>
 

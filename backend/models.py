@@ -54,10 +54,18 @@ class Database:
         finally:
             cursor.close()
     
-    def create_user(self, email, password, first_name, last_name, role, date_of_birth=None, phone=None, health_care_number =None):
-        """Create a new user (password stored as-is for demo, hash in production)"""
+    def create_user(self, email, password, first_name, last_name, role, 
+                   date_of_birth=None, phone=None, health_care_number=None, working_id=None):
+        """
+        Create a new user (password stored as-is for demo, hash in production)
+        
+        Parameters:
+        - health_care_number: Required for patients
+        - working_id: Required for specialists and staff
+        """
         cursor = self._get_cursor()
         try:
+            # Insert into users table
             sql = """
                 INSERT INTO users (email, password_hash, first_name, last_name, role, date_of_birth, phone)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -67,21 +75,23 @@ class Database:
             self.connection.commit()
             user_id = cursor.lastrowid
             
-            # Create patient record if role is patient
+            # Create role-specific records
             if role == 'patient':
                 cursor.execute(
-                    "INSERT INTO patients (user_id, health_care_number) VALUES (%s,%s)",
-                    (user_id,health_care_number)
+                    "INSERT INTO patients (user_id, health_care_number) VALUES (%s, %s)",
+                    (user_id, health_care_number)
                 )
                 self.connection.commit()
-            # Create specialist record if role is specialist
+                
             elif role == 'specialist':
+                # Insert with working_id if your table has that column
+                # Otherwise, just insert user_id
                 cursor.execute(
                     "INSERT INTO specialists (user_id) VALUES (%s)",
                     (user_id,)
                 )
                 self.connection.commit()
-            # Create staff record if role is staff
+                
             elif role == 'staff':
                 cursor.execute(
                     "INSERT INTO staff (user_id) VALUES (%s)",
@@ -90,6 +100,7 @@ class Database:
                 self.connection.commit()
             
             return user_id
+            
         except Error as e:
             self.connection.rollback()
             logger.error(f"Error creating user: {e}")
@@ -97,7 +108,10 @@ class Database:
         finally:
             cursor.close()
 
-    def update_user(self, user_id, *, email: str | None = None, password: str | None = None, first_name: str | None = None, last_name: str | None = None, role: str | None = None, date_of_birth: str | None = None, phone: str | None = None, health_care_number: str | None = None)-> bool:
+    def update_user(self, user_id, *, email: str | None = None, password: str | None = None, 
+                   first_name: str | None = None, last_name: str | None = None, 
+                   role: str | None = None, date_of_birth: str | None = None, 
+                   phone: str | None = None, health_care_number: str | None = None) -> bool:
         """
         Update user. Only provided fields are updated.
         Password is stored in plain text (demo only).
@@ -107,7 +121,7 @@ class Database:
             # Build updates for `users` table
             updates = {}
             if email is not None:          updates["email"] = email
-            if password is not None:       updates["password_hash"] = password  # plain text
+            if password is not None:       updates["password_hash"] = password
             if first_name is not None:     updates["first_name"] = first_name
             if last_name is not None:      updates["last_name"] = last_name
             if role is not None:           updates["role"] = role
@@ -115,7 +129,7 @@ class Database:
             if phone is not None:          updates["phone"] = phone
 
             if not updates:
-                return False  # nothing to update
+                return False
 
             set_clause = ", ".join(f"{col} = %s" for col in updates)
             values = list(updates.values())
@@ -125,13 +139,13 @@ class Database:
             cursor.execute(sql, values)
 
             if cursor.rowcount == 0:
-                return False  # user not found
+                return False
 
-            # === Role-specific logic ===
+            # Role-specific logic
             if role is not None:
-                # Get old role
                 cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
-                old_role = cursor.fetchone()[0]
+                result = cursor.fetchone()
+                old_role = result['role'] if result else None
 
                 # Clean up old role table
                 if old_role == "patient":
@@ -152,7 +166,7 @@ class Database:
                 elif role == "staff":
                     cursor.execute("INSERT INTO staff (user_id) VALUES (%s)", (user_id,))
 
-            # === Update health care number (even if role didn't change) ===
+            # Update health care number if provided
             elif health_care_number is not None:
                 cursor.execute(
                     "UPDATE patients SET health_care_number = %s WHERE user_id = %s",
@@ -169,29 +183,19 @@ class Database:
         finally:
             cursor.close()
 
-    def delete_user(self,user_id)-> bool:
-            
+    def delete_user(self, user_id) -> bool:
         """
         Delete a user and all associated records.
         Relies on ON DELETE CASCADE in the database.
-
-        Returns
-        -------
-        bool
-            True if user was deleted, False if user not found.
         """
-
         cursor = self._get_cursor()
         try:
-
-            # Delete from users table (CASCADE handles patients/specialists/staff)
             cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
             self.connection.commit()
-
-            return cursor.rowcount > 0 # True if a row is deleted
+            return cursor.rowcount > 0
         except Exception as e:
             self.connection.rollback()
-            logger.error("Error Deleting the user {user_id}: {e} ")
+            logger.error(f"Error deleting user {user_id}: {e}")
             raise
         finally:
             cursor.close()
@@ -225,10 +229,50 @@ class Database:
         finally:
             cursor.close()
 
+    # Assigns Patient to Doctors
+    def assign_patient_to_specialist(self, patient_user_id, specialist_user_id):
+        """Assigns a patient (by user_id) to a specialist (by user_id)."""
+        cursor = self._get_cursor()
+        try:
+            # 1. Look up actual patient_id from user_id
+            cursor.execute(
+                "SELECT patient_id FROM patients WHERE user_id = %s", 
+                (patient_user_id,)
+            )
+            patient = cursor.fetchone()
+            
+            # 2. Look up actual specialist_id from user_id
+            cursor.execute(
+                "SELECT specialist_id FROM specialists WHERE user_id = %s", 
+                (specialist_user_id,)
+            )
+            specialist = cursor.fetchone()
 
+            if not patient or not specialist:
+                raise ValueError("Patient or Specialist record not found for the given user IDs.")
 
+            patient_id = patient['patient_id']
+            specialist_id = specialist['specialist_id']
 
-    
+            # 3. Insert or Update the assignment in specialistpatient table
+            # (Using REPLACE INTO to overwrite existing assignment if patient is already assigned)
+            sql = """
+                REPLACE INTO specialistpatient (patient_id, specialist_id)
+                VALUES (%s, %s)
+            """
+            cursor.execute(sql, (patient_id, specialist_id))
+            self.connection.commit()
+            
+            return True
+
+        except Exception as e:
+            self.connection.rollback()
+            logger.error(f"Error assigning patient: {e}")
+            raise
+        finally:
+            cursor.close()
+
+            
     # Blood Sugar Readings
     def create_reading(self, user_id, value, unit='mg/dL', fasting=None, food_intake=None, 
                       activity=None, event=None, symptoms_notes=None, additional_note=None, 
@@ -267,7 +311,6 @@ class Database:
             cursor.execute(sql, (user_id, start_date))
             readings = cursor.fetchall()
             
-            # Convert datetime objects to strings
             for reading in readings:
                 if reading.get('date_time'):
                     reading['date_time'] = reading['date_time'].isoformat()
@@ -275,7 +318,6 @@ class Database:
                     reading['created_at'] = reading['created_at'].isoformat()
                 if reading.get('updated_at'):
                     reading['updated_at'] = reading['updated_at'].isoformat()
-                # Convert Decimal to float
                 if reading.get('value'):
                     reading['value'] = float(reading['value'])
             
@@ -304,7 +346,6 @@ class Database:
             cursor.execute(sql)
             readings = cursor.fetchall()
             
-            # Convert to proper format
             for reading in readings:
                 if reading.get('date_time'):
                     reading['dateTime'] = reading['date_time'].isoformat()
@@ -441,7 +482,7 @@ class Database:
     
     # Alerts
     def create_alert(self, user_id, reason, specialist_id=None):
-        """Create a new alert - typically done by triggers"""
+        """Create a new alert"""
         cursor = self._get_cursor()
         try:
             sql = """
@@ -508,7 +549,6 @@ class Database:
         """Set or update a user's threshold"""
         cursor = self._get_cursor()
         try:
-            # Check if threshold exists
             cursor.execute(
                 "SELECT threshold_id FROM thresholds WHERE user_id = %s AND status = %s",
                 (user_id, status)
@@ -516,7 +556,6 @@ class Database:
             existing = cursor.fetchone()
             
             if existing:
-                # Update
                 sql = """
                     UPDATE thresholds 
                     SET min_value = %s, max_value = %s 
@@ -524,7 +563,6 @@ class Database:
                 """
                 cursor.execute(sql, (min_value, max_value, existing['threshold_id']))
             else:
-                # Insert
                 sql = """
                     INSERT INTO thresholds (user_id, status, min_value, max_value)
                     VALUES (%s, %s, %s, %s)
@@ -571,7 +609,30 @@ class Database:
             return recommendations
         finally:
             cursor.close()
-    
+
+    def get_all_users(self):
+        """Get all users from the users table for the Admin Dashboard."""
+        cursor = self._get_cursor()
+        try:
+            sql = """
+                SELECT user_id, first_name, last_name, email, phone, date_of_birth, role 
+                FROM users 
+                ORDER BY user_id DESC
+            """
+            cursor.execute(sql)
+            users = cursor.fetchall()
+            
+            for user in users:
+                if user.get('date_of_birth'):
+                    user['date_of_birth'] = user['date_of_birth'].isoformat() if user['date_of_birth'] else None
+            
+            return users
+        except Exception as e:
+            logger.error(f"Database error in get_all_users: {e}") 
+            raise
+        finally:
+            cursor.close()
+        
     # Specialist Functions
     def get_patient_specialist(self, patient_user_id):
         """Get the specialist assigned to a patient"""
@@ -619,7 +680,6 @@ class Database:
             result = cursor.fetchone()
             
             if result:
-                # Convert to int where needed
                 for key in ['total_patients', 'total_alerts', 'alerts_last_7d', 
                            'inactive_patients', 'abnormal_patients']:
                     if result.get(key):

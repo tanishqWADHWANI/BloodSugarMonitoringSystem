@@ -7,25 +7,24 @@
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/dasshboard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
 </head>
 
 <body>
-    <!-- HEADER -->
     <header>
-		<nav>
-			<ul>
-				<li><a href="index.html">Home</a></li>
-				<li><a href="patient.html">Patient</a></li>
-				<li><a href="specialist.html">Specialist</a></li>
-				<li><a href="clinic.html">Clinic</a></li>
-				<li><a href="contact.html">Contact Us</a></li>
-				<li><button id="logoutBtn" class="logout-btn">Logout</button></li>
-			</ul>
-		</nav>
-	</header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="patient.html">Patient</a></li>
+                <li><a href="specialist.html">Specialist</a></li>
+                <li><a href="clinic.html">Clinic</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
 
-
-    <!-- MAIN -->
     <main class="container">
         <section class="dashboard-header">
             <h1>Administrator – User Management & Reports</h1>
@@ -34,7 +33,6 @@
             </p>
         </section>
 
-        <!-- CREATE USER -->
         <section class="card">
             <h2>Create User</h2>
             <form id="createUserForm" class="form-grid">
@@ -55,12 +53,23 @@
 
                 <div class="form-row">
                     <div class="form-field">
+                        <label for="password">Password</label>
+                        <input id="password" type="password" required />
+                    </div>
+                    <div class="form-field">
                         <label for="phone">Phone</label>
                         <input id="phone" type="tel" required />
                     </div>
                     <div class="form-field">
                         <label for="dob">Date of birth</label>
                         <input id="dob" type="date" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field" id="workingIdContainer" style="display: none;">
+                        <label for="workingId">Working ID</label>
+                        <input id="workingId" placeholder="Required for Specialist/Staff" />
                     </div>
                     <div class="form-field">
                         <label for="role">Role</label>
@@ -87,7 +96,6 @@
             </form>
         </section>
 
-        <!-- USERS TABLE -->
         <section class="card">
             <h2>Users</h2>
             <div class="table-wrapper">
@@ -104,12 +112,11 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody><!-- rows injected --></tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- ASSIGNMENTS -->
         <section class="card">
             <h2>Assign Patient to Specialist</h2>
             <form id="assignForm" class="form-grid">
@@ -139,12 +146,11 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody><!-- rows injected --></tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- REPORTS -->
         <section class="card">
             <h2>Simple Report</h2>
             <p class="hint">
@@ -174,192 +180,203 @@
         </section>
     </main>
 
-    <!-- FOOTER -->
     <footer>
         <div class="footer-bottom">
             <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
         </div>
     </footer>
 
-    <!-- LOGIC -->
     <script>
-        // ===== Storage keys =====
-        const USERS_KEY = 'users';
+        // =========================================================================
+        // ADMIN DASHBOARD - Single Script Block
+        // =========================================================================
+
+        // Global State
+        let USERS_CACHE = [];
         const ASSIGN_KEY = 'assignments';
-        // readings are stored as 'readings_<patientKey>' where patientKey = email prefix (lowercase)
 
-        // ===== Thresholds =====
-        function getThresholds() {
-            const saved = JSON.parse(localStorage.getItem('thresholds') || '[]');
-            const t = { normalMin: 70, normalMax: 130, borderlineMax: 180 }; // defaults
-            saved.forEach(x => {
-                if (x.status === 'AbnormalLow') t.normalMin = Number(x.value);
-                if (x.status === 'Normal') t.normalMax = Number(x.value);
-                if (x.status === 'Borderline') t.borderlineMax = Number(x.value);
-            });
-            return t;
-        }
-        function statusFor(value) {
-            const th = getThresholds();
-            if (value < th.normalMin || value > th.borderlineMax) return 'Abnormal';
-            if (value <= th.normalMax) return 'Normal';
-            return 'Borderline';
-        }
+        // Element References
+        let createForm, usersTableBody, assignForm, patientSelect, specialistSelect, assignTableBody;
+        let elTotalUsers, elCP, elCS, elCSt, elCA, elAssigned, elUnassigned, elR7Total, elR7Abn, elR7Pct;
+        let roleSelect, workingIdContainer;
 
-        // ===== Users =====
-        function loadUsers() {
-            try { const u = JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); return Array.isArray(u) ? u : []; }
-            catch { return []; }
-        }
-        function saveUsers(arr) { localStorage.setItem(USERS_KEY, JSON.stringify(arr)); }
-
-        // ===== Assignments =====
+        // ===== Utility Functions =====
+        
+        
         function loadAssignments() {
-            try { const a = JSON.parse(localStorage.getItem(ASSIGN_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+            try { return JSON.parse(localStorage.getItem(ASSIGN_KEY) || '[]'); }
             catch { return []; }
         }
-        function saveAssignments(arr) { localStorage.setItem(ASSIGN_KEY, JSON.stringify(arr)); }
 
-        // ===== Elements =====
-        const createForm = document.getElementById('createUserForm');
-        const usersTableBody = document.querySelector('#usersTable tbody');
-        const assignForm = document.getElementById('assignForm');
-        const patientSelect = document.getElementById('patientSelect');
-        const specialistSelect = document.getElementById('specialistSelect');
-        const assignTableBody = document.querySelector('#assignTable tbody');
-        const seedDemoBtn = document.getElementById('seedDemoBtn');
+        function saveAssignments(arr) {
+            localStorage.setItem(ASSIGN_KEY, JSON.stringify(arr));
+        }
 
-        // ===== Render Users =====
-        function renderUsers() {
-            const users = loadUsers();
+        // ===== API Functions =====
+        async function fetchUsersFromAPI() {
+            try {
+                const response = await getAllUsers();
+                USERS_CACHE = response.users || [];
+                return USERS_CACHE;
+            } catch (e) {
+                console.error("Failed to fetch users from API:", e);
+                alert("Error: Could not load users from the server.");
+                return [];
+            }
+        }
+
+        // ===== Render Functions =====
+        async function renderUsers() {
+            const users = USERS_CACHE.length ? USERS_CACHE : await fetchUsersFromAPI();
+
             usersTableBody.innerHTML = users.map(u => `
-        <tr>
-          <td>${u.id}</td>
-          <td>${u.firstName} ${u.lastName}</td>
-          <td>${u.email}</td>
-          <td>${u.phone}</td>
-          <td>${u.dob || ''}</td>
-          <td>${u.role}</td>
-          <td>${u.active ? 'Active' : 'Inactive'}</td>
-          <td>
-            <button type="button" class="toggle-btn" data-id="${u.id}">
-              ${u.active ? 'Deactivate' : 'Activate'}
-            </button>
-          </td>
-        </tr>
-      `).join('');
+                <tr>
+                    <td>${u.user_id}</td>
+                    <td>${u.first_name} ${u.last_name}</td>
+                    <td>${u.email}</td>
+                    <td>${u.phone || 'N/A'}</td>
+                    <td>${u.date_of_birth || ''}</td>
+                    <td>${u.role}</td>
+                    <td>Active</td>
+                    <td>
+                        <button type="button" class="btn-sm btn-delete" data-id="${u.user_id}">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
 
-            // Refresh patient/specialist selects for assignments
-            const patients = users.filter(u => u.role === 'patient' && u.active);
-            const specialists = users.filter(u => u.role === 'specialist' && u.active);
+            const patients = users.filter(u => u.role === 'patient');
+            const specialists = users.filter(u => u.role === 'specialist');
 
             patientSelect.innerHTML = patients.map(p => `
-        <option value="${p.id}">${p.firstName} ${p.lastName} (${p.email})</option>
-      `).join('');
+                <option value="${p.user_id}">${p.first_name} ${p.last_name} (${p.email})</option>
+            `).join('');
             specialistSelect.innerHTML = specialists.map(s => `
-        <option value="${s.id}">${s.firstName} ${s.lastName} (${s.email})</option>
-      `).join('');
+                <option value="${s.user_id}">${s.first_name} ${s.last_name} (${s.email})</option>
+            `).join('');
         }
 
-        // ===== Toggle Active =====
-        usersTableBody.addEventListener('click', (e) => {
-            const btn = e.target.closest('button.toggle-btn');
-            if (!btn) return;
-            const id = Number(btn.dataset.id);
-            const users = loadUsers();
-            const idx = users.findIndex(u => u.id === id);
-            if (idx >= 0) {
-                users[idx].active = !users[idx].active;
-                saveUsers(users);
-                renderUsers();
-                renderAssignments();
-                renderReport();
-            }
-        });
+        function renderAssignments() {
+            const users = USERS_CACHE;
+            const assigns = loadAssignments();
 
-        // ===== Create User =====
-        createForm.addEventListener('submit', (e) => {
+            function fmtUser(id) {
+                const u = users.find(x => x.user_id === id);
+                return u ? `${u.first_name} ${u.last_name} (${u.email})` : '—';
+            }
+
+            assignTableBody.innerHTML = assigns.map(a => `
+                <tr>
+                    <td>${a.id}</td>
+                    <td>${fmtUser(a.patientId)}</td>
+                    <td>${fmtUser(a.specialistId)}</td>
+                    <td><button type="button" class="remove-assign" data-id="${a.id}">Remove</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function renderReport() {
+            const users = USERS_CACHE;
+            const assigns = loadAssignments();
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const currentMonth = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            try {
+                const reportData = await getAdminMonthlyReport(currentMonth, year);
+
+                const allPatientStats = reportData.patient_statistics || [];
+
+                elTotalUsers.textContent = users.length;
+                elCP.textContent = users.filter(u => u.role === 'patient').length;
+                elCS.textContent = users.filter(u => u.role === 'specialist').length;
+                elCSt.textContent = users.filter(u => u.role === 'staff').length;
+                elCA.textContent = users.filter(u => u.role === 'admin').length;
+
+                const patients = users.filter(u => u.role === 'patient');
+                const assignedSet = new Set(assigns.map(a => a.patientId));
+                const assignedCount = patients.filter(p => assignedSet.has(p.user_id)).length;
+                elAssigned.textContent = assignedCount;
+                elUnassigned.textContent = Math.max(0, patients.length - assignedCount);
+
+                
+
+                // Calculate global totals from the list of patient statistics
+                const totalReadings = allPatientStats.reduce((sum, p) => sum + (p.total_readings || 0), 0);
+                const totalAbnormal = allPatientStats.reduce((sum, p) => sum + (p.abnormal_count || 0), 0);
+
+                elR7Total.textContent = totalReadings;
+                elR7Abn.textContent = totalAbnormal;
+                elR7Pct.textContent = totalReadings > 0 
+                    ? Math.round((totalAbnormal / totalReadings) * 100) + '%' 
+                    : '0%';
+
+            } catch (error) {
+                console.error("Failed to load report from backend:", error);
+                elR7Total.textContent = elR7Abn.textContent = '0';
+                elR7Pct.textContent = '0%';
+            }
+        }
+
+        // ===== Event Handlers =====
+        async function handleCreateUser(e) {
             e.preventDefault();
-            const user = {
-                id: Date.now(),
+
+            const role = document.getElementById('role').value;
+
+            const payload = {
                 firstName: document.getElementById('firstName').value.trim(),
                 lastName: document.getElementById('lastName').value.trim(),
                 email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value.trim(),
+                role: role,
                 phone: document.getElementById('phone').value.trim(),
-                dob: document.getElementById('dob').value,
-                role: document.getElementById('role').value,
-                imageUrl: document.getElementById('imageUrl').value.trim(),
-                active: true
+                dateOfBirth: document.getElementById('dob').value,
             };
-            const users = loadUsers();
-            if (users.some(u => u.email.toLowerCase() === user.email.toLowerCase())) {
-                alert('A user with this email already exists.');
-                return;
-            }
-            users.push(user);
-            saveUsers(users);
-            createForm.reset();
-            renderUsers();
-            renderReport();
-            alert('User created.');
-        });
 
-        // ===== Seed Demo Users =====
-        seedDemoBtn.addEventListener('click', () => {
-            if (!confirm('Seed demo users?')) return;
-            const demo = [
-                { firstName: 'Alice', lastName: 'Lee', email: 'alice@x.com', phone: '555-1111', dob: '1990-01-10', role: 'patient' },
-                { firstName: 'Bob', lastName: 'Ng', email: 'bob@x.com', phone: '555-2222', dob: '1991-02-12', role: 'patient' },
-                { firstName: 'Dr.', lastName: 'Yuan', email: 'yuan@x.com', phone: '555-3000', dob: '1980-03-18', role: 'specialist' },
-                { firstName: 'Dr.', lastName: 'Singh', email: 'singh@x.com', phone: '555-4000', dob: '1981-04-22', role: 'specialist' },
-                { firstName: 'Maya', lastName: 'Chen', email: 'maya@x.com', phone: '555-5000', dob: '1995-05-14', role: 'staff' },
-                { firstName: 'Admin', lastName: 'One', email: 'admin@x.com', phone: '555-9000', dob: '1985-06-01', role: 'admin' }
-            ];
-            const users = loadUsers();
-            demo.forEach(d => users.push({
-                id: Date.now() + Math.floor(Math.random() * 100000),
-                active: true, imageUrl: '', ...d
-            }));
-            saveUsers(users);
-            renderUsers();
-            renderReport();
-        });
-
-        // ===== Assignments =====
-        function renderAssignments() {
-            const users = loadUsers();
-            const assigns = loadAssignments();
-            function fmtUser(id) {
-                const u = users.find(x => x.id === id);
-                return u ? `${u.firstName} ${u.lastName} (${u.email})` : '—';
+            if (role === 'specialist' || role === 'staff') {
+                const workingId = document.getElementById('workingId').value.trim();
+                if (!workingId) {
+                    alert(`Working ID is required for role: ${role}`);
+                    return;
+                }
+                payload.workingId = workingId;
             }
-            assignTableBody.innerHTML = assigns.map(a => `
-        <tr>
-          <td>${a.id}</td>
-          <td>${fmtUser(a.patientId)}</td>
-          <td>${fmtUser(a.specialistId)}</td>
-          <td><button type="button" class="remove-assign" data-id="${a.id}">Remove</button></td>
-        </tr>
-      `).join('');
+
+            try {
+                const response = await apiRequest('/api/admin/users', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                alert(`User created successfully! ID: ${response.userId}`);
+
+                createForm.reset();
+                await fetchUsersFromAPI();
+                await renderUsers();
+                await renderReport();
+            } catch (error) {
+                console.error("User creation failed:", error);
+                alert('Error creating user: ' + error.message);
+            }
         }
 
-        assignForm.addEventListener('submit', (e) => {
+        function handleAssignSubmit(e) {
             e.preventDefault();
             const patientId = Number(patientSelect.value);
             const specialistId = Number(specialistSelect.value);
             if (!patientId || !specialistId) return;
 
             const assigns = loadAssignments();
-            // replace any existing mapping for this patient
             const rest = assigns.filter(a => a.patientId !== patientId);
             rest.push({ id: Date.now(), patientId, specialistId });
             saveAssignments(rest);
             renderAssignments();
             renderReport();
-            alert('Assigned.');
-        });
+            alert('Assigned (Local).');
+        }
 
-        assignTableBody.addEventListener('click', (e) => {
+        function handleRemoveAssignment(e) {
             const btn = e.target.closest('.remove-assign');
             if (!btn) return;
             const id = Number(btn.dataset.id);
@@ -367,90 +384,68 @@
             saveAssignments(left);
             renderAssignments();
             renderReport();
-        });
-
-        // ===== Reports =====
-        const elTotalUsers = document.getElementById('totalUsers');
-        const elCP = document.getElementById('countPatients');
-        const elCS = document.getElementById('countSpecialists');
-        const elCSt = document.getElementById('countStaff');
-        const elCA = document.getElementById('countAdmins');
-        const elAssigned = document.getElementById('assignedPatients');
-        const elUnassigned = document.getElementById('unassignedPatients');
-        const elR7Total = document.getElementById('r7Total');
-        const elR7Abn = document.getElementById('r7Abnormal');
-        const elR7Pct = document.getElementById('r7AbnormalPct');
-        const recalcBtn = document.getElementById('recalcBtn');
-        const exportBtn = document.getElementById('exportBtn');
-
-        function patientKeyFromEmail(email) {
-            return (email || '').split('@')[0].toLowerCase();
         }
 
-        function renderReport() {
-            const users = loadUsers();
-            const assigns = loadAssignments();
+        // ===== Initialization =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Bind Elements
+            createForm = document.getElementById('createUserForm');
+            usersTableBody = document.querySelector('#usersTable tbody');
+            assignForm = document.getElementById('assignForm');
+            patientSelect = document.getElementById('patientSelect');
+            specialistSelect = document.getElementById('specialistSelect');
+            assignTableBody = document.querySelector('#assignTable tbody');
 
-            elTotalUsers.textContent = users.length;
-            elCP.textContent = users.filter(u => u.role === 'patient').length;
-            elCS.textContent = users.filter(u => u.role === 'specialist').length;
-            elCSt.textContent = users.filter(u => u.role === 'staff').length;
-            elCA.textContent = users.filter(u => u.role === 'admin').length;
+            elTotalUsers = document.getElementById('totalUsers');
+            elCP = document.getElementById('countPatients');
+            elCS = document.getElementById('countSpecialists');
+            elCSt = document.getElementById('countStaff');
+            elCA = document.getElementById('countAdmins');
+            elAssigned = document.getElementById('assignedPatients');
+            elUnassigned = document.getElementById('unassignedPatients');
+            elR7Total = document.getElementById('r7Total');
+            elR7Abn = document.getElementById('r7Abnormal');
+            elR7Pct = document.getElementById('r7AbnormalPct');
 
-            const patients = users.filter(u => u.role === 'patient' && u.active);
-            const assignedSet = new Set(assigns.map(a => a.patientId));
-            const assignedCount = patients.filter(p => assignedSet.has(p.id)).length;
+            roleSelect = document.getElementById('role');
+            workingIdContainer = document.getElementById('workingIdContainer');
 
-            elAssigned.textContent = assignedCount;
-            elUnassigned.textContent = Math.max(0, patients.length - assignedCount);
-
-            // 7-day readings & abnormal %
-            const now = new Date();
-            const since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-            let total = 0, abnormal = 0;
-
-            patients.forEach(p => {
-                const key = 'readings_' + patientKeyFromEmail(p.email);
-                const arr = JSON.parse(localStorage.getItem(key) || '[]');
-                arr.forEach(r => {
-                    // parse datetime
-                    const dt = new Date((r.date || '') + 'T' + (r.time || '00:00'));
-                    if (!isNaN(dt) && dt >= since && dt <= now) {
-                        total++;
-                        if (statusFor(Number(r.sugar)) === 'Abnormal') abnormal++;
+            // Working ID Visibility Logic
+            if (roleSelect && workingIdContainer) {
+                roleSelect.addEventListener('change', (e) => {
+                    const role = e.target.value;
+                    if (role === 'specialist' || role === 'staff') {
+                        workingIdContainer.style.display = 'block';
+                        document.getElementById('workingId').setAttribute('required', 'required');
+                    } else {
+                        workingIdContainer.style.display = 'none';
+                        document.getElementById('workingId').removeAttribute('required');
                     }
                 });
-            });
+            }
 
-            elR7Total.textContent = total;
-            elR7Abn.textContent = abnormal;
-            elR7Pct.textContent = total ? Math.round((abnormal / total) * 100) + '%' : '0%';
-        }
+            // Event Listeners
+            if (createForm) createForm.addEventListener('submit', handleCreateUser);
+            if (assignForm) assignForm.addEventListener('submit', handleAssignSubmit);
+            if (assignTableBody) assignTableBody.addEventListener('click', handleRemoveAssignment);
 
-        recalcBtn.addEventListener('click', renderReport);
+            const recalcBtn = document.getElementById('recalcBtn');
+            if (recalcBtn) recalcBtn.addEventListener('click', renderReport);
 
-        exportBtn.addEventListener('click', () => {
-            const out = {
-                users: loadUsers(),
-                assignments: loadAssignments(),
-                thresholds: JSON.parse(localStorage.getItem('thresholds') || '[]')
-            };
-            const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'admin_export.json';
-            document.body.appendChild(a); a.click(); a.remove();
-            URL.revokeObjectURL(url);
-        });
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('loggedInAdmin');
+                    window.location.href = 'index.html';
+                });
+            }
 
-        // ===== Init =====
-        function init() {
+            // Initial Load
+            await fetchUsersFromAPI();
             renderUsers();
             renderAssignments();
             renderReport();
-        }
-        init();
+        });
     </script>
 </body>
 
