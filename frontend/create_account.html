@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Patient Account - Blood Sugar Monitor Clinic</title>
 
-  <!-- Use your unified global stylesheet -->
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/api.js"></script>
 </head>
 
 <body>
@@ -23,7 +24,6 @@
     </nav>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main class="container">
     <section class="login-section">
       <h2>Create Patient Account</h2>
@@ -31,7 +31,6 @@
         Please fill in your information below to register for your patient portal.
       </p>
 
-      <!-- Registration Form -->
       <form id="registerForm" method="post" action="">
         <label for="fullName">Full Name</label>
         <input type="text" id="fullName" name="fullName" placeholder="e.g., Alice Johnson" required>
@@ -70,23 +69,20 @@
     </section>
   </main>
 
-  <!-- FOOTER -->
   <footer>
     <div class="footer-bottom">
       <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
     </div>
   </footer>
 
-  <!-- ======================================================
-       REGISTRATION SCRIPT
-       Handles validation, localStorage saving, and redirect
-       ====================================================== -->
   <script>
     (function () {
       const form = document.getElementById('registerForm');
       const msg = document.getElementById('registerMsg');
 
-      form.addEventListener('submit', function (e) {
+      if (!form) return;
+
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
         msg.style.color = 'red';
         msg.textContent = '';
@@ -99,7 +95,6 @@
         const password = document.getElementById('password').value.trim();
         const confirmPassword = document.getElementById('confirmPassword').value.trim();
 
-        // Validation
         if (!fullName || !email || !age || !gender || !contact || !password || !confirmPassword) {
           msg.textContent = 'Please fill out all fields.';
           return;
@@ -115,37 +110,57 @@
           return;
         }
 
-        // Load existing patients
         const patients = JSON.parse(localStorage.getItem('patients') || '{}');
-
         if (patients[email]) {
-          msg.textContent = 'This email is already registered. Please log in instead.';
+          msg.textContent = 'This email is already registered. Please log in.';
           return;
         }
 
-        // Save new patient record
-        patients[email] = {
-          fullName,
+        const parts = fullName.split(' ');
+        const firstName = parts[0] || fullName;
+        const lastName = parts.slice(1).join(' ') || firstName;
+
+        const payload = {
           email,
-          age,
-          gender,
-          contact,
-          password
+          password,
+          firstName,
+          lastName,
+          role: 'patient',
+          phone: contact
         };
-        localStorage.setItem('patients', JSON.stringify(patients));
 
-        // Auto-login the new user
-        localStorage.setItem('loggedInPatient', email.split('@')[0]);
+        try {
+          const result = await registerUser(payload);
 
-        msg.style.color = 'green';
-        msg.textContent = 'Account created successfully! Redirecting to your dashboard...';
+          const userId = result.userId;
 
-        // Redirect to patient dashboard
-        setTimeout(() => {
-          window.location.href = 'patient_dashboard.html';
-        }, 1200);
+          patients[email] = {
+            fullName,
+            email,
+            age,
+            gender,
+            contact,
+            password,
+            userId
+          };
+          localStorage.setItem('patients', JSON.stringify(patients));
+
+          localStorage.setItem('loggedInPatient', email.split('@')[0]);
+          localStorage.setItem('patientUserId', String(userId));
+
+          msg.style.color = 'green';
+          msg.textContent = 'Account created! Redirecting...';
+
+          setTimeout(() => {
+            window.location.href = 'patient_dashboard.html';
+          }, 1200);
+        } catch (err) {
+          msg.style.color = 'red';
+          msg.textContent = 'Server error: ' + (err.message || 'Unknown error');
+        }
       });
     })();
   </script>
 </body>
+
 </html>

@@ -3,6 +3,9 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from datetime import datetime
 import logging
+import os
+from werkzeug.utils import secure_filename
+
 from models import Database
 from ml_service import MLService
 from notification_service import NotificationService
@@ -14,14 +17,26 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+# ===== File upload config =====
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Allow frontend from anywhere (file://, localhost, etc.)
 CORS(app, resources={
     r"/api/*": {
-        "origins": [
-            "http://127.0.0.1:5500",
-            "http://localhost:5500"
-        ]
+        "origins": "*"
     }
 })
+
+
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -241,7 +256,13 @@ def add_reading():
             activity=data.get('activity', ''),
             time_of_day=date_time.hour
         )
-        
+        ai_status = prediction_result['status']
+        if ai_status in ('low', 'high'):
+            db_status = 'abnormal'
+        elif ai_status == 'prediabetic':
+            db_status = 'borderline'
+        else:
+            db_status = 'normal'
         # Store reading in database (triggers will auto-classify and create alerts)
         reading_id = db.create_reading(
             user_id=data['userId'],
@@ -254,6 +275,7 @@ def add_reading():
             symptoms_notes=data.get('symptomsNotes'),
             additional_note=data.get('additionalNote'),
             date_time=date_time
+            status=db_status 
         )
         
         # Save AI insight if significant
@@ -1021,6 +1043,67 @@ def test_database():
     except Exception as e:
         logger.error(f"Database test failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/patients/<int:patient_id>/documents', methods=['POST'])
+def upload_documents(patient_id):
+    """
+    Upload ID picture + medical documents for a patient.
+    Stores files in /uploads/patient_<id>/ and returns metadata.
+    """
+    try:
+        # OPTIONAL: verify that patient exists in DB
+        cursor = db._get_cursor()
+        cursor.execute("SELECT patient_id FROM patients WHERE patient_id = %s", (patient_id,))
+        patient = cursor.fetchone()
+        cursor.close()
+
+        if not patient:
+            return jsonify({"error": "Patient not found"}), 404
+
+        # Make per-patient folder
+        patient_folder = os.path.join(app.config['UPLOAD_FOLDER'], f"patient_{patient_id}")
+        os.makedirs(patient_folder, exist_ok=True)
+
+        files_saved = []
+
+        # Single ID picture (optional)
+        id_pic = request.files.get('idPicture')
+        if id_pic and id_pic.filename and allowed_file(id_pic.filename):
+            filename = secure_filename(id_pic.filename)
+            save_path = os.path.join(patient_folder, f"id_{filename}")
+            id_pic.save(save_path)
+            files_saved.append({
+                "type": "idPicture",
+                "filename": filename,
+                "path": f"patient_{patient_id}/id_{filename}"
+            })
+
+        # Multiple medical records
+        medical_files = request.files.getlist('medicalRecords')
+        for f in medical_files:
+            if f and f.filename and allowed_file(f.filename):
+                filename = secure_filename(f.filename)
+                save_path = os.path.join(patient_folder, filename)
+                f.save(save_path)
+                files_saved.append({
+                    "type": "medicalRecord",
+                    "filename": filename,
+                    "path": f"patient_{patient_id}/{filename}"
+                })
+
+        if not files_saved:
+            return jsonify({"error": "No valid files uploaded"}), 400
+
+        return jsonify({
+            "patientId": patient_id,
+            "files": files_saved,
+            "count": len(files_saved),
+            "message": "Documents uploaded successfully"
+        }), 201
+
+    except Exception as e:
+        logger.error(f"Error uploading documents for patient {patient_id}: {e}")
+        return jsonify({"error": "Failed to upload documents"}), 500
 
 if __name__ == '__main__':
     # Initialize scheduler for periodic tasks

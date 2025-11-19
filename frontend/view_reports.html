@@ -1,58 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>View Reports</title>
-  <link rel="stylesheet" href="css/style.css">
- <style>
-    
-    form { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    form label { display: block; margin: 15px 0 5px; font-weight: bold; }
-    form input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
-    form button { margin-top: 20px; padding: 12px 20px; background: #004080; color: white; border: none; border-radius: 8px; cursor: pointer; }
-    form button:hover { background: #0066cc; }
+
+  <!-- styles -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- 🔗 CONNECT TO BACKEND API HELPERS -->
+  <!-- make sure api.js is in a folder called "js" next to this html -->
+  <script src="js/api.js"></script>
+
+  <style>
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    form label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+    }
+
+    form input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #004080;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background: #0066cc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background: #004080;
+      color: white;
+    }
   </style>
 </head>
+
 <body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="staff_dashboard.html">Dashboard</a></li>
+        <li><a href="patient_records.html">Patient Records</a></li>
+        <li><a href="staff.html">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
 
-<header>
-  <nav>
-    <ul>
-      <li><a href="staff_dashboard.html">Dashboard</a></li>
-      <li><a href="patient_records.html">Patient Records</a></li>
-      <li><a href="staff.html">Logout</a></li>
-    </ul>
-  </nav>
-</header>
+  <main class="container">
+    <h1>View Reports</h1>
 
-<main class="container">
-  <h1>View Reports</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Report ID</th>
-        <th>Patient Name</th>
-        <th>Date</th>
-        <th>Summary</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>001</td>
-        <td>John Doe</td>
-        <td>2025-10-28</td>
-        <td>Blood sugar levels normal</td>
-      </tr>
-      <tr>
-        <td>002</td>
-        <td>Jane Smith</td>
-        <td>2025-10-27</td>
-        <td>Requires further monitoring</td>
-      </tr>
-    </tbody>
-  </table>
-</main>
+    <!-- 🔍 small helper form so staff can choose the patient -->
+    <form id="reportForm">
+      <label for="userIdInput">Patient User ID</label>
+      <input type="number" id="userIdInput" placeholder="e.g. 101" required />
+      <button type="submit">Load Reports</button>
+    </form>
 
+    <table id="reportsTable">
+      <thead>
+        <tr>
+          <th>Report ID</th>
+          <th>Patient Name</th>
+          <th>Date</th>
+          <th>Summary</th>
+        </tr>
+      </thead>
+      <tbody id="reportsBody">
+        <!-- rows will be injected by JS -->
+        <tr>
+          <td colspan="4">
+            Enter a Patient User ID above and click “Load Reports”.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- 🔌 PAGE LOGIC: call Flask `/api/reports/<userId>` via getReport() -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("reportForm");
+      const userIdInput = document.getElementById("userIdInput");
+      const tbody = document.getElementById("reportsBody");
+
+      function formatDate(iso) {
+        if (!iso) return "-";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+        return d.toISOString().slice(0, 10); // YYYY-MM-DD
+      }
+
+      async function loadReports(userId) {
+        if (!userId) {
+          tbody.innerHTML =
+            '<tr><td colspan="4">Please enter a Patient User ID.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML =
+          '<tr><td colspan="4">Loading reports from server.</td></tr>';
+
+        try {
+          // uses getReport() from api.js → /api/reports/<userId>
+          const report = await getReport(userId);
+          console.log("Report from backend:", report);
+
+          const date = formatDate(report.generated_at);
+          const firstInsight =
+            report.insights && report.insights.length
+              ? report.insights[0].message || "See insights for details."
+              : "No insights available yet.";
+
+          tbody.innerHTML = `
+              <tr>
+                <td>${userId}</td>
+                <td>Patient #${userId}</td>
+                <td>${date}</td>
+                <td>${firstInsight}</td>
+              </tr>
+            `;
+        } catch (err) {
+          console.error(err);
+          tbody.innerHTML = `
+              <tr>
+                <td colspan="4" style="color:red">
+                  Failed to load reports: ${err.message}
+                </td>
+              </tr>
+            `;
+        }
+      }
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const userId = userIdInput.value.trim();
+        loadReports(userId);
+      });
+    });
+  </script>
 </body>
+
 </html>
