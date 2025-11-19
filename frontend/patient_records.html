@@ -18,6 +18,7 @@
   th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
   th { background: #004080; color: white; }
 </style>
+<script src="js/api.js"></script>
 </head>
 <body>
 
@@ -60,49 +61,7 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td>001</td>
-          <td>John Doe</td>
-          <td>35</td>
-          <td>Male</td>
-          <td>555-1234</td>
-          <td>Diabetes, Hypertension</td>
-          <td>Blood Sugar: 140 mg/dL</td>
-          <td>
-            <a href="#" class="btn actionBtn" data-action="view">View</a>
-            <a href="#" class="btn actionBtn" data-action="update">Update</a>
-            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
-          </td>
-        </tr>
-        <tr>
-          <td>002</td>
-          <td>Jane Smith</td>
-          <td>28</td>
-          <td>Female</td>
-          <td>555-5678</td>
-          <td>Pre-diabetes</td>
-          <td>Blood Sugar: 110 mg/dL</td>
-          <td>
-            <a href="#" class="btn actionBtn" data-action="view">View</a>
-            <a href="#" class="btn actionBtn" data-action="update">Update</a>
-            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
-          </td>
-        </tr>
-        <tr>
-          <td>003</td>
-          <td>Mark Lee</td>
-          <td>42</td>
-          <td>Male</td>
-          <td>555-9876</td>
-          <td>Hypertension</td>
-          <td>Blood Sugar: 125 mg/dL</td>
-          <td>
-            <a href="#" class="btn actionBtn" data-action="view">View</a>
-            <a href="#" class="btn actionBtn" data-action="update">Update</a>
-            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
-          </td>
-        </tr>
+      <tbody id="patientTableBody">
       </tbody>
     </table>
   </div>
@@ -113,34 +72,123 @@
 </footer>
 
 <script>
-  // Search functionality
-  const searchForm = document.getElementById('searchForm');
-  const table = document.getElementById('patientTable').getElementsByTagName('tbody')[0];
+  document.addEventListener('DOMContentLoaded', async () => {
+    // 1) Only allow staff 
+    let authUser;
+    try {
+      authUser = requireRole('staff');   
+    } catch (err) {
+      // requireRole already redirected; just stop.
+      return;
+    }
 
-  searchForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const number = document.getElementById('patientNumber').value.toLowerCase();
-    const name = document.getElementById('patientName').value.toLowerCase();
+    const tbody = document.getElementById('patientTableBody');
+    const searchForm = document.getElementById('searchForm');
 
-    for (let row of table.rows) {
-      const rowNumber = row.cells[0].innerText.toLowerCase();
-      const rowName = row.cells[1].innerText.toLowerCase();
-      if ((number && !rowNumber.includes(number)) || (name && !rowName.includes(name))) {
-        row.style.display = 'none';
-      } else {
-        row.style.display = '';
+    // Show a quick loading row
+    tbody.innerHTML = '<tr><td colspan="8">Loading patients…</td></tr>';
+
+    try {
+      // 2) Get all users from backend and filter to patients
+      const { users } = await getAllUsers();   // api.js helper → /api/admin/users/all
+      const patients = (users || []).filter(u => u.role === 'patient');
+
+      // 3) Render table rows
+      tbody.innerHTML = '';
+
+     async function renderPatients(patients) {
+      const tbody = document.querySelector('#patientTable tbody');
+      tbody.innerHTML = '';
+
+      for (const p of patients) {
+        const tr = document.createElement('tr');
+
+        // store real DB id on the row
+        tr.dataset.patientId = p.user_id;
+
+        const fullName = `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email;
+        const contact  = p.phone || p.email || '-';
+
+        // look up latest reading for this patient 
+        let lastTestText = '-';
+        try {
+          // if you changed getReadings to accept a limit:
+          // const readings = await getReadings(p.user_id, 1);
+          const readings = await getReadings(p.user_id);   // from api.js
+          const last = readings && readings[0];
+
+          if (last) {
+            const value =
+              last.value ??
+              last.blood_sugar ??
+              last.bloodSugar ??
+              last.reading ??
+              '-';
+            const unit = last.unit || 'mg/dL';
+            lastTestText = `Blood Sugar: ${value} ${unit}`;
+          }
+        } catch (err) {
+          console.error('Failed to fetch last reading for user', p.user_id, err);
+        }
+
+        tr.innerHTML = `
+          <td>${String(p.user_id).padStart(3, '0')}</td>
+          <td>${fullName}</td>
+          <td>-</td>
+          <td>${p.gender || '-'}</td>
+          <td>${contact}</td>
+          <td>-</td>
+          <td>${lastTestText}</td>
+          <td>
+            <a href="#" class="btn actionBtn" data-action="view">View</a>
+            <a href="#" class="btn actionBtn" data-action="update">Update</a>
+            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
+          </td>
+        `;
+
+          tbody.appendChild(tr);
       }
+    }
+
+      // 4) Hook up search + actions now that rows exist
+      wireSearch(searchForm, tbody);
+      wireActions(tbody);
+    } catch (err) {
+      console.error('Failed to load patients:', err);
+      tbody.innerHTML = `<tr><td colspan="8" style="color:red">Failed to load patients: ${err.message}</td></tr>`;
     }
   });
 
-  // Handle action buttons
-  const actionButtons = document.querySelectorAll('.actionBtn');
-  actionButtons.forEach(btn => {
-    btn.addEventListener('click', function(e) {
+  // Search is still front-end only, just against whatever rows are currently rendered
+  function wireSearch(form, tbody) {
+    form.addEventListener('submit', function (e) {
       e.preventDefault();
-      const row = this.closest('tr');
+      const number = document.getElementById('patientNumber').value.toLowerCase();
+      const name = document.getElementById('patientName').value.toLowerCase();
+
+      Array.from(tbody.rows).forEach(row => {
+        const rowNumber = row.cells[0].innerText.toLowerCase();
+        const rowName = row.cells[1].innerText.toLowerCase();
+
+        const numberMismatch = number && !rowNumber.includes(number);
+        const nameMismatch = name && !rowName.includes(name);
+
+        row.style.display = (numberMismatch || nameMismatch) ? 'none' : '';
+      });
+    });
+  }
+
+  // Actions: store the real patient id + display data in localStorage and navigate
+  function wireActions(tbody) {
+    tbody.addEventListener('click', function (e) {
+      const btn = e.target.closest('.actionBtn');
+      if (!btn) return;
+      e.preventDefault();
+
+      const row = btn.closest('tr');
       const patient = {
-        id: row.cells[0].innerText,
+        id: row.dataset.patientId,              // REAL user_id from backend
+        number: row.cells[0].innerText,
         name: row.cells[1].innerText,
         age: row.cells[2].innerText,
         gender: row.cells[3].innerText,
@@ -148,15 +196,19 @@
         medicalHistory: row.cells[5].innerText,
         lastTestResults: row.cells[6].innerText
       };
+
       localStorage.setItem('selectedPatient', JSON.stringify(patient));
 
-      // Redirect based on action
-      const action = this.getAttribute('data-action');
-      if (action === 'view') window.location.href = 'staff_view.html';
-      if (action === 'update') window.location.href = 'update_medical.html';
-      if (action === 'upload') window.location.href = 'upload_documents.html';
+      const action = btn.getAttribute('data-action');
+      if (action === 'view') {
+        window.location.href = 'staff_view_patient.html';
+      } else if (action === 'update') {
+        window.location.href = 'update_medical.html';
+      } else if (action === 'upload') {
+        window.location.href = 'upload_documents.html';
+      }
     });
-  });
+  }
 </script>
 
 </body>

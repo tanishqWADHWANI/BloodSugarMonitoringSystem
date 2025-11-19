@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Staff Login</title>
   <link rel="stylesheet" href="css/style.css" />
-  
+  <script src="js/api.js"></script>
 </head>
 
 <body>
@@ -59,30 +59,47 @@
   </footer>
 
   <script>
-    const staffForm = document.getElementById('staffLoginForm');
-    const staffEmail = document.getElementById('staffEmail');
-    const staffPassword = document.getElementById('staffPassword');
-    const demoStaffBtn = document.getElementById('demoStaffLogin');
+    document.addEventListener('DOMContentLoaded', () => {
+      const form   = document.getElementById('staffLoginForm');
+      const email  = document.getElementById('staffEmail');
+      const pass   = document.getElementById('staffPassword');
+      const msgBox = document.getElementById('loginMsg');   // add a <div id="loginMsg"></div> near the form if you don’t have one
 
-    staffForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (!staffEmail.value.trim() || !staffPassword.value.trim()) {
-        alert('Please enter email and password.');
-        return;
-      }
-      localStorage.setItem('loggedInStaff', staffEmail.value.trim());
-      window.location.href = 'staff_dashboard.html';
-    });
+      if (!form) return;
 
-    demoStaffBtn.addEventListener('click', function () {
-      const demoEmail = 'demo@staff.com';
-      const demoPass = 'demo123';
-      staffEmail.value = demoEmail;
-      staffPassword.value = demoPass;
-      localStorage.setItem('loggedInStaff', demoEmail);
-      window.location.href = 'staff_dashboard.html';
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (msgBox) msgBox.textContent = '';
+
+        try {
+          const emailVal = (email.value || '').trim();
+          const passVal  = (pass.value || '').trim();
+
+          if (!emailVal || !passVal) {
+            throw new Error('Enter email and password.');
+          }
+
+          // This calls /api/login via api.js and also writes authUser to localStorage
+          const user = await loginUser(emailVal, passVal, 'staff');
+
+          // At this point:
+          //   - user.user_id contains the real staff user id
+          //   - user.role === 'staff'
+          //   - localStorage["authUser"] now contains the same user object
+
+          const target = `staff_dashboard.html?user_id=${encodeURIComponent(user.user_id)}`;
+          window.location.href = target;
+        } catch (err) {
+          console.error(err);
+          if (msgBox) {
+            msgBox.textContent = err.message || 'Login failed. Check your credentials.';
+          } else {
+            alert(err.message || 'Login failed');
+          }
+        }
+      });
     });
-  </script>
+</script>
 </body>
 
 </html>
