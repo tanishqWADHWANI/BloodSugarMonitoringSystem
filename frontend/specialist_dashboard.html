@@ -300,7 +300,7 @@
         // Update greeting
         const specialistNameDisplay = document.getElementById('specialistNameDisplay');
         if (specialistNameDisplay && user.first_name) {
-          specialistNameDisplay.textContent = `Dr. ${user.first_name} ${user.last_name || ''}`.trim();
+          specialistNameDisplay.textContent = `${user.first_name} ${user.last_name || ''}`.trim();
         }
       }
     } catch (error) {
