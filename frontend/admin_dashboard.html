@@ -48,8 +48,10 @@
                 <div><strong>📧 Email:</strong> <span id="adminEmail">Loading...</span></div>
                 <div><strong>📱 Phone:</strong> <span id="adminPhone">Loading...</span></div>
                 <div><strong>🎂 Birthday:</strong> <span id="adminBirthday">Loading...</span></div>
+                <div><strong>🔢 User ID:</strong> <span id="adminUserId">Loading...</span></div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">System account identifier</div>
                 <div><strong>🆔 License ID:</strong> <span id="adminLicenseId">Not applicable</span></div>
-                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">ℹ️ Province/State Professional License Number</div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">ℹ️ Province/State Professional License Number</div>
             </div>
 
             <!-- Edit Profile Form -->
@@ -1763,6 +1765,7 @@
                         document.getElementById('adminEmail').textContent = userData.email || 'Not provided';
                         document.getElementById('adminPhone').textContent = userData.phone || 'Not provided';
                         document.getElementById('adminBirthday').textContent = userData.date_of_birth || 'Not set';
+                        document.getElementById('adminUserId').textContent = userData.user_id || 'N/A';
                         document.getElementById('adminLicenseId').textContent = userData.license_id || 'Not applicable';
                         
                         // Display profile image if available

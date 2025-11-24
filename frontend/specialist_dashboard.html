@@ -74,11 +74,13 @@
 
       <!-- Profile Display -->
       <div id="profileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-        <div><strong>📧 Email:</strong> <span id="profileEmail">Loading...</span></div>
+        <div><strong>💼 Email:</strong> <span id="profileEmail">Loading...</span></div>
         <div><strong>📱 Phone:</strong> <span id="profilePhone">Loading...</span></div>
         <div><strong>🎂 Birthday:</strong> <span id="profileBirthday">Loading...</span></div>
+        <div><strong>🔢 User ID:</strong> <span id="profileUserId">Loading...</span></div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">System account identifier</div>
         <div><strong>🆔 License ID:</strong> <span id="profileLicenseId">Loading...</span></div>
-        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">ℹ️ Province/State Professional License Number</div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">ℹ️ Province/State Professional License Number</div>
       </div>
 
       <!-- Edit Profile Form -->
@@ -285,6 +287,7 @@
         document.getElementById('profileEmail').textContent = user.email || 'Not provided';
         document.getElementById('profilePhone').textContent = user.phone || 'Not provided';
         document.getElementById('profileBirthday').textContent = user.date_of_birth || 'Not provided';
+        document.getElementById('profileUserId').textContent = user.user_id || 'N/A';
         document.getElementById('profileLicenseId').textContent = user.license_id || 'Not provided';
         
         // Display profile image if available

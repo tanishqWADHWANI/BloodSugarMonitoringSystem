@@ -251,14 +251,18 @@
             <input type="date" id="dateOfBirth" />
           </div>
           <div class="form-field">
-            <label for="healthCareNumber">🏥 Health Care Number</label>
-            <input type="text" id="healthCareNumber" placeholder="HCN-123456" />
+            <label for="userId">🔢 User ID</label>
+            <input type="text" id="userId" disabled />
+            <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">System account identifier (read-only)</small>
           </div>
         </div>
 
-        <div class="form-field">
-          <label for="userId">🆔 User ID</label>
-          <input type="text" id="userId" disabled style="background: #f5f5f5;" />
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="healthCareNumber">🏥 Health Care Number</label>
+            <input type="text" id="healthCareNumber" placeholder="HCN-123456" />
+            <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Provincial/State health insurance number</small>
+          </div>
         </div>
 
         <!-- Action Buttons -->

@@ -251,15 +251,18 @@
             <input type="date" id="dateOfBirth" />
           </div>
           <div class="form-field">
+            <label for="userId">🔢 User ID</label>
+            <input type="text" id="userId" disabled />
+            <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">System account identifier (read-only)</small>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
             <label for="licenseId">🆔 License ID</label>
             <input type="text" id="licenseId" placeholder="e.g. AD12345 (Province/State License)" />
             <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Professional license number issued by your province/state board</small>
           </div>
-        </div>
-
-        <div class="form-field">
-          <label for="userId">🆔 User ID</label>
-          <input type="text" id="userId" disabled style="background: #f5f5f5;" />
         </div>
 
         <!-- Action Buttons -->

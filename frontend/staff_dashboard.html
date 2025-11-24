@@ -253,11 +253,13 @@
 
     <!-- Profile Display -->
     <div id="profileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-      <div><strong>📧 Email:</strong> <span id="profileEmail">Loading...</span></div>
+      <div><strong>💼 Email:</strong> <span id="profileEmail">Loading...</span></div>
       <div><strong>📱 Phone:</strong> <span id="profilePhone">Loading...</span></div>
       <div><strong>🎂 Birthday:</strong> <span id="profileBirthday">Loading...</span></div>
+      <div><strong>🔢 User ID:</strong> <span id="profileUserId">Loading...</span></div>
+      <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">System account identifier</div>
       <div><strong>🆔 License ID:</strong> <span id="profileLicenseId">Loading...</span></div>
-      <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">ℹ️ Province/State Professional License Number</div>
+      <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">ℹ️ Province/State Professional License Number</div>
     </div>
 
     <!-- Edit Profile Form -->
@@ -690,6 +692,7 @@
 
       if (response.ok && userData.user) {
         currentUserData = {
+          userId: userData.user.user_id,
           firstName: userData.user.first_name,
           lastName: userData.user.last_name,
           email: userData.user.email,
@@ -702,6 +705,7 @@
         document.getElementById('profileEmail').textContent = currentUserData.email;
         document.getElementById('profilePhone').textContent = currentUserData.phone;
         document.getElementById('profileBirthday').textContent = currentUserData.dateOfBirth || 'Not set';
+        document.getElementById('profileUserId').textContent = currentUserData.userId || 'N/A';
         document.getElementById('profileLicenseId').textContent = currentUserData.licenseId;
         
         // Display profile image if available
