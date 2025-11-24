@@ -834,12 +834,34 @@ def get_all_patients():
 
 @app.route('/api/specialist/<int:specialist_id>/patients', methods=['GET'])
 def get_specialist_patients(specialist_id):
-    """Get all patients assigned to a specialist"""
+    """Get all patients assigned to a specialist
+    
+    Args:
+        specialist_id: Can be either user_id or specialist_id from specialists table
+    """
     try:
-        patients = db.get_specialist_patients(specialist_id)
+        # First check if this is a user_id, and if so, get the specialist_id
+        cursor = db._get_cursor()
+        try:
+            cursor.execute(
+                "SELECT specialist_id FROM specialists WHERE user_id = %s OR specialist_id = %s",
+                (specialist_id, specialist_id)
+            )
+            result = cursor.fetchone()
+            
+            if result:
+                actual_specialist_id = result['specialist_id']
+            else:
+                return jsonify({"error": "Specialist not found"}), 404
+                
+        finally:
+            cursor.close()
+        
+        # Get patients using the actual specialist_id from specialists table
+        patients = db.get_specialist_patients(actual_specialist_id)
         
         return jsonify({
-            "specialistId": specialist_id,
+            "specialistId": actual_specialist_id,
             "patients": patients,
             "count": len(patients)
         }), 200
