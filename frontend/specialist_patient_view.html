@@ -221,6 +221,13 @@
   const patientUserIdFinal = resolvedUserId;
   const patientIdFinal = resolvedPatientId;
 
+  console.log('=== Patient View Context ===');
+  console.log('Patient Number:', patientNumber);
+  console.log('Patient Name:', patientName);
+  console.log('Patient User ID (for readings):', patientUserIdFinal);
+  console.log('Patient ID (for feedback):', patientIdFinal);
+  console.log('===========================');
+
   const patientNumberSpan = document.getElementById('patientNumber');
   const patientNameSpan = document.getElementById('patientName');
   if (patientNumberSpan) patientNumberSpan.textContent = patientNumber;
@@ -267,20 +274,35 @@
     if (!readingsBody) return;
 
     try {
-      console.log('Loading readings for patient user_id:', patientUserIdFinal);
+      console.log('=== Loading Readings ===');
+      console.log('API URL:', `${API_BASE}/api/readings/${patientUserIdFinal}?days=30`);
+      console.log('Patient User ID:', patientUserIdFinal);
+      
+      if (!patientUserIdFinal) {
+        throw new Error('Patient User ID is missing');
+      }
+      
       const res = await fetch(
         `${API_BASE}/api/readings/${patientUserIdFinal}?days=30`
       );
+      
+      console.log('Response status:', res.status);
+      
       if (!res.ok) {
-        throw new Error(`Server responded ${res.status}`);
+        const errorText = await res.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Server responded ${res.status}: ${errorText}`);
       }
+      
       const data = await res.json();
-      console.log('Readings loaded:', data);
+      console.log('Readings data received:', data);
+      console.log('Number of readings:', data.readings?.length || 0);
+      
       renderReadings(data.readings || []);
     } catch (err) {
       console.error('Error loading readings:', err);
       readingsBody.innerHTML =
-        '<tr><td colspan="7">Error loading readings from server.</td></tr>';
+        `<tr><td colspan="7" style="color: red;">Error loading readings from server: ${err.message}</td></tr>`;
     }
   }
 
