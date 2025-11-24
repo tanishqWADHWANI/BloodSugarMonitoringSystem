@@ -1118,23 +1118,39 @@
       const messagesContainer = document.getElementById('messagesContainer');
       const patientId = localStorage.getItem('patientId');
       
-      if (!messagesContainer || !patientId) {
-        console.log('Messages container or patientId not available');
+      console.log('=== Loading Specialist Messages ===');
+      console.log('Patient ID:', patientId);
+      console.log('Messages container exists:', !!messagesContainer);
+      
+      if (!messagesContainer) {
+        console.error('Messages container not found');
+        return;
+      }
+      
+      if (!patientId) {
+        console.warn('Patient ID not available - user may need to log in again');
+        messagesContainer.innerHTML = '<p class="info-text">Please log in to view messages.</p>';
         return;
       }
 
       try {
-        console.log('Loading specialist messages for patient_id:', patientId);
-        const response = await fetch(`${API_BASE}/api/patient/${patientId}/feedback`);
+        const url = `${API_BASE}/api/patient/${patientId}/feedback`;
+        console.log('Fetching from:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          const errorText = await response.text();
+          console.error('API Error:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
-        const messages = data.feedback || [];
+        console.log('Response data:', data);
         
-        console.log('Loaded messages:', messages);
+        const messages = data.feedback || [];
+        console.log('Number of messages:', messages.length);
 
         if (messages.length === 0) {
           messagesContainer.innerHTML = '<p class="info-text">No messages at this time. Your specialist will send messages here when they review your health data.</p>';
@@ -1167,10 +1183,12 @@
             </div>
           `;
         }).join('');
+        
+        console.log('✅ Messages loaded successfully');
 
       } catch (error) {
         console.error('Error loading specialist messages:', error);
-        messagesContainer.innerHTML = '<p class="error-text">Unable to load messages at this time.</p>';
+        messagesContainer.innerHTML = `<p class="error-text" style="color: #dc3545;">Unable to load messages: ${error.message}</p>`;
       }
     }
 
