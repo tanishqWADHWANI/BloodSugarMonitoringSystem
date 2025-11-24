@@ -1165,6 +1165,45 @@ def assign_patient_api():
         logger.error(f"Error in assignment API: {str(e)}", exc_info=True)
         return jsonify({"error": "Failed to complete assignment."}), 500
 
+@app.route('/api/assignments', methods=['GET'])
+def get_all_assignments_api():
+    """API endpoint to get all patient-specialist assignments from database."""
+    try:
+        cursor = db._get_cursor()
+        try:
+            cursor.execute("""
+                SELECT 
+                    sp.specialist_id,
+                    sp.patient_id,
+                    sp.created_at,
+                    p.user_id as patient_user_id,
+                    s.user_id as specialist_user_id,
+                    CONCAT(pu.first_name, ' ', pu.last_name) as patient_name,
+                    pu.email as patient_email,
+                    CONCAT(su.first_name, ' ', su.last_name) as specialist_name,
+                    su.email as specialist_email
+                FROM specialistpatient sp
+                JOIN patients p ON sp.patient_id = p.patient_id
+                JOIN specialists s ON sp.specialist_id = s.specialist_id
+                JOIN users pu ON p.user_id = pu.user_id
+                JOIN users su ON s.user_id = su.user_id
+                ORDER BY sp.created_at DESC
+            """)
+            
+            assignments = cursor.fetchall()
+            
+            return jsonify({
+                "count": len(assignments),
+                "assignments": assignments
+            }), 200
+            
+        finally:
+            cursor.close()
+            
+    except Exception as e:
+        logger.error(f"Error fetching assignments: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to fetch assignments."}), 500
+
 @app.route('/api/assignments/<int:specialist_id>/<int:patient_id>', methods=['DELETE'])
 def remove_assignment_api(specialist_id, patient_id):
     """API endpoint to remove a patient assignment from a specialist."""
