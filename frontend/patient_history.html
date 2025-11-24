@@ -120,185 +120,120 @@
   </header>
 
   <main>
-    <h1>Patient History</h1>
-    <p>View and analyze your past health readings below. You can select a date range, or filter by daily, weekly, monthly, or yearly trends.</p>
+    <h1>📋 My Complete Health History</h1>
+    <p>View, edit, and manage all your recorded health entries. All your recorded entries are displayed here. Review patterns, edit recent entries, or remove incorrect data. Your specialist can see these entries to better understand your health trends.</p>
     
     <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:15px;margin-bottom:20px;border-radius:6px;">
-      <strong>📌 Note:</strong> This page automatically loads your health history. If you don't see data, make sure you have entries saved in your dashboard.
+      <strong>📌 Note:</strong> This page displays your complete health history from the database. To add new entries, visit your dashboard.
       <button onclick="location.href='patient_dashboard.html'" style="margin-left:10px;padding:8px 16px;background:#004080;color:white;border:none;border-radius:6px;cursor:pointer;">Go to Dashboard</button>
     </div>
 
-    <!-- Controls -->
-    <div class="controls">
-      <label for="viewSelect">View:</label>
-      <select id="viewSelect">
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-      </select>
-
-      <label for="monthSelect">Month:</label>
-      <select id="monthSelect">
-        <option value="">All Months</option>
-      </select>
-
-      <label for="startDate">From:</label>
-      <input type="date" id="startDate">
-
-      <label for="endDate">To:</label>
-      <input type="date" id="endDate">
-
-      <button id="applyFilter">Apply</button>
-      <button id="resetFilter">Reset</button>
-    </div>
-
-    <!-- Chart -->
-    <div class="chart-container">
-      <canvas id="bloodSugarChart"></canvas>
-    </div>
-
-    <!-- Table -->
-    <table id="historyTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Time</th>
-          <th>Blood Sugar (mg/dL)</th>
-          <th>Blood Pressure</th>
-          <th>Heart Rate</th>
-          <th>Medications</th>
-          <th>Food Time</th>
-          <th>Food Taken</th>
-          <th>Activity / Notes</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <!-- Health History Table -->
+    <section style="background: white; padding: 30px; margin-bottom: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+      <div style="overflow-x: auto; margin-top: 20px;">
+        <table id="entriesTable" style="width: 100%; border-collapse: collapse; background: white;">
+          <thead>
+            <tr style="background: linear-gradient(135deg, #004080, #0059b3); color: white;">
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">📅 Date</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">⏰ Time</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">🩸 Blood Sugar</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">💓 BP</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">❤️ HR</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">💊 Medications</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">🍽️ Meal Time</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">🥗 Food</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">📝 Notes</th>
+              <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd;">⚙️ Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <div class="footer">
     &copy; 2025 Online Blood Sugar Monitoring Clinic
   </div>
 
- <script>
-  // --- utilities ---
-  // Get the active user ID from localStorage or URL parameter
-  function activeUserId() {
-    // First check URL parameter
-    const p = new URLSearchParams(window.location.search);
-    const q = p.get('user_id');
-    if (q) return q;
-    
-    // Then check localStorage for logged in patient
-    const userId = localStorage.getItem('userId');
-    if (userId) return userId;
-    
-    const patientId = localStorage.getItem('patientId');
-    if (patientId) return patientId;
-    
-    // Fallback to prompt only if nothing found
-    return window.prompt('Enter Patient User ID to view history:');
-  }
-
-   function mapToRows(readingArray) {
-    const arr = Array.isArray(readingArray) ? readingArray : [];
-
-    return arr.map(r => {
-      // Backend stores timestamp in "date_time" column, plus some fallbacks
-      const ts = r.date_time || r.timestamp || r.time || r.created_at;
-      let date = '', time = '';
-
-      if (ts) {
-        const d = new Date(ts);
-        if (!Number.isNaN(d.getTime())) {
-          // Normalise to YYYY-MM-DD and HH:MM
-          date = d.toISOString().slice(0, 10);
-          time = d.toTimeString().slice(0, 5);
-        }
-      }
-
-      // If backend already gave separate date/time fields, use them as fallback
-      if (!date && r.date) date = r.date;
-      if (!time && r.time) time = r.time;
-
-      // Blood sugar value is stored as "value" in DB, but we support other keys too
-      const blood = r.value
-                 ?? r.bloodSugar
-                 ?? r.blood_sugar
-                 ?? r.reading
-                 ?? '-';
-
-      return {
-        date,
-        time,
-        bloodSugar: blood,
-        bloodPressure: r.bloodPressure || '-',
-        heartRate: r.heartRate || '-',
-        medications: r.medications || '-',
-        foodTime: r.food_time || r.foodTime || '-',
-        foodTaken: r.food_intake || r.foodTaken || '-',
-        activity: r.activity || r.symptoms_notes || r.additional_note || '-'
-      };
-    }).filter(e => e.date); // ensure each row has a date for grouping/filters
-  }
-  // --- grouping for the chart only (table shows raw rows) ---
-  function startOfWeekISO(d) {
-    const copy = new Date(d);
-    const day = copy.getDay();            // 0=Sun..6=Sat
-    const diff = (day === 0 ? -6 : 1) - day; // shift to Monday as week start
-    copy.setDate(copy.getDate() + diff);
-    copy.setHours(0,0,0,0);
-    return copy;
-  }
-
-  function groupForChart(rows, view) {
-    if (!rows.length || view === 'daily') {
-      // daily: each row is a point; if multiple per day, show the last one
-      const byDay = {};
-      rows.forEach(r => {
-        if (!byDay[r.date]) byDay[r.date] = [];
-        byDay[r.date].push(Number(r.bloodSugar));
-      });
-      const labels = Object.keys(byDay).sort();
-      const data = labels.map(k => {
-        const vals = byDay[k].filter(Number.isFinite);
-        if (!vals.length) return null;
-        // average per day
-        return vals.reduce((a,b)=>a+b,0)/vals.length;
-      });
-      return { labels, data };
+  <style>
+    /* Table styles */
+    #entriesTable tbody tr {
+      border-bottom: 1px solid #e0e0e0;
+      transition: background 0.2s;
     }
 
-    // weekly / monthly / yearly
-    const buckets = {};
-    rows.forEach(r => {
-      const d = new Date(r.date);
-      if (isNaN(d)) return;
-      let key;
-      if (view === 'weekly') {
-        key = startOfWeekISO(d).toISOString().slice(0,10); // week start date
-      } else if (view === 'monthly') {
-        key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      } else if (view === 'yearly') {
-        key = `${d.getFullYear()}`;
-      } else {
-        key = r.date; // fallback
-      }
-      if (!buckets[key]) buckets[key] = [];
-      const v = Number(r.bloodSugar);
-      if (Number.isFinite(v)) buckets[key].push(v);
-    });
+    #entriesTable tbody tr:hover {
+      background: #f8f9fa;
+    }
 
-    const labels = Object.keys(buckets).sort();
-    const data = labels.map(k => {
-      const vals = buckets[k];
-      return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
-    });
-    return { labels, data };
+    #entriesTable tbody td {
+      padding: 12px 15px;
+      color: #333;
+      font-size: 0.9rem;
+    }
+
+    #entriesTable tbody tr.abnormal-row {
+      background: #fff5f5;
+    }
+
+    #entriesTable tbody td.abnormal {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .edit-btn, .del-btn {
+      padding: 6px 12px;
+      margin: 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .edit-btn {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .edit-btn:hover {
+      background: #138496;
+    }
+
+    .del-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .del-btn:hover {
+      background: #c82333;
+    }
+  </style>
+
+ <script>
+  const currentPatient = (localStorage.getItem('loggedInPatient') || 'patient').toLowerCase();
+  const LS_KEY = 'health_' + currentPatient;
+
+  const tbody = document.querySelector('#entriesTable tbody');
+
+  // Load entries from localStorage
+  function loadEntries() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   }
 
-  // Helper function to check if values are abnormal
+  // Save entries to localStorage
+  function saveEntries(entries) {
+    localStorage.setItem(LS_KEY, JSON.stringify(entries));
+  }
+
+  // Helper functions to check abnormal values
   function isAbnormalBloodSugar(value) {
     const num = parseFloat(value);
     return !isNaN(num) && (num < 70 || num > 130);
@@ -319,18 +254,56 @@
     return !isNaN(num) && (num < 60 || num > 80);
   }
 
-  function renderTable(rows) {
-    const tbody = document.querySelector('#historyTable tbody');
-    if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center">No readings.</td></tr>`;
+  // Render table (async to load from database)
+  async function renderTable() {
+    let rows = loadEntries(); // Load from localStorage first
+    
+    // Try to load from database
+    const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+    if (userId) {
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/readings/${userId}?days=365`);
+        if (response.ok) {
+          const dbReadings = await response.json();
+          if (dbReadings && dbReadings.length > 0) {
+            // Convert database format to table format
+            rows = dbReadings.map(r => ({
+              date: r.date_time ? new Date(r.date_time).toISOString().split('T')[0] : '-',
+              time: r.date_time ? new Date(r.date_time).toTimeString().slice(0,5) : '-',
+              bloodSugar: r.value || '-',
+              bloodPressure: r.bloodPressure || '-',
+              heartRate: r.heartRate || '-',
+              medications: r.medications || '-',
+              foodTime: r.food_time || r.food_intake || '-',
+              foodTaken: r.food_intake || '-',
+              activity: r.activity || r.symptoms_notes || '-'
+            }));
+            console.log('✓ Loaded', rows.length, 'entries from database');
+          }
+        }
+      } catch (e) {
+        console.error('Could not load from database:', e);
+      }
+    }
+    
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;">
+        <strong>No health history found.</strong><br><br>
+        <p>Start tracking your health by adding entries in your <a href="patient_dashboard.html" style="color:#004080;text-decoration:underline;font-weight:bold;">Dashboard</a>.</p>
+      </td></tr>`;
       return;
     }
-    // sort ascending by date then time
-    const sorted = [...rows].sort((a,b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : (a.time > b.time ? 1 : -1)));
-    tbody.innerHTML = sorted.map(e => {
-      const bsAbnormal = isAbnormalBloodSugar(e.bloodSugar);
-      const bpAbnormal = isAbnormalBloodPressure(e.bloodPressure);
-      const hrAbnormal = isAbnormalHeartRate(e.heartRate);
+
+    // Sort descending by date (newest first)
+    rows.sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return b.time.localeCompare(a.time);
+    });
+
+    tbody.innerHTML = rows.map((r, i) => {
+      const bsAbnormal = isAbnormalBloodSugar(r.bloodSugar);
+      const bpAbnormal = isAbnormalBloodPressure(r.bloodPressure);
+      const hrAbnormal = isAbnormalHeartRate(r.heartRate);
       const hasAbnormal = bsAbnormal || bpAbnormal || hrAbnormal;
       
       const rowClass = hasAbnormal ? ' class="abnormal-row"' : '';
@@ -341,125 +314,63 @@
       
       return `
       <tr${rowClass}>
-        <td>${warningIcon}${e.date||'-'}</td><td>${e.time||'-'}</td>
-        <td${bsClass}>${e.bloodSugar}</td><td${bpClass}>${e.bloodPressure}</td>
-        <td${hrClass}>${e.heartRate}</td><td>${e.medications}</td>
-        <td>${e.foodTime}</td><td>${e.foodTaken}</td>
-        <td>${e.activity}</td>
-      </tr>`).join('');
+        <td>${warningIcon}${r.date}</td>
+        <td>${r.time}</td>
+        <td${bsClass}>${r.bloodSugar}</td>
+        <td${bpClass}>${r.bloodPressure || '-'}</td>
+        <td${hrClass}>${r.heartRate || '-'}</td>
+        <td>${r.medications || '-'}</td>
+        <td>${r.foodTime || '-'}</td>
+        <td>${r.foodTaken || '-'}</td>
+        <td>${r.activity || '-'}</td>
+        <td>
+          <button type="button" class="edit-btn" data-index="${i}">Edit</button>
+          <button type="button" class="del-btn" data-index="${i}">Delete</button>
+        </td>
+      </tr>
+    `}).join('');
   }
 
-  // chart instance holder
-  let bloodSugarChartInstance = null;
+  // Edit / Delete handlers
+  tbody.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = Number(btn.dataset.index);
+    const rows = loadEntries();
 
-  function renderChart(rows, view) {
-    const ctx = document.getElementById('bloodSugarChart').getContext('2d');
-
-    // If we already have a chart instance, destroy it before creating a new one
-    if (bloodSugarChartInstance) {
-      bloodSugarChartInstance.destroy();
+    if (btn.classList.contains('del-btn')) {
+      if (confirm('Delete this entry? This action cannot be undone.')) {
+        rows.splice(idx, 1);
+        saveEntries(rows);
+        renderTable();
+        alert('Entry deleted successfully.');
+      }
+      return;
     }
 
-    const { labels, data } = groupForChart(rows, view);
+    if (btn.classList.contains('edit-btn')) {
+      alert('To edit this entry, please go to your Dashboard and add a corrected version. You can then delete this old entry.');
+    }
+  });
 
-    // Create and save the new instance
-    bloodSugarChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Average Blood Sugar (mg/dL)',
-          data,
-          borderWidth: 2,
-          fill: false,
-          tension: 0.2
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { title: { display: true, text: 'Period' } },
-          y: { title: { display: true, text: 'mg/dL' } }
-        }
-      }
-    });
-  }
-
-  function populateMonthSelect(rows) {
-    const sel = document.getElementById('monthSelect');
-    const months = [...new Set(rows.map(r => r.date).filter(Boolean).map(d => d.slice(0,7)))].sort();
-    months.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
-      sel.appendChild(opt);
-    });
-  }
-
-  function applyFiltersTo(rows) {
-    const start = document.getElementById('startDate').value;
-    const end   = document.getElementById('endDate').value;
-    const month = document.getElementById('monthSelect').value;
-    const view  = document.getElementById('viewSelect').value;
-
-    let f = [...rows];
-    if (start) { const S = new Date(start); f = f.filter(r => r.date && new Date(r.date) >= S); }
-    if (end)   { const E = new Date(end);   f = f.filter(r => r.date && new Date(r.date) <= E); }
-    if (month) f = f.filter(r => r.date && r.date.startsWith(month));
-
-    renderTable(f);
-    renderChart(f, view);
-  }
-
+  // Initialize page - load and display all health history
   document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const userId = activeUserId();
-      if (!userId) {
-        alert('Could not determine user ID. Please log in again.');
-        window.location.href = 'patient.html';
-        return;
-      }
-
-      console.log('Loading history for user ID:', userId);
-      console.log('Database connected: Flask server should be running on http://127.0.0.1:5000');
-      
-      let rows = [];
-      
-      // ALWAYS load from API/database - no localStorage fallback
-      try {
-        console.log(`Fetching readings from: /api/readings/${userId}?days=30`);
-        const apiReadings = await getReadings(userId);  // from js/api.js
-        console.log('API Response:', apiReadings);
-        rows = mapToRows(apiReadings);
-        console.log('✓ Loaded ' + rows.length + ' entries from database');
-        
-        if (rows.length === 0) {
-          console.warn('⚠️ Database returned 0 entries for user_id:', userId);
-          console.warn('This means Alice has no data in the bloodsugarreadings table.');
-          console.warn('Solution: Visit the Dashboard - it will auto-create 8 demo entries on first visit.');
-        }
-      } catch (apiError) {
-        console.error('❌ Failed to connect to database:', apiError);
-        console.error('Please ensure:');
-        console.error('1. Flask server is running: cd backend && python app.py');
-        console.error('2. MySQL/XAMPP is running');
-        console.error('3. Database blood_sugar_db exists');
-        
-        const tbody = document.querySelector('#historyTable tbody');
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#dc3545;">
-          <strong>❌ Database Connection Failed</strong><br><br>
-          Error: ${apiError.message}<br><br>
-          <strong>To fix this:</strong><br>
-          1. Ensure Flask server is running: <code>cd backend && python app.py</code><br>
-          2. Ensure MySQL/XAMPP is running<br>
-          3. Check browser console (F12) for detailed error messages
-        </td></tr>`;
-        return;
-      }
-
-      if (rows.length === 0) {
-        const tbody = document.querySelector('#historyTable tbody');
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;">
-          <strong>No health history found in database.</strong><br><br>
+    await renderTable();
+    
+    //logout behavior
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('loggedInPatient');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('patientId');
+        window.location.href = 'index.html';
+      });
+    }
+  });
+</script>
+</body>
+</html>
           <p>This is normal for new accounts. Your demo data will be created automatically.</p>
           <p><strong>Next step:</strong> Go to your <a href="patient_dashboard.html" style="color:#004080;text-decoration:underline;font-weight:bold;">Dashboard</a> 
           - it will automatically create 8 sample health entries with abnormal readings for testing.</p>
