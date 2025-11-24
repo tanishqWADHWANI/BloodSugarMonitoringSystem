@@ -109,13 +109,29 @@
     'clee': 'Dr. Christina Lee' 
   };
   
+  // Map usernames to actual user_ids in the database
+  const usernameToUserIdMap = {
+    'jsmith': 101,  // Dr. John Smith's user_id
+    'ajones': 102,  // Dr. Alex Jones's user_id
+    'clee': 103     // Dr. Christina Lee's user_id
+  };
+  
   let specialistName = 'Specialist';
+  let specialistUserId = localStorage.getItem('specialistUserId') || '';
   let specialistId = localStorage.getItem('specialistId') || '';
   
   if (storedUsername) {
     const usernameLower = storedUsername.toLowerCase();
     if (specialistDisplayMap[usernameLower]) {
       specialistName = specialistDisplayMap[usernameLower];
+      
+      // Set the user_id for API calls
+      if (usernameToUserIdMap[usernameLower]) {
+        specialistUserId = String(usernameToUserIdMap[usernameLower]);
+        localStorage.setItem('specialistUserId', specialistUserId);
+      }
+      
+      // Keep old specialistId for compatibility
       const demoMap = { 'jsmith': 1, 'ajones': 2, 'clee': 3 };
       if (!specialistId && demoMap[usernameLower]) {
         specialistId = String(demoMap[usernameLower]);
@@ -128,7 +144,12 @@
     specialistName = storedFull;
   }
   
-  console.log('Specialist Info:', { username: storedUsername, name: specialistName, id: specialistId });
+  console.log('Specialist Info:', { 
+    username: storedUsername, 
+    name: specialistName, 
+    userId: specialistUserId,
+    oldId: specialistId 
+  });
   
   const specialistNameDisplay = document.getElementById('specialistNameDisplay');
   if (specialistNameDisplay) {
@@ -164,17 +185,22 @@
 
   // Load patients from server (filtered by specialist)
   async function loadPatientsFromServer() {
-    if (!specialistId) {
+    // Use specialistUserId if available, otherwise fall back to specialistId
+    const idToUse = specialistUserId || specialistId;
+    
+    if (!idToUse) {
       console.error('Missing specialist ID. Cannot load patients.');
       tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: red;">Error: Specialist ID not found. Please log in again.</td></tr>';
       return;
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/specialist/${specialistId}/patients`, {
+      console.log('Loading patients for specialist user_id:', idToUse);
+      const res = await fetch(`${API_BASE}/api/specialist/${idToUse}/patients?t=${Date.now()}`, {
         headers: {
           'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('bsm_token') || ''}`
+          'Authorization': `Bearer ${localStorage.getItem('bsm_token') || ''}`,
+          'Cache-Control': 'no-cache'
         }
       });
       
@@ -183,6 +209,8 @@
       }
       
       const data = await res.json();
+      console.log('API returned data:', data);
+      
       const mapped = (data.patients || []).map(p => ({
         patientId: p.patient_id,
         userId: p.user_id,
@@ -193,7 +221,7 @@
       
       patientsCache = mapped;
       renderTable(mapped);
-      console.log(`Loaded ${mapped.length} patients for specialist ${specialistId}`);
+      console.log(`✅ Loaded ${mapped.length} patients for specialist user_id ${idToUse}:`, mapped);
     } catch(err) {
       console.warn('Server patient load failed:', err);
       // Fallback to localStorage if server fails
@@ -211,9 +239,10 @@
       
       // Filter by assignments if available
       const assigns = JSON.parse(localStorage.getItem('assignments') || '[]');
-      if (Array.isArray(assigns) && assigns.length > 0 && specialistId) {
+      const idToUse = specialistUserId || specialistId;
+      if (Array.isArray(assigns) && assigns.length > 0 && idToUse) {
         const myPatientIds = assigns
-          .filter(a => String(a.specialistId) === String(specialistId))
+          .filter(a => String(a.specialistId) === String(idToUse))
           .map(a => String(a.patientId).toLowerCase());
         
         if (myPatientIds.length > 0) {
@@ -276,10 +305,6 @@
     localStorage.removeItem('specialistSpecialty');
     localStorage.removeItem('specialistId');
     localStorage.removeItem('bsm_token');
-    window.location.href = 'specialist.html';
-  });
-  </script>
-    alert("You have been logged out.");
     window.location.href = 'specialist.html';
   });
   </script>

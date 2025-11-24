@@ -237,7 +237,7 @@
     readingsBody.innerHTML = '';
     if (!readings || readings.length === 0) {
       readingsBody.innerHTML =
-        '<tr><td colspan="5">No readings found for this patient.</td></tr>';
+        '<tr><td colspan="7">No readings found for this patient.</td></tr>';
       return;
     }
 
@@ -254,8 +254,10 @@
         <td>${datePart}</td>
         <td>${timePart}</td>
         <td>${r.value} ${r.unit || ''}</td>
-        <td>${r.status || 'normal'}</td>
-        <td>${r.food_intake || ''}</td>
+        <td>${r.heart_rate || '-'}</td>
+        <td>${r.medications || '-'}</td>
+        <td>${r.food_time || '-'}</td>
+        <td>${r.food_intake || '-'} / ${r.activity || '-'}</td>
       `;
       readingsBody.appendChild(tr);
     });
@@ -265,6 +267,7 @@
     if (!readingsBody) return;
 
     try {
+      console.log('Loading readings for patient user_id:', patientUserIdFinal);
       const res = await fetch(
         `${API_BASE}/api/readings/${patientUserIdFinal}?days=30`
       );
@@ -272,11 +275,12 @@
         throw new Error(`Server responded ${res.status}`);
       }
       const data = await res.json();
+      console.log('Readings loaded:', data);
       renderReadings(data.readings || []);
     } catch (err) {
       console.error('Error loading readings:', err);
       readingsBody.innerHTML =
-        '<tr><td colspan="5">Error loading readings from server.</td></tr>';
+        '<tr><td colspan="7">Error loading readings from server.</td></tr>';
     }
   }
 
@@ -298,13 +302,26 @@
       const li = document.createElement('li');
       const author = fb.specialist_name || 'Specialist';
       const text = fb.feedback_text || '';
-      const created =
-        fb.createdAt || fb.created_at || fb.created_at || '';
+      const createdRaw = fb.createdAt || fb.created_at || '';
+      
+      // Format timestamp to be more readable
+      let formattedDate = '';
+      if (createdRaw) {
+        try {
+          const date = new Date(createdRaw);
+          formattedDate = date.toLocaleString();
+        } catch (e) {
+          formattedDate = createdRaw;
+        }
+      }
 
       li.innerHTML = `
-        <strong>${author}:</strong> ${text}
-        <br><small>${created}</small>
+        <strong>${author}:</strong> ${text}<br>
+        <small style="color: #666;">${formattedDate}</small>
       `;
+      li.style.marginBottom = '12px';
+      li.style.paddingBottom = '12px';
+      li.style.borderBottom = '1px solid #eee';
       commentList.appendChild(li);
     });
   }

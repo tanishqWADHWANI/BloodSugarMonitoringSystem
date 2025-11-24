@@ -1107,9 +1107,71 @@
       await Promise.all([
         loadPatientInfo(),
         loadAlerts(),
-        loadDietRecommendations()
+        loadDietRecommendations(),
+        loadSpecialistMessages()
       ]);
       loadSpecialistAssignment();
+    }
+
+    // Load specialist messages/feedback
+    async function loadSpecialistMessages() {
+      const messagesContainer = document.getElementById('messagesContainer');
+      const patientId = localStorage.getItem('patientId');
+      
+      if (!messagesContainer || !patientId) {
+        console.log('Messages container or patientId not available');
+        return;
+      }
+
+      try {
+        console.log('Loading specialist messages for patient_id:', patientId);
+        const response = await fetch(`${API_BASE}/api/patient/${patientId}/feedback`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const messages = data.feedback || [];
+        
+        console.log('Loaded messages:', messages);
+
+        if (messages.length === 0) {
+          messagesContainer.innerHTML = '<p class="info-text">No messages at this time. Your specialist will send messages here when they review your health data.</p>';
+          return;
+        }
+
+        // Render messages
+        messagesContainer.innerHTML = messages.map(msg => {
+          const authorName = msg.specialist_name || 'Specialist';
+          const text = msg.feedback_text || '';
+          const createdRaw = msg.created_at || msg.createdAt || '';
+          
+          let formattedDate = '';
+          if (createdRaw) {
+            try {
+              const date = new Date(createdRaw);
+              formattedDate = date.toLocaleString();
+            } catch (e) {
+              formattedDate = createdRaw;
+            }
+          }
+          
+          return `
+            <div class="message-item" style="padding: 15px; margin-bottom: 15px; background: #f8f9fa; border-left: 4px solid #007bff; border-radius: 6px;">
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #007bff;">${escapeHtml(authorName)}:</strong>
+                <span style="color: #333; margin-left: 8px;">${escapeHtml(text)}</span>
+              </div>
+              <small style="color: #666;">${escapeHtml(formattedDate)}</small>
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Error loading specialist messages:', error);
+        messagesContainer.innerHTML = '<p class="error-text">Unable to load messages at this time.</p>';
+      }
     }
 
     // Initialize dashboard on page load
