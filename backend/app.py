@@ -226,6 +226,84 @@ def create_user_admin():
     except Exception as e:
         logger.error(f"Error creating user: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+def delete_user_admin(user_id):
+    """Admin endpoint to delete a user"""
+    try:
+        cursor = db._get_cursor()
+        try:
+            # Start transaction
+            cursor.execute("START TRANSACTION")
+            
+            # Get user role to determine cleanup needed
+            cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            role = user['role']
+            
+            # Delete related records based on role
+            if role == 'patient':
+                # Get patient_id
+                cursor.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+                patient = cursor.fetchone()
+                if patient:
+                    patient_id = patient['patient_id']
+                    # Delete assignments
+                    cursor.execute("DELETE FROM specialistpatient WHERE patient_id = %s", (patient_id,))
+                    # Delete readings
+                    cursor.execute("DELETE FROM bloodsugarreadings WHERE user_id = %s", (user_id,))
+                    # Delete alerts
+                    cursor.execute("DELETE FROM alerts WHERE user_id = %s", (user_id,))
+                    # Delete insights
+                    cursor.execute("DELETE FROM aiinsights WHERE user_id = %s", (user_id,))
+                    # Delete patient record
+                    cursor.execute("DELETE FROM patients WHERE patient_id = %s", (patient_id,))
+            
+            elif role == 'specialist':
+                # Get specialist_id
+                cursor.execute("SELECT specialist_id FROM specialists WHERE user_id = %s", (user_id,))
+                specialist = cursor.fetchone()
+                if specialist:
+                    specialist_id = specialist['specialist_id']
+                    # Delete assignments
+                    cursor.execute("DELETE FROM specialistpatient WHERE specialist_id = %s", (specialist_id,))
+                    # Delete feedback
+                    cursor.execute("DELETE FROM specialist_feedback WHERE specialist_id = %s", (specialist_id,))
+                    # Delete specialist record
+                    cursor.execute("DELETE FROM specialists WHERE specialist_id = %s", (specialist_id,))
+            
+            elif role == 'staff':
+                # Get staff_id if exists
+                cursor.execute("SELECT staff_id FROM staff WHERE user_id = %s", (user_id,))
+                staff = cursor.fetchone()
+                if staff:
+                    staff_id = staff['staff_id']
+                    cursor.execute("DELETE FROM staff WHERE staff_id = %s", (staff_id,))
+            
+            # Finally delete the user
+            cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+            
+            # Commit transaction
+            db.connection.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'User {user_id} deleted successfully'
+            }), 200
+            
+        except Exception as e:
+            db.connection.rollback()
+            raise e
+        finally:
+            cursor.close()
+            
+    except Exception as e:
+        logger.error(f"Error deleting user: {e}")
+        return jsonify({'error': str(e)}), 500
     
 # Blood Sugar Readings
 @app.route('/api/readings', methods=['POST'])
@@ -373,6 +451,8 @@ def delete_reading(reading_id):
 @app.route('/api/login', methods=['POST'])
 def login():
     """User login"""
+    from werkzeug.security import check_password_hash
+    
     data = request.json
     
     user = db.get_user_by_email(data['email'])
@@ -380,16 +460,33 @@ def login():
     if not user:
         return jsonify({"error": "Invalid credentials"}), 401
     
-    # Simple password check (improve with hashing later)
-    if user['password_hash'] != data['password']:
+    # Verify password using proper hashing
+    if not check_password_hash(user['password_hash'], data['password']):
         return jsonify({"error": "Invalid credentials"}), 401
     
     # Remove password from response
     del user['password_hash']
     
+    # Generate a simple token (in production, use JWT)
+    token = f"token_{user['user_id']}_{user['role']}"
+    
+    # Get patient_id if user is a patient
+    patient_id = None
+    if user['role'] == 'patient':
+        cursor = db._get_cursor()
+        cursor.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user['user_id'],))
+        patient_record = cursor.fetchone()
+        cursor.close()
+        if patient_record:
+            patient_id = patient_record['patient_id']
+    
     return jsonify({
         "message": "Login successful",
-        "user": user
+        "user": user,
+        "token": token,
+        "user_id": user['user_id'],
+        "patient_id": patient_id,
+        "name": f"{user['first_name']} {user['last_name']}"
     }), 200
 
 @app.route('/api/specialist/<int:specialist_id>/readings/search', methods=['GET'])
@@ -520,6 +617,41 @@ def get_patient_feedback(patient_id):
 
     except Exception as e:
         logger.error(f"Error in get_patient_feedback({patient_id}): {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/api/patient/<int:patient_id>/specialist', methods=['GET'])
+def get_patient_specialist(patient_id):
+    """Get the assigned specialist for a patient"""
+    try:
+        cursor = db._get_cursor()
+        try:
+            sql = """
+                SELECT s.specialist_id, u.user_id, u.first_name, u.last_name, u.email
+                FROM specialistpatient sp
+                JOIN specialists s ON sp.specialist_id = s.specialist_id
+                JOIN users u ON s.user_id = u.user_id
+                WHERE sp.patient_id = %s
+                LIMIT 1
+            """
+            cursor.execute(sql, (patient_id,))
+            specialist = cursor.fetchone()
+            
+            if specialist:
+                return jsonify({
+                    "patientId": patient_id,
+                    "specialist": specialist
+                }), 200
+            else:
+                return jsonify({
+                    "patientId": patient_id,
+                    "specialist": None,
+                    "message": "No specialist assigned"
+                }), 200
+        finally:
+            cursor.close()
+
+    except Exception as e:
+        logger.error(f"Error in get_patient_specialist({patient_id}): {e}")
         return jsonify({"error": "Internal server error"}), 500
     
 # AI Insights
@@ -685,6 +817,21 @@ def get_diet_recommendations(condition):
         return jsonify({"error": str(e)}), 500
 
 # Specialist Features
+@app.route('/api/patients', methods=['GET'])
+def get_all_patients():
+    """Get all patients in the system (for staff/admin)"""
+    try:
+        patients = db.get_all_patients()
+        
+        return jsonify({
+            "patients": patients,
+            "count": len(patients)
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error fetching all patients: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/specialist/<int:specialist_id>/patients', methods=['GET'])
 def get_specialist_patients(specialist_id):
     """Get all patients assigned to a specialist"""
@@ -1018,6 +1165,30 @@ def assign_patient_api():
         logger.error(f"Error in assignment API: {str(e)}", exc_info=True)
         return jsonify({"error": "Failed to complete assignment."}), 500
 
+@app.route('/api/assignments/<int:specialist_id>/<int:patient_id>', methods=['DELETE'])
+def remove_assignment_api(specialist_id, patient_id):
+    """API endpoint to remove a patient assignment from a specialist."""
+    try:
+        cursor = db._get_cursor()
+        try:
+            cursor.execute(
+                "DELETE FROM specialistpatient WHERE specialist_id = %s AND patient_id = %s",
+                (specialist_id, patient_id)
+            )
+            db.connection.commit()
+            
+            if cursor.rowcount == 0:
+                return jsonify({"error": "Assignment not found"}), 404
+            
+            return jsonify({"message": "Assignment removed successfully"}), 200
+            
+        finally:
+            cursor.close()
+            
+    except Exception as e:
+        logger.error(f"Error removing assignment: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to remove assignment."}), 500
+
 # Test Endpoints
 @app.route('/api/test/database', methods=['GET'])
 def test_database():
@@ -1104,6 +1275,69 @@ def upload_documents(patient_id):
     except Exception as e:
         logger.error(f"Error uploading documents for patient {patient_id}: {e}")
         return jsonify({"error": "Failed to upload documents"}), 500
+
+@app.route('/api/setup/demo-users', methods=['POST'])
+def setup_demo_users():
+    """Create demo users including Alice for testing"""
+    try:
+        from werkzeug.security import generate_password_hash
+        
+        cursor = db._get_cursor()
+        created_users = []
+        
+        # Demo patients with password123
+        demo_patients = [
+            {'email': 'alice@x.com', 'first_name': 'Alice', 'last_name': 'Johnson', 'phone': '555-0101'},
+            {'email': 'bob@x.com', 'first_name': 'Bob', 'last_name': 'Smith', 'phone': '555-0102'},
+            {'email': 'sarah@x.com', 'first_name': 'Sarah', 'last_name': 'Williams', 'phone': '555-0103'},
+            {'email': 'michael@x.com', 'first_name': 'Michael', 'last_name': 'Brown', 'phone': '555-0104'},
+            {'email': 'emma@x.com', 'first_name': 'Emma', 'last_name': 'Davis', 'phone': '555-0105'}
+        ]
+        
+        password_hash = generate_password_hash('password123')
+        
+        for patient_data in demo_patients:
+            # Check if user already exists
+            cursor.execute("SELECT user_id FROM users WHERE email = %s", (patient_data['email'],))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Update password
+                cursor.execute("UPDATE users SET password_hash = %s WHERE email = %s", 
+                             (password_hash, patient_data['email']))
+                user_id = existing['user_id']
+                created_users.append(f"Updated: {patient_data['email']}")
+            else:
+                # Create new user
+                cursor.execute("""
+                    INSERT INTO users (email, password_hash, role, first_name, last_name, phone, date_of_birth)
+                    VALUES (%s, %s, 'patient', %s, %s, %s, '1990-01-01')
+                """, (patient_data['email'], password_hash, patient_data['first_name'], 
+                      patient_data['last_name'], patient_data['phone']))
+                user_id = cursor.lastrowid
+                
+                # Create patient record
+                cursor.execute("""
+                    INSERT INTO patients (user_id, health_care_number, created_at)
+                    VALUES (%s, %s, NOW())
+                """, (user_id, f'HCN{user_id}'))
+                
+                created_users.append(f"Created: {patient_data['email']}")
+        
+        db.connection.commit()
+        cursor.close()
+        
+        return jsonify({
+            "message": "Demo users setup completed",
+            "users": created_users,
+            "password": "password123"
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error setting up demo users: {e}")
+        if cursor:
+            cursor.close()
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # Initialize scheduler for periodic tasks

@@ -13807,7 +13807,9 @@ INSERT INTO `patients` (`patient_id`, `user_id`, `health_care_number`, `created_
 (1, 1, 'HCN001', '2025-10-23 07:18:54'),
 (3, 11, 'HCN123477', '2025-11-05 22:16:57'),
 (4, 18, 'HCN123456', '2025-11-06 04:07:02'),
-(5, 20, 'OHIP123456', '2025-11-06 04:54:48');
+(5, 20, 'OHIP123456', '2025-11-06 04:54:48'),
+(101, 201, 'HCN201', '2025-11-24 00:00:00'),
+(102, 202, 'HCN202', '2025-11-24 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -13820,6 +13822,17 @@ CREATE TABLE `specialistpatient` (
   `patient_id` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `specialistpatient`
+--
+
+INSERT INTO `specialistpatient` (`specialist_id`, `patient_id`, `created_at`) VALUES
+(1, 101, '2025-11-24 00:00:00'),
+(7, 102, '2025-11-24 00:00:00'),
+(3, 1, '2025-11-24 00:00:00'),
+(4, 3, '2025-11-24 00:00:00'),
+(5, 4, '2025-11-24 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -13842,7 +13855,10 @@ INSERT INTO `specialists` (`specialist_id`, `user_id`, `working_id`, `created_at
 (3, 12, 'SP002', '2025-11-05 22:24:52'),
 (4, 14, NULL, '2025-11-06 02:23:42'),
 (5, 17, NULL, '2025-11-06 02:27:29'),
-(6, 10, NULL, '2025-11-06 04:54:31');
+(6, 10, NULL, '2025-11-06 04:54:31'),
+(1, 101, 'SP101', '2025-11-24 00:00:00'),
+(2, 102, 'SP102', '2025-11-24 00:00:00'),
+(7, 103, 'SP103', '2025-11-24 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -13935,7 +13951,12 @@ INSERT INTO `users` (`user_id`, `role`, `first_name`, `last_name`, `email`, `pho
 (14, 'specialist', 'Jia', 'Rana', 'demo.patient@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:23:42', '2025-11-06 02:23:42'),
 (17, 'specialist', 'Jia', 'Rana', 'kavya.rana@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:27:29', '2025-11-06 02:27:29'),
 (18, 'patient', 'John', 'Doe', 'patient1@test.com', '604-555-1234', '1990-05-15', 'pass123', NULL, '2025-11-06 04:07:02', '2025-11-06 04:07:02'),
-(20, 'patient', 'John', 'Doe', 'john.doe@example.com', NULL, NULL, 'pass123', NULL, '2025-11-06 04:54:48', '2025-11-06 04:54:48');
+(20, 'patient', 'John', 'Doe', 'john.doe@example.com', NULL, NULL, 'pass123', NULL, '2025-11-06 04:54:48', '2025-11-06 04:54:48'),
+(101, 'specialist', 'Dr. John', 'Smith', 'jsmith@demo', '555-0101', '1970-01-15', 'demo123', NULL, '2025-11-24 00:00:00', '2025-11-24 00:00:00'),
+(102, 'specialist', 'Dr. Alex', 'Jones', 'ajones@demo', '555-0102', '1975-03-22', 'demo123', NULL, '2025-11-24 00:00:00', '2025-11-24 00:00:00'),
+(103, 'specialist', 'Dr. Christina', 'Lee', 'clee@clinic', '555-0103', '1972-05-10', 'demo123', NULL, '2025-11-24 00:00:00', '2025-11-24 00:00:00'),
+(201, 'patient', 'Alice', 'Lee', 'alice@example.com', '555-1001', '1985-04-12', 'pass123', NULL, '2025-11-24 00:00:00', '2025-11-24 00:00:00'),
+(202, 'patient', 'Bob', 'Ray', 'bob@example.com', '555-1002', '1990-08-25', 'pass123', NULL, '2025-11-24 00:00:00', '2025-11-24 00:00:00');
 
 -- --------------------------------------------------------
 

@@ -7,7 +7,6 @@
   <title>Patient Portal</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/dasshboard.css" />
-  <script src="js/api.js"></script>
   <style>
     /* New Section Styles for Patient Portal */
     .section-box {
@@ -140,6 +139,18 @@
       </form>
 
       <div id="loginMsg" style="color:red; margin-top:10px;"></div>
+      
+      <!-- Demo Login Credentials -->
+      <div style="background:#e8f4f8;border:2px solid #004080;border-radius:8px;padding:15px;margin-top:20px;">
+        <h4 style="color:#004080;margin:0 0 10px 0;">🧪 Demo Patient Logins</h4>
+        <div style="font-size:0.9rem;line-height:1.8;">
+          <strong>Patient 1:</strong> alice@x.com / password123<br>
+          <strong>Patient 2:</strong> bob@x.com / password123<br>
+          <strong>Patient 3:</strong> sarah@x.com / password123<br>
+          <strong>Patient 4:</strong> michael@x.com / password123<br>
+          <strong>Patient 5:</strong> emma@x.com / password123
+        </div>
+      </div>
 
       <p class="note">
         Don’t have an account? 
@@ -263,75 +274,124 @@
     </div>
   </footer>
 
-   <!-- Backend-aware patient login -->
- <script>
-    // Helper to normalise the login payload
-    function loginAsPatient(email, password) {
-      // uses the shared login() helper from js/api.js
-      return login(email, password, 'patient');
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const form   = document.getElementById('loginForm');
-      const emailEl = document.getElementById('loginEmail');
-      const passEl  = document.getElementById('loginPassword');
-      const msgEl   = document.getElementById('loginMsg');
+  <!-- Patient login with database integration -->
+  <script>
+    (function () {
+      var form = document.getElementById('loginForm');
+      var emailEl = document.getElementById('loginEmail');
+      var passEl = document.getElementById('loginPassword');
+      var msgEl = document.getElementById('loginMsg');
 
       if (!form) return;
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();                // stop normal form navigation
-        msgEl.textContent = '';           // clear any old message
+      function prefixFromEmail(email) {
+        return (email || '').split('@')[0].trim().toLowerCase();
+      }
 
-        const email = (emailEl.value || '').trim();
-        const password = (passEl.value || '').trim();
+      // Login via database API
+      async function loginViaDatabase(email, password) {
+        try {
+          const response = await fetch('http://127.0.0.1:5000/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password,
+              role: 'patient'
+            })
+          });
 
-        if (!email || !password) {
-          msgEl.textContent = 'Enter email and password.';
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Store authentication token and user info
+            localStorage.setItem('bsm_token', data.token || '');
+            localStorage.setItem('loggedInPatient', prefixFromEmail(email));
+            localStorage.setItem('patientEmail', email);
+            localStorage.setItem('patientId', data.patient_id || data.user_id || '');
+            localStorage.setItem('patientName', data.name || data.first_name + ' ' + data.last_name || '');
+            localStorage.setItem('userId', data.user_id || '');
+            
+            // Initialize empty readings store if needed
+            var lsKey = 'readings_' + prefixFromEmail(email);
+            if (!localStorage.getItem(lsKey)) {
+              localStorage.setItem(lsKey, '[]');
+            }
+            
+            return { success: true, data: data };
+          } else {
+            const error = await response.json();
+            return { success: false, message: error.message || 'Login failed' };
+          }
+        } catch (error) {
+          console.error('Database login error:', error);
+          return { success: false, message: 'Server connection failed' };
+        }
+      }
+
+      // Fallback localStorage login (for offline mode)
+      function loginViaLocalStorage(email, password) {
+        var key = prefixFromEmail(email) || 'patient';
+        
+        // Store basic info
+        localStorage.setItem('loggedInPatient', key);
+        localStorage.setItem('patientEmail', email);
+        
+        // Create empty readings store if needed
+        var lsKey = 'readings_' + key;
+        if (!localStorage.getItem(lsKey)) {
+          localStorage.setItem(lsKey, '[]');
+        }
+        
+        return { success: true, message: 'Logged in (offline mode)' };
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        var email = (emailEl.value || '').trim();
+        var pass = (passEl.value || '').trim();
+
+        if (!email || !pass) {
+          if (msgEl) { 
+            msgEl.style.color = 'red';
+            msgEl.textContent = 'Enter email and password.'; 
+          }
           return;
         }
 
-        try {
-      // CALL FLASK /api/login
-      const resp = await loginAsPatient(email, password);   // resp = { message, user: {...} }
-      const user = resp.user;
-
-        if (!user || !user.user_id) {
-           msgEl.textContent = 'Login response is missing user.user_id.';
-          console.error('Login response:', resp);
-        return;
+        // Show loading state
+        if (msgEl) { 
+          msgEl.style.color = '#004080';
+          msgEl.textContent = 'Signing in…'; 
         }
 
-      // Enforce that this is really a patient account
-      if (user.role && user.role.toLowerCase() !== 'patient') {
-        msgEl.textContent = 'This account is not a patient account.';
-      return;
-      }
-
-      // Remember who is logged in for other pages
-      localStorage.setItem('loggedInPatientId', String(user.user_id));
-      if (user.first_name || user.last_name) {
-        localStorage.setItem(
-          'loggedInPatientName',
-          `${user.first_name || ''} ${user.last_name || ''}`.trim()
-          );
-      }
-
-      // (optional) store full user object via the shared helper in api.js, if you want:
-      if (typeof saveAuthUser === 'function') {
-        saveAuthUser(user);   // this lets other pages call loadAuthUser()
-      }
-
-      // Redirect to the PATIENT dashboard
-      const targetUrl = `patient_dashboard.html?user_id=${encodeURIComponent(user.user_id)}`;
-      window.location.href = targetUrl;
-
-        } catch (err) {
-          console.error('Patient login failed:', err);
-          msgEl.textContent = 'Login failed: ' + err.message;
+        // Try database login first
+        const result = await loginViaDatabase(email, pass);
+        
+        if (result.success) {
+          if (msgEl) { 
+            msgEl.style.color = 'green';
+            msgEl.textContent = 'Login successful!'; 
+          }
+          
+          // Redirect to dashboard
+          setTimeout(function () {
+            window.location.href = 'patient_dashboard.html';
+          }, 500);
+        } else {
+          // Show specific error message instead of falling back to offline mode
+          if (msgEl) { 
+            msgEl.style.color = 'red';
+            msgEl.textContent = result.message || 'Invalid email or password'; 
+          }
+          console.error('Login failed:', result.message);
         }
       });
-    });
+    })();
   </script>
 </body>
 

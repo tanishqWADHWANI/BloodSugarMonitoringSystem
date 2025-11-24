@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/demo_users.js"></script>
 
   <style>
    
@@ -68,6 +69,20 @@
       color: white;
     }
 
+    .abnormal {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .abnormal-row {
+      background-color: #ffe6e6 !important;
+      border-left: 4px solid #dc3545;
+    }
+
+    .abnormal-row:hover {
+      background-color: #ffd4d4 !important;
+    }
+
     .footer {
       text-align: center;
       padding: 10px;
@@ -75,18 +90,19 @@
       background: #f0f0f0;
     }
     
-    #logout-btn {
-      background-color: #f44336;
+    #logout-btn, #logoutBtn {
+      background: #dc3545;
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 10px 20px;
       cursor: pointer;
-      border-radius: 4px;
-      font-size: 0.9rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
     } 
 
-    #logout-btn:hover {
-      background-color: #d32f2f;
+    #logout-btn:hover, #logoutBtn:hover {
+      background: #c82333;
     }
   </style>
 </head>
@@ -106,6 +122,11 @@
   <main>
     <h1>Patient History</h1>
     <p>View and analyze your past health readings below. You can select a date range, or filter by daily, weekly, monthly, or yearly trends.</p>
+    
+    <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:15px;margin-bottom:20px;border-radius:6px;">
+      <strong>📌 Note:</strong> This page automatically loads your health history. If you don't see data, make sure you have entries saved in your dashboard.
+      <button onclick="location.href='patient_dashboard.html'" style="margin-left:10px;padding:8px 16px;background:#004080;color:white;border:none;border-radius:6px;cursor:pointer;">Go to Dashboard</button>
+    </div>
 
     <!-- Controls -->
     <div class="controls">
@@ -162,10 +183,21 @@
 
  <script>
   // --- utilities ---
+  // Get the active user ID from localStorage or URL parameter
   function activeUserId() {
+    // First check URL parameter
     const p = new URLSearchParams(window.location.search);
     const q = p.get('user_id');
     if (q) return q;
+    
+    // Then check localStorage for logged in patient
+    const userId = localStorage.getItem('userId');
+    if (userId) return userId;
+    
+    const patientId = localStorage.getItem('patientId');
+    if (patientId) return patientId;
+    
+    // Fallback to prompt only if nothing found
     return window.prompt('Enter Patient User ID to view history:');
   }
 
@@ -266,6 +298,27 @@
     return { labels, data };
   }
 
+  // Helper function to check if values are abnormal
+  function isAbnormalBloodSugar(value) {
+    const num = parseFloat(value);
+    return !isNaN(num) && (num < 70 || num > 130);
+  }
+
+  function isAbnormalBloodPressure(value) {
+    if (value === '-' || !value) return false;
+    const parts = String(value).split('/');
+    if (parts.length !== 2) return false;
+    const systolic = parseFloat(parts[0]);
+    const diastolic = parseFloat(parts[1]);
+    return (!isNaN(systolic) && (systolic < 90 || systolic > 130)) ||
+           (!isNaN(diastolic) && (diastolic < 60 || diastolic > 85));
+  }
+
+  function isAbnormalHeartRate(value) {
+    const num = parseFloat(value);
+    return !isNaN(num) && (num < 60 || num > 80);
+  }
+
   function renderTable(rows) {
     const tbody = document.querySelector('#historyTable tbody');
     if (!rows.length) {
@@ -274,11 +327,23 @@
     }
     // sort ascending by date then time
     const sorted = [...rows].sort((a,b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : (a.time > b.time ? 1 : -1)));
-    tbody.innerHTML = sorted.map(e => `
-      <tr>
-        <td>${e.date||'-'}</td><td>${e.time||'-'}</td>
-        <td>${e.bloodSugar}</td><td>${e.bloodPressure}</td>
-        <td>${e.heartRate}</td><td>${e.medications}</td>
+    tbody.innerHTML = sorted.map(e => {
+      const bsAbnormal = isAbnormalBloodSugar(e.bloodSugar);
+      const bpAbnormal = isAbnormalBloodPressure(e.bloodPressure);
+      const hrAbnormal = isAbnormalHeartRate(e.heartRate);
+      const hasAbnormal = bsAbnormal || bpAbnormal || hrAbnormal;
+      
+      const rowClass = hasAbnormal ? ' class="abnormal-row"' : '';
+      const warningIcon = hasAbnormal ? '⚠️ ' : '';
+      const bsClass = bsAbnormal ? ' class="abnormal"' : '';
+      const bpClass = bpAbnormal ? ' class="abnormal"' : '';
+      const hrClass = hrAbnormal ? ' class="abnormal"' : '';
+      
+      return `
+      <tr${rowClass}>
+        <td>${warningIcon}${e.date||'-'}</td><td>${e.time||'-'}</td>
+        <td${bsClass}>${e.bloodSugar}</td><td${bpClass}>${e.bloodPressure}</td>
+        <td${hrClass}>${e.heartRate}</td><td>${e.medications}</td>
         <td>${e.foodTime}</td><td>${e.foodTaken}</td>
         <td>${e.activity}</td>
       </tr>`).join('');
@@ -320,20 +385,12 @@
     });
   }
 
-    function populateMonthSelect(rows) {
+  function populateMonthSelect(rows) {
     const sel = document.getElementById('monthSelect');
-
-    const months = [...new Set(
-      rows
-        .map(r => r.date)
-        .filter(Boolean)
-        .map(d => d.slice(0, 7))      // YYYY-MM
-    )].sort();
-
+    const months = [...new Set(rows.map(r => r.date).filter(Boolean).map(d => d.slice(0,7)))].sort();
     months.forEach(m => {
       const opt = document.createElement('option');
-      opt.value = m;
-      opt.textContent = m;
+      opt.value = m; opt.textContent = m;
       sel.appendChild(opt);
     });
   }
@@ -355,15 +412,61 @@
 
   document.addEventListener('DOMContentLoaded', async () => {
     try {
-      let auth;
-      try {
-        auth = requireRole('patient');
-      } catch {
+      const userId = activeUserId();
+      if (!userId) {
+        alert('Could not determine user ID. Please log in again.');
+        window.location.href = 'patient.html';
         return;
       }
-    const userId = auth.user_id;
-    const apiReadings = await getReadings(userId);
-      const rows = mapToRows(apiReadings);
+
+      console.log('Loading history for user ID:', userId);
+      console.log('Database connected: Flask server should be running on http://127.0.0.1:5000');
+      
+      let rows = [];
+      
+      // ALWAYS load from API/database - no localStorage fallback
+      try {
+        console.log(`Fetching readings from: /api/readings/${userId}?days=30`);
+        const apiReadings = await getReadings(userId);  // from js/api.js
+        console.log('API Response:', apiReadings);
+        rows = mapToRows(apiReadings);
+        console.log('✓ Loaded ' + rows.length + ' entries from database');
+        
+        if (rows.length === 0) {
+          console.warn('⚠️ Database returned 0 entries for user_id:', userId);
+          console.warn('This means Alice has no data in the bloodsugarreadings table.');
+          console.warn('Solution: Visit the Dashboard - it will auto-create 8 demo entries on first visit.');
+        }
+      } catch (apiError) {
+        console.error('❌ Failed to connect to database:', apiError);
+        console.error('Please ensure:');
+        console.error('1. Flask server is running: cd backend && python app.py');
+        console.error('2. MySQL/XAMPP is running');
+        console.error('3. Database blood_sugar_db exists');
+        
+        const tbody = document.querySelector('#historyTable tbody');
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#dc3545;">
+          <strong>❌ Database Connection Failed</strong><br><br>
+          Error: ${apiError.message}<br><br>
+          <strong>To fix this:</strong><br>
+          1. Ensure Flask server is running: <code>cd backend && python app.py</code><br>
+          2. Ensure MySQL/XAMPP is running<br>
+          3. Check browser console (F12) for detailed error messages
+        </td></tr>`;
+        return;
+      }
+
+      if (rows.length === 0) {
+        const tbody = document.querySelector('#historyTable tbody');
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;">
+          <strong>No health history found in database.</strong><br><br>
+          <p>This is normal for new accounts. Your demo data will be created automatically.</p>
+          <p><strong>Next step:</strong> Go to your <a href="patient_dashboard.html" style="color:#004080;text-decoration:underline;font-weight:bold;">Dashboard</a> 
+          - it will automatically create 8 sample health entries with abnormal readings for testing.</p>
+          <p style="margin-top:15px;font-size:0.9em;color:#666;">After visiting the dashboard, refresh this page to see your health history.</p>
+        </td></tr>`;
+        return;
+      }
 
       populateMonthSelect(rows);
 
@@ -385,19 +488,16 @@
       const tbody = document.querySelector('#historyTable tbody');
       tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red">Failed to load readings: ${err.message}</td></tr>`;
     }
+    
+    //logout behavior
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('loggedInPatient');
+        window.location.href = 'index.html';
+      });
+    }
   });
-
-  //logout behavior
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('loggedInPatientId');
-      localStorage.removeItem('loggedInPatientName');
-      localStorage.removeItem(AUTH_KEY); // "authUser" in api.js
-
-      window.location.href = 'patient.html'; // back to patient login
-    });
-  }
 </script>
 </body>
 </html>

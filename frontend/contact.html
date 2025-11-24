@@ -129,6 +129,10 @@
     footer a:hover {
       text-decoration: underline;
     }
+    /* Contact form styles */
+    .contact-form { max-width:760px; margin-top:18px; background:#ffffff;padding:18px;border-radius:10px;border:1px solid #e6eefc; }
+    .contact-form .form-input { width:100%; max-width:100%; padding:8px;border-radius:6px;border:1px solid #ccc; box-sizing:border-box; }
+    .contact-form .actions { display:flex; gap:10px; align-items:center; }
   </style>
 
   <script>
@@ -178,20 +182,124 @@
         <strong>Important Update:</strong> Our clinic celebrates 100 years of compassionate care.  
         For urgent assistance, call <strong>800.223.2273</strong> or visit our <a href="#">Help Center</a>.
       </div>
-
-      <!-- Appointment Request Section -->
-      <div class="appointment-section">
-        <img src="pics/appointment.png" alt="calendar illustration" />
-        <h3>Request an Appointment</h3>
-        <p>To fill out this form, you’ll need to be 18 or older, have your insurance details (if insured), and your referring provider’s contact info.</p>
-        <p>This will take about 10 minutes. Appointments are processed within 1–2 business days.</p>
-
-        <div class="buttons">
-          <!-- Example: Go Back button (currently commented out) -->
-          <!-- <button class="back-btn">Go Back</button> -->
-          <button class="start-btn">Get Started</button>
-        </div>
+      <!-- Contact Form -->
+      <div class="update-section" style="margin-top:12px">
+        <strong>Contact Form:</strong> Use the form below for non-urgent questions. Staff will review messages and reply as appropriate. For urgent matters, please call the clinic directly.
       </div>
+
+      <div class="contact-form" style="margin-top:18px;background:#ffffff;padding:18px;border-radius:10px;border:1px solid #e6eefc;">
+        <form id="contactForm">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px">
+              <label for="contact-name">Your name</label>
+              <input id="contact-name" name="name" type="text" required class="form-input" />
+            </div>
+            <div style="flex:1;min-width:200px">
+              <label for="contact-email">Your email</label>
+              <input id="contact-email" name="email" type="email" required class="form-input" />
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label for="contact-subject">Subject</label>
+            <input id="contact-subject" name="subject" type="text" required class="form-input" />
+          </div>
+
+          <div style="margin-top:12px">
+            <label for="contact-message">Message</label>
+            <textarea id="contact-message" name="message" rows="6" required class="form-input" style="min-height:140px"></textarea>
+          </div>
+
+          <div class="actions">
+            <button type="submit" style="background:#004080;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer">Send Message</button>
+            <button id="contactClear" type="button" style="background:#f0f0f0;border:1px solid #ccc;padding:8px 12px;border-radius:6px;cursor:pointer">Clear</button>
+            <span id="contactStatus" style="margin-left:8px;color:#333"></span>
+          </div>
+        </form>
+      </div>
+
+      <script>
+        (function(){
+          const form = document.getElementById('contactForm');
+          const statusEl = document.getElementById('contactStatus');
+          const clearBtn = document.getElementById('contactClear');
+
+          function pushToLocalStorage(msg) {
+            try {
+              const raw = localStorage.getItem('contact_messages') || '[]';
+              const arr = JSON.parse(raw);
+              arr.push(msg);
+              localStorage.setItem('contact_messages', JSON.stringify(arr));
+              return true;
+            } catch (e) { console.warn('Failed to persist contact message locally', e); return false; }
+          }
+
+          async function trySendToServer(msg) {
+            // Best-effort: attempt to POST to a contact API endpoint if available.
+            // If server rejects or endpoint missing, we keep the local copy.
+            try {
+              const res = await fetch('/api/contact', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(msg)
+              });
+              if (res.ok) return true;
+              // Try alternative generic notify endpoint if defined in backend
+              const alt = await fetch('/api/notify/email', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: 'staff@clinic', subject: msg.subject, message: msg.message })
+              });
+              return alt.ok;
+            } catch (e) {
+              console.warn('Contact: server send failed', e);
+              return false;
+            }
+          }
+
+          form.addEventListener('submit', async function(ev){
+            ev.preventDefault();
+            statusEl.textContent = '';
+            const msg = {
+              id: Date.now(),
+              name: document.getElementById('contact-name').value.trim(),
+              email: document.getElementById('contact-email').value.trim(),
+              subject: document.getElementById('contact-subject').value.trim(),
+              message: document.getElementById('contact-message').value.trim(),
+              timestamp: new Date().toISOString(),
+              read: false
+            };
+
+            // persist locally first
+            const okLocal = pushToLocalStorage(msg);
+            if (!okLocal) {
+              statusEl.style.color = 'red'; statusEl.textContent = 'Could not save message locally.'; return;
+            }
+
+            // optimistic UI — always display 'Message sent' to the end user
+            statusEl.style.color = '#444'; statusEl.textContent = 'Saved locally.';
+
+            // try send to server (best-effort)
+            const sent = await trySendToServer(msg).catch(()=>false);
+            if (sent) {
+              statusEl.style.color = 'green'; statusEl.textContent = 'Message sent.';
+            } else {
+              // still show 'Message sent' to the user but mark queued state visually
+              statusEl.style.color = 'orange'; statusEl.textContent = 'Message sent.';
+            }
+
+            // mark pending outbox and push a lightweight notify so staff dashboard shows an alert
+            try {
+              const notify = { id: msg.id, summary: `${msg.name} — ${msg.subject}`, timestamp: msg.timestamp };
+              localStorage.setItem('pending_outbox_notify', JSON.stringify(notify));
+            } catch (e) { console.warn('Failed to set pending outbox notify', e); }
+
+            // link to open staff dashboard removed — notify is set but no user-facing link
+
+            // reset form after short delay
+            setTimeout(()=>{ form.reset(); }, 300);
+            // notify dashboard (if open) via storage event - already handled by polling on dashboard
+          });
+
+          clearBtn.addEventListener('click', ()=>{ form.reset(); statusEl.textContent=''; });
+        })();
+      </script>
     </div>
   </main>
 

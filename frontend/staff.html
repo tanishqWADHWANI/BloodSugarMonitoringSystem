@@ -63,9 +63,19 @@
       const form   = document.getElementById('staffLoginForm');
       const email  = document.getElementById('staffEmail');
       const pass   = document.getElementById('staffPassword');
-      const msgBox = document.getElementById('loginMsg');   // add a <div id="loginMsg"></div> near the form if you don’t have one
+      const demoBtn = document.getElementById('demoStaffLogin');
+      const msgBox = document.getElementById('loginMsg');
 
       if (!form) return;
+
+      // Demo Staff Login
+      if (demoBtn) {
+        demoBtn.addEventListener('click', () => {
+          localStorage.setItem('loggedInStaff', 'staff@clinic');
+          localStorage.setItem('staffName', 'Staff2');
+          window.location.href = 'staff_dashboard.html';
+        });
+      }
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -80,15 +90,26 @@
           }
 
           // This calls /api/login via api.js and also writes authUser to localStorage
-          const user = await loginUser(emailVal, passVal, 'staff');
+          const response = await loginUser(emailVal, passVal, 'staff');
+          
+          if (response && response.user && response.user.role === 'staff') {
+            const user = response.user;
+            
+            // Store staff info from database
+            localStorage.setItem('loggedInStaff', emailVal);
+            localStorage.setItem('staffName', user.first_name || user.firstName || 'Staff');
+            localStorage.setItem('staffId', String(user.user_id || user.id || ''));
+            
+            // Store token if available
+            if (response.token || response.access_token) {
+              localStorage.setItem('bsm_token', response.token || response.access_token);
+            }
 
-          // At this point:
-          //   - user.user_id contains the real staff user id
-          //   - user.role === 'staff'
-          //   - localStorage["authUser"] now contains the same user object
-
-          const target = `staff_dashboard.html?user_id=${encodeURIComponent(user.user_id)}`;
-          window.location.href = target;
+            const target = `staff_dashboard.html?user_id=${encodeURIComponent(user.user_id || user.id)}`;
+            window.location.href = target;
+          } else {
+            throw new Error('Invalid role or user data received from server.');
+          }
         } catch (err) {
           console.error(err);
           if (msgBox) {

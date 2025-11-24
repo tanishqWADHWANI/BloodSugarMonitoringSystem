@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Patient Account - Blood Sugar Monitor Clinic</title>
 
+  <!-- Use your unified global stylesheet -->
   <link rel="stylesheet" href="css/style.css" />
-  <script src="js/api.js"></script>
+  <script src="js/demo_users.js"></script>
 </head>
 
 <body>
@@ -24,6 +24,7 @@
     </nav>
   </header>
 
+  <!-- MAIN CONTENT -->
   <main class="container">
     <section class="login-section">
       <h2>Create Patient Account</h2>
@@ -31,6 +32,7 @@
         Please fill in your information below to register for your patient portal.
       </p>
 
+      <!-- Registration Form -->
       <form id="registerForm" method="post" action="">
         <label for="fullName">Full Name</label>
         <input type="text" id="fullName" name="fullName" placeholder="e.g., Alice Johnson" required>
@@ -69,20 +71,23 @@
     </section>
   </main>
 
+  <!-- FOOTER -->
   <footer>
     <div class="footer-bottom">
       <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
     </div>
   </footer>
 
+  <!-- ======================================================
+       REGISTRATION SCRIPT
+       Handles validation, localStorage saving, and redirect
+       ====================================================== -->
   <script>
     (function () {
       const form = document.getElementById('registerForm');
       const msg = document.getElementById('registerMsg');
 
-      if (!form) return;
-
-      form.addEventListener('submit', async function (e) {
+      form.addEventListener('submit', function (e) {
         e.preventDefault();
         msg.style.color = 'red';
         msg.textContent = '';
@@ -95,6 +100,7 @@
         const password = document.getElementById('password').value.trim();
         const confirmPassword = document.getElementById('confirmPassword').value.trim();
 
+        // Validation
         if (!fullName || !email || !age || !gender || !contact || !password || !confirmPassword) {
           msg.textContent = 'Please fill out all fields.';
           return;
@@ -110,57 +116,72 @@
           return;
         }
 
-        const patients = JSON.parse(localStorage.getItem('patients') || '{}');
-        if (patients[email]) {
-          msg.textContent = 'This email is already registered. Please log in.';
-          return;
-        }
+        // Load existing patients (support both array and map shapes)
+        try{ const key='patients'; const raw=localStorage.getItem(key); const arr=raw?JSON.parse(raw):null; const exists=Array.isArray(arr)&&arr.some(p=>p.number==='001'||p.id==='001'||p.patientId==='001'); if(!exists){ const demo={ number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', id:'001', patientId:'001', email:'johndoe@demo' }; const out=Array.isArray(arr)?[demo,...arr]:[demo]; localStorage.setItem(key, JSON.stringify(out)); } }catch(e){}
 
-        const parts = fullName.split(' ');
-        const firstName = parts[0] || fullName;
-        const lastName = parts.slice(1).join(' ') || firstName;
+        const rawPatients = (function(){ try { return JSON.parse(localStorage.getItem('patients') || 'null'); } catch(e) { return null; } })();
 
-        const payload = {
-          email,
-          password,
-          firstName,
-          lastName,
-          role: 'patient',
-          phone: contact
-        };
+        // If stored as an array, treat as list; otherwise treat as map/object
+        if (Array.isArray(rawPatients)) {
+          // check duplicate by email in array
+          const exists = rawPatients.some(p => String((p.email||'')).toLowerCase() === String(email).toLowerCase());
+          if (exists) {
+            msg.textContent = 'This email is already registered. Please log in instead.';
+            return;
+          }
 
-        try {
-          const result = await registerUser(payload);
-
-          const userId = result.userId;
-
-          patients[email] = {
+          // append to array (mark assignment pending)
+          rawPatients.push({
+            number: ('00' + (rawPatients.length + 1)).slice(-3),
+            name: fullName,
+            email: email,
+            age: age,
+            gender: gender,
+            phone: contact,
+            password: password,
+            assigned_specialist: null,
+            assignment_status: 'pending',
+            id: Date.now(),
+            patientId: Date.now()
+          });
+          try { localStorage.setItem('patients', JSON.stringify(rawPatients)); } catch(e) { console.warn('Could not save patients array', e); }
+        } else {
+          // treat as map/object
+          const patientsMap = rawPatients && typeof rawPatients === 'object' ? rawPatients : {};
+          if (patientsMap[email]) {
+            msg.textContent = 'This email is already registered. Please log in instead.';
+            return;
+          }
+          patientsMap[email] = {
             fullName,
             email,
             age,
             gender,
             contact,
             password,
-            userId
+            assigned_specialist: null,
+            assignment_status: 'pending'
           };
-          localStorage.setItem('patients', JSON.stringify(patients));
-
-          localStorage.setItem('loggedInPatient', email.split('@')[0]);
-          localStorage.setItem('patientUserId', String(userId));
-
-          msg.style.color = 'green';
-          msg.textContent = 'Account created! Redirecting...';
-
-          setTimeout(() => {
-            window.location.href = 'patient_dashboard.html';
-          }, 1200);
-        } catch (err) {
-          msg.style.color = 'red';
-          msg.textContent = 'Server error: ' + (err.message || 'Unknown error');
+          try { localStorage.setItem('patients', JSON.stringify(patientsMap)); } catch(e){ console.warn('Could not save patients map', e); }
         }
+        // Notify admin dashboard that a new patient was created (clinic should review assignment)
+        try {
+          const notify = { id: Date.now(), email: email, name: fullName, created_at: new Date().toISOString(), note: 'New patient registered — assignment pending' };
+          localStorage.setItem('admin_patient_notify', JSON.stringify(notify));
+        } catch (e) { console.warn('Could not set admin notification', e); }
+
+        // Auto-login the new user
+        localStorage.setItem('loggedInPatient', email.split('@')[0]);
+
+        msg.style.color = 'green';
+        msg.textContent = 'Account created successfully! The clinic will review your information and assign a specialist shortly. Redirecting to your dashboard...';
+
+        // Redirect to patient dashboard
+        setTimeout(() => {
+          window.location.href = 'patient_dashboard.html';
+        }, 1200);
       });
     })();
   </script>
 </body>
-
 </html>

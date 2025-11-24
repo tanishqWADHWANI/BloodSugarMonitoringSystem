@@ -8,9 +8,16 @@
   <style>
    
     .logout-btn {
-      background: #cc0000; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer;
+      background: #dc3545; 
+      border: none; 
+      border-radius: 6px; 
+      padding: 10px 20px; 
+      cursor: pointer;
+      color: white;
+      font-weight: 500;
+      font-size: 0.95rem;
     }
-    .logout-btn:hover { background: #ff3333; }
+    .logout-btn:hover { background: #c82333; }
 
     .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
     h1, h2, h3, h4, p { margin: 0 0 15px 0; }
@@ -84,48 +91,158 @@
   </footer>
 
   <script>
-  // ================================
-  // Secure Access
-  // ================================
+  const API_BASE = 'http://127.0.0.1:5000';
+
+  // AUTH / BASIC INFO
   const loggedInSpecialist = localStorage.getItem('specialistUsername');
   if (!loggedInSpecialist) {
+    // Not logged in, send back to login page
     window.location.href = 'specialist.html';
   }
-  const specialistName = localStorage.getItem('specialistFullName') || "Dr. John Smith";
-  document.getElementById("specialistNameDisplay").textContent = specialistName;
 
-  // ================================
-  // Patient Data
-  // ================================
-  let patients = JSON.parse(localStorage.getItem('patients')) || [
-    { number: 'P001', name: 'Alice Johnson', lastChecked: '2025-10-14' },
-    { number: 'P002', name: 'Bob Smith', lastChecked: '2025-10-13' },
-    { number: 'P003', name: 'Charlie Lee', lastChecked: '2025-10-11' },
-    { number: 'P004', name: 'Diana King', lastChecked: '2025-10-10' },
-    { number: 'P005', name: 'Ethan Brown', lastChecked: '2025-10-12' }
-  ];
+  // Resolve specialist display info
+  const storedUsername = (localStorage.getItem('specialistUsername') || '').toString().trim();
+  let storedFull = (localStorage.getItem('specialistFullName') || '').toString().trim();
+  const specialistDisplayMap = { 
+    'jsmith': 'Dr. John Smith', 
+    'ajones': 'Dr. Alex Jones', 
+    'clee': 'Dr. Christina Lee' 
+  };
+  
+  let specialistName = 'Specialist';
+  let specialistId = localStorage.getItem('specialistId') || '';
+  
+  if (storedUsername) {
+    const usernameLower = storedUsername.toLowerCase();
+    if (specialistDisplayMap[usernameLower]) {
+      specialistName = specialistDisplayMap[usernameLower];
+      const demoMap = { 'jsmith': 1, 'ajones': 2, 'clee': 3 };
+      if (!specialistId && demoMap[usernameLower]) {
+        specialistId = String(demoMap[usernameLower]);
+        localStorage.setItem('specialistId', specialistId);
+      }
+    } else if (storedFull) {
+      specialistName = storedFull;
+    }
+  } else if (storedFull) {
+    specialistName = storedFull;
+  }
+  
+  console.log('Specialist Info:', { username: storedUsername, name: specialistName, id: specialistId });
+  
+  const specialistNameDisplay = document.getElementById('specialistNameDisplay');
+  if (specialistNameDisplay) {
+    specialistNameDisplay.textContent = specialistName;
+  }
 
   const tableBody = document.querySelector('#patient-table tbody');
+  let patientsCache = [];
 
-  // Render Patient Table
   function renderTable(data) {
+    if (!tableBody) return;
     tableBody.innerHTML = '';
+    if (!data || data.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">No patients assigned to you.</td></tr>';
+      return;
+    }
     data.forEach(p => {
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${p.number}</td>
-        <td>${p.name}</td>
-        <td>${p.lastChecked}</td>
-      `;
+      row.innerHTML = `\
+        <td>${p.number || p.patient_id || ''}</td>\
+        <td>${p.name || p.first_name + ' ' + p.last_name || ''}</td>\
+        <td>${p.lastChecked || p.last_date_time || 'Not available'}</td>`;
       row.addEventListener('click', () => {
-        localStorage.setItem('viewingPatientNumber', p.number);
-        localStorage.setItem('viewingPatientName', p.name);
+        try { localStorage.setItem('viewingPatientNumber', p.number || p.patient_id || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientName', p.name || (p.first_name + ' ' + p.last_name) || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientUserId', p.userId || p.user_id || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientId', p.patientId || p.patient_id || p.id || ''); } catch(e){}
         window.location.href = 'specialist_patient_view.html';
       });
       tableBody.appendChild(row);
     });
   }
-  renderTable(patients);
+
+  // Load patients from server (filtered by specialist)
+  async function loadPatientsFromServer() {
+    if (!specialistId) {
+      console.error('Missing specialist ID. Cannot load patients.');
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: red;">Error: Specialist ID not found. Please log in again.</td></tr>';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/specialist/${specialistId}/patients`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('bsm_token') || ''}`
+        }
+      });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      const data = await res.json();
+      const mapped = (data.patients || []).map(p => ({
+        patientId: p.patient_id,
+        userId: p.user_id,
+        number: p.patient_id,
+        name: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+        lastChecked: p.last_date_time ? String(p.last_date_time).split('T')[0] : 'Not available'
+      }));
+      
+      patientsCache = mapped;
+      renderTable(mapped);
+      console.log(`Loaded ${mapped.length} patients for specialist ${specialistId}`);
+    } catch(err) {
+      console.warn('Server patient load failed:', err);
+      // Fallback to localStorage if server fails
+      loadPatientsFromLocalStorage();
+    }
+  }
+
+  // Fallback to localStorage
+  function loadPatientsFromLocalStorage() {
+    try {
+      let patients = JSON.parse(localStorage.getItem('patients') || '[]');
+      if (!Array.isArray(patients) && typeof patients === 'object') {
+        patients = Object.values(patients);
+      }
+      
+      // Filter by assignments if available
+      const assigns = JSON.parse(localStorage.getItem('assignments') || '[]');
+      if (Array.isArray(assigns) && assigns.length > 0 && specialistId) {
+        const myPatientIds = assigns
+          .filter(a => String(a.specialistId) === String(specialistId))
+          .map(a => String(a.patientId).toLowerCase());
+        
+        if (myPatientIds.length > 0) {
+          patients = patients.filter(p => {
+            const ids = [p.patientId, p.patient_id, p.number, p.userId, p.user_id, p.id]
+              .map(x => String(x || '').toLowerCase());
+            return ids.some(id => id && myPatientIds.includes(id));
+          });
+        }
+      }
+      
+      const mapped = patients.map(p => ({
+        patientId: p.patientId || p.patient_id || p.id,
+        userId: p.userId || p.user_id,
+        number: p.number || p.patient_id || p.id || '-',
+        name: p.name || p.fullName || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown',
+        lastChecked: p.lastChecked || p.last_date_time || 'Not available'
+      }));
+      
+      patientsCache = mapped;
+      renderTable(mapped);
+    } catch(e) {
+      console.error('Failed to load patients from localStorage:', e);
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">No patients found.</td></tr>';
+    }
+  }
+
+  // Load on page start
+  loadPatientsFromServer();
 
   // Search and Reset
   document.getElementById('search-btn').addEventListener('click', () => {
@@ -134,9 +251,9 @@
     const startDate = document.getElementById('start-date').value;
     const endDate = document.getElementById('end-date').value;
 
-    const filtered = patients.filter(p => {
-      const matchName = p.name.toLowerCase().includes(nameVal);
-      const matchNumber = p.number.toLowerCase().includes(numberVal);
+    const filtered = patientsCache.filter(p => {
+      const matchName = (p.name || '').toLowerCase().includes(nameVal);
+      const matchNumber = String(p.number || '').toLowerCase().includes(numberVal);
       const matchDate = (!startDate || p.lastChecked >= startDate) && (!endDate || p.lastChecked <= endDate);
       return matchName && matchNumber && matchDate;
     });
@@ -148,7 +265,7 @@
     document.getElementById('search-number').value = '';
     document.getElementById('start-date').value = '';
     document.getElementById('end-date').value = '';
-    renderTable(patients);
+    renderTable(patientsCache);
   });
 
   // Logout
@@ -156,6 +273,12 @@
     e.preventDefault();
     localStorage.removeItem('specialistUsername');
     localStorage.removeItem('specialistFullName');
+    localStorage.removeItem('specialistSpecialty');
+    localStorage.removeItem('specialistId');
+    localStorage.removeItem('bsm_token');
+    window.location.href = 'specialist.html';
+  });
+  </script>
     alert("You have been logged out.");
     window.location.href = 'specialist.html';
   });

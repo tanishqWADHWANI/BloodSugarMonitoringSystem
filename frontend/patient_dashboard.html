@@ -9,67 +9,275 @@
   <link rel="stylesheet" href="css/dasshboard.css" />
   <script src="js/api.js"></script>
   <style>
-    /* Form styles */
+    /* Modern Card Design */
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      color: #004080;
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+    }
+
+    .card p.description {
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #f0f7ff;
+      border-left: 4px solid #004080;
+      border-radius: 4px;
+    }
+
+    /* Form Grid Layout */
     .form-grid {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 20px;
     }
 
     .form-row {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
     }
 
     .form-field {
-      flex: 1;
       display: flex;
       flex-direction: column;
+      gap: 6px;
     }
 
     .form-field label {
-      font-weight: bold;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-field label .icon {
+      font-size: 1.1rem;
+    }
+
+    .form-field input,
+    .form-field textarea {
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: border-color 0.3s;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: #004080;
+      box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
     }
 
     .form-field small {
-      font-size: 0.8rem;
-      color: #555;
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.4;
     }
 
+    .form-field .help-text {
+      background: #fffbea;
+      border-left: 3px solid #ffc107;
+      padding: 8px 12px;
+      margin-top: 4px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #856404;
+    }
+
+    /* Info Badges */
+    .info-badge {
+      display: inline-block;
+      background: #e8f4f8;
+      color: #004080;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .required-star {
+      color: #dc3545;
+      margin-left: 2px;
+    }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .section-header .icon {
+      font-size: 1.5rem;
+      color: #004080;
+    }
+
+    .section-header h3 {
+      color: #004080;
+      font-size: 1.2rem;
+      margin: 0;
+    }
+
+    /* Form Actions */
     .form-actions {
-      margin-top: 15px;
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .form-actions button[type="submit"] {
+      background: #004080;
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .form-actions button[type="submit"]:hover {
+      background: #003366;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 64, 128, 0.2);
+    }
+
+    .form-actions button[type="button"] {
+      background: #e0e0e0;
+      color: #333;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .form-actions button[type="button"]:hover {
+      background: #d0d0d0;
+    }
+
+    /* Table Styles */
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 20px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      background: white;
     }
 
-    th,
-    td {
-      padding: 8px;
-      border: 1px solid #ccc;
+    th {
+      background: #004080;
+      color: white;
+      padding: 14px 12px;
       text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .abnormal {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .abnormal-row {
+      background-color: #ffe6e6 !important;
+      border-left: 4px solid #dc3545;
+    }
+
+    .abnormal-row:hover {
+      background-color: #ffd4d4 !important;
     }
 
     .edit-btn,
     .del-btn {
-      margin-right: 5px;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-right: 6px;
     }
 
-    .card {
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      background: #f9f9f9;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    .edit-btn {
+      background: #28a745;
+      color: white;
+    }
+
+    .edit-btn:hover {
+      background: #218838;
+    }
+
+    .del-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .del-btn:hover {
+      background: #c82333;
+    }
+
+    /* Dashboard Header */
+    .dashboard-header {
+      margin-bottom: 30px;
+    }
+
+    .dashboard-header h1 {
+      color: #004080;
+      font-size: 2rem;
+      margin-bottom: 10px;
     }
 
     .dashboard-header p {
       font-size: 0.95rem;
-      color: #333;
+      color: #666;
+      line-height: 1.6;
     }
 
     /* Navigation & Logout button */
@@ -97,17 +305,34 @@
     }
 
     .logout-btn {
-      background-color: #f44336;
+      background: #dc3545;
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 10px 20px;
       cursor: pointer;
-      border-radius: 4px;
-      font-size: 0.9rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
     }
 
     .logout-btn:hover {
-      background-color: #d32f2f;
+      background: #c82333;
+    }
+
+    /* Status Indicators */
+    .status-normal {
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .status-borderline {
+      color: #ffc107;
+      font-weight: 600;
+    }
+
+    .status-abnormal {
+      color: #dc3545;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -127,100 +352,165 @@
 
   <main class="container">
     <section class="dashboard-header">
-      <h1 id="greeting">Patient Dashboard</h1>
-      <p id="specialistLine" class="subtext">Here you can track your daily health readings, medications, food intake, and activities. Keep your records up-to-date to help your specialist monitor your health trends.</p>
+      <h1 id="greeting">📊 Patient Dashboard</h1>
+      <p id="specialistLine" class="subtext">Track your daily health readings, medications, food intake, and physical activities. Maintaining accurate records helps your specialist monitor health trends and provide better care.</p>
     </section>
 
     <!-- Health Entry Form -->
     <section class="card">
-      <h2>Add Daily Health Entry</h2>
+      <h2>📝 Add Daily Health Entry</h2>
+      <p class="description">
+        <strong>📌 Important:</strong> Record your readings at consistent times each day for accurate trend analysis. Include all relevant information to help your healthcare team make informed decisions about your treatment plan.
+      </p>
+
       <form id="healthForm" class="form-grid">
-        <p>Fill out your daily readings accurately. Each entry will be saved in your history for review and trend tracking.</p>
-
+        <!-- Date & Time Section -->
+        <div class="section-header">
+          <span class="icon">🕐</span>
+          <h3>Date & Time</h3>
+        </div>
         <div class="form-row">
           <div class="form-field">
-            <label for="date">Date</label>
+            <label for="date">
+              <span class="icon">📅</span>
+              Date <span class="required-star">*</span>
+            </label>
             <input type="date" id="date" name="date" required />
-            <small>The date of your measurement.</small>
+            <small>When did you take this measurement?</small>
           </div>
           <div class="form-field">
-            <label for="time">Time</label>
+            <label for="time">
+              <span class="icon">⏰</span>
+              Time <span class="required-star">*</span>
+            </label>
             <input type="time" id="time" name="time" required />
-            <small>The time you took the measurement or ate your meal.</small>
+            <small>Exact time helps identify patterns throughout the day.</small>
           </div>
         </div>
 
+        <!-- Vital Signs Section -->
+        <div class="section-header">
+          <span class="icon">🩺</span>
+          <h3>Vital Signs</h3>
+        </div>
         <div class="form-row">
           <div class="form-field">
-            <label for="bloodSugar">Blood Sugar (mg/dL)</label>
+            <label for="bloodSugar">
+              <span class="icon">🩸</span>
+              Blood Sugar (mg/dL) <span class="required-star">*</span>
+              <span class="info-badge">Primary Metric</span>
+            </label>
             <input type="number" id="bloodSugar" name="bloodSugar" min="20" max="600" required />
-            <small>Measure your blood sugar using your device. Normal fasting: 70-99 mg/dL.</small>
+            <div class="help-text">
+              <strong>Normal Ranges:</strong> Fasting: 70-99 mg/dL | After meals: &lt;140 mg/dL
+            </div>
           </div>
           <div class="form-field">
-            <label for="bloodPressure">Blood Pressure (mmHg)</label>
+            <label for="bloodPressure">
+              <span class="icon">💓</span>
+              Blood Pressure (mmHg)
+            </label>
             <input type="text" id="bloodPressure" name="bloodPressure" placeholder="120/80" />
-            <small>Optional. Enter as systolic/diastolic, e.g., 120/80.</small>
+            <small>Format: systolic/diastolic (e.g., 120/80). Normal: &lt;120/80 mmHg</small>
           </div>
           <div class="form-field">
-            <label for="heartRate">Heart Rate (bpm)</label>
-            <input type="number" id="heartRate" name="heartRate" min="40" max="200" />
-            <small>Optional. Your pulse rate in beats per minute.</small>
+            <label for="heartRate">
+              <span class="icon">❤️</span>
+              Heart Rate (bpm)
+            </label>
+            <input type="number" id="heartRate" name="heartRate" min="40" max="200" placeholder="72" />
+            <small>Resting heart rate. Normal range: 60-100 bpm</small>
           </div>
         </div>
 
+        <!-- Medications Section -->
+        <div class="section-header">
+          <span class="icon">💊</span>
+          <h3>Medications</h3>
+        </div>
         <div class="form-row">
-          <div class="form-field" style="width:100%">
-            <label for="medications">Medications Taken</label>
-            <input type="text" id="medications" name="medications" placeholder="e.g., Metformin 500mg" />
-            <small>List any medications you took, including dosage.</small>
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label for="medications">
+              <span class="icon">💊</span>
+              Medications Taken Today
+            </label>
+            <input type="text" id="medications" name="medications" placeholder="e.g., Metformin 500mg (morning), Insulin 10 units (dinner)" />
+            <small>List all medications with dosages and timing. This helps track medication effectiveness.</small>
           </div>
         </div>
 
+        <!-- Food & Nutrition Section -->
+        <div class="section-header">
+          <span class="icon">🍽️</span>
+          <h3>Food & Nutrition</h3>
+        </div>
         <div class="form-row">
-          <div class="form-field" style="width:50%">
-            <label for="foodTime">Time of Food Intake</label>
+          <div class="form-field">
+            <label for="foodTime">
+              <span class="icon">⏰</span>
+              Meal Time
+            </label>
             <input type="time" id="foodTime" name="foodTime" />
-            <small>Optional. Record when you had your meal/snack.</small>
+            <small>When did you eat? Track timing to correlate with blood sugar.</small>
           </div>
-          <div class="form-field" style="width:50%">
-            <label for="foodTaken">Food Consumed</label>
-            <input type="text" id="foodTaken" name="foodTaken" placeholder="e.g., 1 cup rice, 200g chicken" />
-            <small>Optional. Helps track how meals affect your sugar readings.</small>
+          <div class="form-field" style="grid-column: span 2;">
+            <label for="foodTaken">
+              <span class="icon">🥗</span>
+              Food Consumed
+            </label>
+            <input type="text" id="foodTaken" name="foodTaken" placeholder="e.g., 1 cup brown rice, 150g grilled chicken, mixed vegetables" />
+            <small>Be specific about portions and types of food. This helps identify how different foods affect your levels.</small>
           </div>
         </div>
 
+        <!-- Activity & Notes Section -->
+        <div class="section-header">
+          <span class="icon">🏃</span>
+          <h3>Physical Activity & Notes</h3>
+        </div>
         <div class="form-row">
-          <div class="form-field" style="width:100%">
-            <label for="activity">Physical Activity / Notes</label>
-            <textarea id="activity" name="activity" rows="3" placeholder="e.g., 30-min walk, feeling dizzy"></textarea>
-            <small>Optional. Record any exercise, symptoms, or special notes.</small>
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label for="activity">
+              <span class="icon">📝</span>
+              Activity, Symptoms, or Special Notes
+            </label>
+            <textarea id="activity" name="activity" rows="4" placeholder="Examples:
+• Exercise: 30-minute walk after dinner
+• Symptoms: Felt dizzy, slightly nauseous
+• Special events: Ate at restaurant, attended party
+• Stress level: High stress day at work
+• Sleep quality: Only slept 4 hours"></textarea>
+            <small>Include any exercise, symptoms, unusual events, stress levels, or sleep quality. All these factors can affect your blood sugar.</small>
           </div>
         </div>
 
         <div class="form-actions">
-          <button type="submit">Save Entry</button>
+          <button type="submit">💾 Save Entry</button>
+          <button type="button" onclick="document.getElementById('healthForm').reset()">🔄 Clear Form</button>
         </div>
       </form>
     </section>
 
     <!-- Entries Table -->
     <section class="card">
-      <h2>My Health History</h2>
-      <p>All your past entries are displayed here. You can review, edit, or delete them. Keeping a detailed history helps your specialist understand trends in your health.</p>
+      <h2>📋 My Health History</h2>
+      <p class="description">
+        All your recorded entries are displayed here. Review patterns, edit recent entries, or remove incorrect data. Your specialist can see these entries to better understand your health trends.
+      </p>
       <div class="table-wrapper">
         <table id="entriesTable">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Blood Sugar</th>
-              <th>Blood Pressure</th>
-              <th>Heart Rate</th>
-              <th>Medications</th>
-              <th>Food Time</th>
-              <th>Food Taken</th>
-              <th>Activity / Notes</th>
-              <th>Actions</th>
+              <th>📅 Date</th>
+              <th>⏰ Time</th>
+              <th>🩸 Blood Sugar</th>
+              <th>💓 BP</th>
+              <th>❤️ HR</th>
+              <th>💊 Medications</th>
+              <th>🍽️ Meal Time</th>
+              <th>🥗 Food</th>
+              <th>📝 Notes</th>
+              <th>⚙️ Actions</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -235,226 +525,383 @@
     </div>
   </footer>
 
-    <script>
-    // Wait until the DOM is ready
-    document.addEventListener('DOMContentLoaded', async () => {
-      // 1. Enforce that this is a logged-in PATIENT
-      let auth;
+  <script>
+    const currentPatient = (localStorage.getItem('loggedInPatient') || 'patient').toLowerCase();
+    const LS_KEY = 'health_' + currentPatient;
+
+    const form = document.getElementById('healthForm');
+    const tbody = document.querySelector('#entriesTable tbody');
+    let editingIndex = null;
+
+    // Load entries
+    function loadEntries() {
       try {
-        auth = requireRole('patient');    // throws + redirects if not logged in as patient
-      } catch (err) {
-        console.error(err);
-        return; // if requireRole redirects, we just stop running code here
+        const parsed = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
       }
+    }
 
-      const userId = auth.user_id;       // this is the DB user_id from /api/login
-      const currentUser = auth;
+    // Save entries
+    function saveEntries(entries) {
+      localStorage.setItem(LS_KEY, JSON.stringify(entries));
+    }
 
-      // 2. Get references to DOM elements
-      const form = document.getElementById('healthForm');
-      const tbody = document.querySelector('#entriesTable tbody');
+    // Helper functions to check abnormal values
+    function isAbnormalBloodSugar(value) {
+      const num = parseFloat(value);
+      return !isNaN(num) && (num < 70 || num > 130);
+    }
 
-      const avgEl = document.getElementById('avgReading');
-      const lastEl = document.getElementById('lastReading');
-      const abnormalCountEl = document.getElementById('abnormalCount');
+    function isAbnormalBloodPressure(value) {
+      if (value === '-' || !value) return false;
+      const parts = String(value).split('/');
+      if (parts.length !== 2) return false;
+      const systolic = parseFloat(parts[0]);
+      const diastolic = parseFloat(parts[1]);
+      return (!isNaN(systolic) && (systolic < 90 || systolic > 130)) ||
+             (!isNaN(diastolic) && (diastolic < 60 || diastolic > 85));
+    }
 
-      const greetEl = document.getElementById('greeting');
-      if (greetEl) {
-        // If we know their first name, use it, otherwise fall back
-        const name = currentUser.first_name || currentUser.email || 'Patient';
-        greetEl.textContent = 'Welcome, ' + name;
-      }
+    function isAbnormalHeartRate(value) {
+      const num = parseFloat(value);
+      return !isNaN(num) && (num < 60 || num > 80);
+    }
 
-      // This array will hold whatever /api/readings returns
-      let readings = [];
-
-      // 3. Helper: convert an API reading into a "row" for the table
-      function readingToRow(r) {
-        // date_time is the canonical timestamp from the backend
-        const raw = r.date_time || r.timestamp || r.dateTime;
-        let date = '', time = '';
-        if (raw) {
-          const d = new Date(raw);
-          if (!Number.isNaN(d.getTime())) {
-            date = d.toISOString().slice(0, 10);       // YYYY-MM-DD
-            time = d.toTimeString().slice(0, 5);       // HH:MM
-          }
-        }
-
-        return {
-          id: r.reading_id,
-          date,
-          time,
-          value: r.value,
-          bloodPressure: r.blood_pressure || '',
-          heartRate: r.heart_rate || '',
-          medications: r.medications || '',
-          foodTime: r.food_time || '',
-          foodTaken: r.food_intake || '',
-          activity: r.activity || r.symptoms_notes || '',
-          status: (r.status || '').toLowerCase()
-        };
-      }
-
-      // 4. Load readings from the backend for this logged-in patient
-      async function loadReadings() {
-        // GET /api/readings/<userId> -> { userId, readings: [...] }
-        const data = await getReadings(userId);
-        readings = (data && Array.isArray(data.readings)) ? data.readings : (Array.isArray(data) ? data : []);
-        renderTable();
-        updateDashboardStats();
-      }
-
-      // 5. Render the table body
-      function renderTable() {
-        if (!tbody) return;
-
-        if (!readings.length) {
-          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center">No entries yet. Start by adding your daily readings above.</td></tr>`;
-          return;
-        }
-
-        // newest first
-        const rows = readings
-          .slice()
-          .sort((a, b) => new Date(b.date_time || 0) - new Date(a.date_time || 0))
-          .map(readingToRow);
-
-        tbody.innerHTML = rows.map(r => `
-          <tr>
-            <td>${r.date || '-'}</td>
-            <td>${r.time || '-'}</td>
-            <td>${r.value ?? '-'}</td>
-            <td>${r.bloodPressure || '-'}</td>
-            <td>${r.heartRate || '-'}</td>
+    // Render table
+    function renderTable() {
+      const rows = loadEntries();
+      tbody.innerHTML = rows.length === 0 ? `<tr><td colspan="10" style="text-align:center">No entries yet. Start by adding your daily readings above.</td></tr>` :
+        rows.map((r, i) => {
+          const bsAbnormal = isAbnormalBloodSugar(r.bloodSugar);
+          const bpAbnormal = isAbnormalBloodPressure(r.bloodPressure);
+          const hrAbnormal = isAbnormalHeartRate(r.heartRate);
+          const hasAbnormal = bsAbnormal || bpAbnormal || hrAbnormal;
+          
+          const rowClass = hasAbnormal ? ' class="abnormal-row"' : '';
+          const warningIcon = hasAbnormal ? '⚠️ ' : '';
+          const bsClass = bsAbnormal ? ' class="abnormal"' : '';
+          const bpClass = bpAbnormal ? ' class="abnormal"' : '';
+          const hrClass = hrAbnormal ? ' class="abnormal"' : '';
+          
+          return `
+          <tr${rowClass}>
+            <td>${warningIcon}${r.date}</td>
+            <td>${r.time}</td>
+            <td${bsClass}>${r.bloodSugar}</td>
+            <td${bpClass}>${r.bloodPressure || '-'}</td>
+            <td${hrClass}>${r.heartRate || '-'}</td>
             <td>${r.medications || '-'}</td>
             <td>${r.foodTime || '-'}</td>
             <td>${r.foodTaken || '-'}</td>
             <td>${r.activity || '-'}</td>
-            <td><!-- TODO: wire Edit/Delete to backend if endpoints exist --></td>
+            <td>
+              <button type="button" class="edit-btn" data-index="${i}">Edit</button>
+              <button type="button" class="del-btn" data-index="${i}">Delete</button>
+            </td>
           </tr>
-        `).join('');
+        `}).join('');
+    }
+
+    // Handle form submit
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const entry = {
+        date: form.date.value,
+        time: form.time.value,
+        bloodSugar: form.bloodSugar.value,
+        bloodPressure: form.bloodPressure.value,
+        heartRate: form.heartRate.value,
+        medications: form.medications.value,
+        foodTime: form.foodTime.value,
+        foodTaken: form.foodTaken.value,
+        activity: form.activity.value
+      };
+
+      const rows = loadEntries();
+      if (editingIndex === null) {
+        rows.push(entry);
+      } else {
+        rows[editingIndex] = entry;
+        editingIndex = null;
       }
 
-      // 6. Update the dashboard stats cards at the top
-      function updateDashboardStats() {
-        if (!readings.length) {
-          if (avgEl) avgEl.textContent = '0';
-          if (lastEl) lastEl.textContent = 'No data yet';
-          if (abnormalCountEl) abnormalCountEl.textContent = '0';
+      // Save to localStorage first (immediate feedback)
+      saveEntries(rows);
+      
+      // Try to save to database as well
+      try {
+        const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+        if (userId) {
+          const timestamp = `${entry.date} ${entry.time}:00`;
+          await addReading({
+            user_id: userId,
+            value: parseFloat(entry.bloodSugar),
+            timestamp: timestamp,
+            bloodPressure: entry.bloodPressure,
+            heartRate: entry.heartRate ? parseInt(entry.heartRate) : null,
+            medications: entry.medications,
+            food_time: entry.foodTime,
+            food_intake: entry.foodTaken,
+            symptoms_notes: entry.activity
+          });
+          console.log('✓ Entry saved to database');
+        }
+      } catch (dbError) {
+        console.warn('Failed to save to database (saved to localStorage only):', dbError);
+      }
+
+      form.reset();
+      renderTable();
+      alert('Your entry has been saved. You can now see it in your history below.');
+    });
+
+    // Edit / Delete
+    tbody.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const idx = Number(btn.dataset.index);
+      const rows = loadEntries();
+
+      if (btn.classList.contains('del-btn')) {
+        if (confirm('Delete this entry? This action cannot be undone.')) {
+          rows.splice(idx, 1);
+          saveEntries(rows);
+          renderTable();
+        }
+        return;
+      }
+
+      if (btn.classList.contains('edit-btn')) {
+        const r = rows[idx];
+        form.date.value = r.date;
+        form.time.value = r.time;
+        form.bloodSugar.value = r.bloodSugar;
+        form.bloodPressure.value = r.bloodPressure;
+        form.heartRate.value = r.heartRate;
+        form.medications.value = r.medications;
+        form.foodTime.value = r.foodTime;
+        form.foodTaken.value = r.foodTaken;
+        form.activity.value = r.activity;
+        editingIndex = idx;
+
+        window.scrollTo({ top: form.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+      }
+    });
+
+    // Greeting
+    const greetEl = document.getElementById('greeting');
+    if (greetEl) {
+      greetEl.textContent = 'Welcome, ' + currentPatient.charAt(0).toUpperCase() + currentPatient.slice(1);
+    }
+
+    // Load specialist assignment from database
+    async function loadSpecialistAssignment() {
+      try {
+        const patientId = localStorage.getItem('patientId');
+        const token = localStorage.getItem('bsm_token') || '';
+        
+        if (!patientId) {
+          document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
           return;
         }
 
-        // Latest reading
-        const sorted = readings
-          .slice()
-          .sort((a, b) => new Date(b.date_time || 0) - new Date(a.date_time || 0));
-        const last = sorted[0];
-
-        if (lastEl) {
-          const d = new Date(last.date_time || '');
-          const when = Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
-          lastEl.textContent = `${last.value} mg/dL (${last.status || 'unknown'})${when ? ' on ' + when : ''}`;
-        }
-
-        // Average blood sugar
-        const numericValues = readings
-          .map(r => Number(r.value))
-          .filter(v => Number.isFinite(v));
-        if (avgEl) {
-          const avg = numericValues.length
-            ? (numericValues.reduce((a, b) => a + b, 0) / numericValues.length).toFixed(1)
-            : '0';
-          avgEl.textContent = avg;
-        }
-
-        // Count of abnormal readings (as per backend classification)
-        if (abnormalCountEl) {
-          const abnormal = readings.filter(r => (r.status || '').toLowerCase() === 'abnormal').length;
-          abnormalCountEl.textContent = String(abnormal);
-        }
-      }
-
-      // 7. Handle the “Add Daily Health Entry” form submit
-      if (form) {
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          if (!userId) return;
-
-          const date = form.date.value;          // "YYYY-MM-DD"
-          const time = form.time.value;          // "HH:MM"
-          const bloodSugarVal = Number(form.bloodSugar.value);
-
-          if (!date || !time || !Number.isFinite(bloodSugarVal)) {
-            alert('Please fill in Date, Time, and Blood Sugar.');
-            return;
+        const response = await fetch(`http://127.0.0.1:5000/api/patient/${patientId}/specialist`, {
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
+        });
 
-          // Build a single datetime string the backend can store
-          // e.g. "2025-11-20 14:30:00"
-          const dateTime = `${date} ${time}:00`;
+        if (response.ok) {
+          const data = await response.json();
+          if (data.specialist) {
+            const spec = data.specialist;
+            document.getElementById('specialistLine').textContent = 
+              `Your specialist: Dr. ${spec.first_name} ${spec.last_name} (${spec.email}). They monitor your health trends and provide care guidance.`;
+          } else {
+            document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load specialist:', error);
+        document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
+      }
+    }
 
-          const meds = form.medications.value.trim();
-          const foodTime = form.foodTime.value.trim();
-          const foodTaken = form.foodTaken.value.trim();
-          const activity = form.activity.value.trim();
-
+    // Create demo health history for Alice if no entries exist
+    async function initializeDemoData() {
+      const patientEmail = (localStorage.getItem('patientEmail') || '').toLowerCase();
+      const currentPatient = (localStorage.getItem('loggedInPatient') || '').toLowerCase();
+      
+      console.log('Checking for demo data initialization...');
+      console.log('patientEmail:', patientEmail);
+      console.log('loggedInPatient:', currentPatient);
+      
+      // Check if this is Alice by email or username
+      const isAlice = patientEmail.includes('alice') || currentPatient.includes('alice');
+                      
+      console.log('Is Alice?', isAlice);
+      
+      if (isAlice) {
+        const existingData = loadEntries();
+        console.log('Existing localStorage entries:', existingData.length);
+        
+        // Check if data exists in database
+        const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+        let dbHasData = false;
+        
+        if (userId) {
           try {
-            // 1) Save the reading to the backend
-            await addReading({
-              userId: userId,
-              value: bloodSugarVal,
-              unit: 'mg/dL',
-              fasting: false,
-              foodIntake: foodTaken,
-              activity: activity,
-              event: null,
-              symptomsNotes: activity,
-              additionalNote: [
-                meds ? `Meds: ${meds}` : '',
-                foodTime ? `Food Time: ${foodTime}` : ''
-              ].filter(Boolean).join(' | '),
-
-              // tell the backend what date/time the user picked
-              dateTime: dateTime
-            });
-
-            // 2) Reload the table and dashboard stats
-            await loadReadings();
-
-            // 3) Optionally clear some fields (leave Date/Time as-is)
-            form.bloodSugar.value = '';
-            form.medications.value = '';
-            form.foodTime.value = '';
-            form.foodTaken.value = '';
-            form.activity.value = '';
-
-            alert('Entry saved to the database successfully!');
-          } catch (err) {
-            console.error('Failed to save entry:', err);
-            alert('Failed to save entry. See console for details.');
+            const dbReadings = await getReadings(userId);
+            dbHasData = dbReadings && dbReadings.length > 0;
+            console.log('Database entries:', dbReadings ? dbReadings.length : 0);
+          } catch (e) {
+            console.log('Could not check database:', e);
           }
-        });
-      }
-
-      // 8. Wire the logout button using the shared helper
-      const logoutBtn = document.getElementById('logoutBtn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-          handleLogout();  // provided by api.js; clears auth + redirects
-        });
-      }
-
-      // 9. Initial load of dashboard data
-      try {
-        await loadReadings();
-      } catch (err) {
-        console.error(err);
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:red">Failed to load readings: ${err.message}</td></tr>`;
         }
+        
+        if (existingData.length === 0 && !dbHasData) {
+          const today = new Date();
+          const demoEntries = [
+            {
+              date: new Date(today.getTime() - 7*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:30',
+              bloodSugar: '95',
+              bloodPressure: '118/76',
+              heartRate: '72',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:45',
+              foodTaken: '1 cup oatmeal, 1 apple, green tea',
+              activity: 'Fasting blood sugar reading before breakfast. Feeling good, slept 7 hours.'
+            },
+            {
+              date: new Date(today.getTime() - 6*24*60*60*1000).toISOString().split('T')[0],
+              time: '07:15',
+              bloodSugar: '102',
+              bloodPressure: '120/78',
+              heartRate: '68',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '07:30',
+              foodTaken: 'Scrambled eggs (2), whole wheat toast, orange juice',
+              activity: 'Slightly elevated reading. Stressed about work presentation.'
+            },
+            {
+              date: new Date(today.getTime() - 5*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:00',
+              bloodSugar: '88',
+              bloodPressure: '115/75',
+              heartRate: '70',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:15',
+              foodTaken: 'Greek yogurt with berries, granola',
+              activity: '30-minute morning walk. Feeling energetic.'
+            },
+            {
+              date: new Date(today.getTime() - 4*24*60*60*1000).toISOString().split('T')[0],
+              time: '13:30',
+              bloodSugar: '145',
+              bloodPressure: '122/80',
+              heartRate: '78',
+              medications: 'Metformin 500mg (lunch)',
+              foodTime: '12:15',
+              foodTaken: 'Large pasta serving at restaurant, garlic bread, soda',
+              activity: 'Post-meal reading. Ate more carbs than usual at lunch meeting.'
+            },
+            {
+              date: new Date(today.getTime() - 3*24*60*60*1000).toISOString().split('T')[0],
+              time: '22:00',
+              bloodSugar: '185',
+              bloodPressure: '138/88',
+              heartRate: '88',
+              medications: 'Forgot evening Metformin dose',
+              foodTime: '19:30',
+              foodTaken: 'Pizza (3 slices), ice cream dessert, cola',
+              activity: '⚠️ ALERT: High blood sugar! Forgot medication + high carb dinner. Feeling thirsty and slightly dizzy. Stress from work deadline.'
+            },
+            {
+              date: new Date(today.getTime() - 2*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:00',
+              bloodSugar: '152',
+              bloodPressure: '132/84',
+              heartRate: '79',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:20',
+              foodTaken: 'Light breakfast - yogurt, fruit',
+              activity: 'Fasting reading still elevated from yesterday evening spike. Monitoring closely.'
+            },
+            {
+              date: new Date(today.getTime() - 1*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:15',
+              bloodSugar: '105',
+              bloodPressure: '128/82',
+              heartRate: '75',
+              medications: 'Metformin 500mg (morning), extra dose at bedtime',
+              foodTime: '08:30',
+              foodTaken: 'Low-carb breakfast: eggs, avocado, vegetables',
+              activity: 'Reading coming down. Increased medication per doctor advice. Light exercise - 20 min walk.'
+            },
+            {
+              date: today.toISOString().split('T')[0],
+              time: '08:00',
+              bloodSugar: '98',
+              bloodPressure: '120/78',
+              heartRate: '72',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:20',
+              foodTaken: 'Steel-cut oats, blueberries, almonds, cinnamon',
+              activity: 'Much better! Back to normal range. Maintaining strict diet and medication schedule. Slept 8 hours.'
+            }
+          ];
+          saveEntries(demoEntries);
+          
+          // Save to database immediately
+          if (userId) {
+            console.log('Saving demo entries to database...');
+            try {
+              for (const entry of demoEntries) {
+                const timestamp = `${entry.date} ${entry.time}:00`;
+                await addReading({
+                  user_id: userId,
+                  value: parseFloat(entry.bloodSugar),
+                  timestamp: timestamp,
+                  bloodPressure: entry.bloodPressure,
+                  heartRate: entry.heartRate ? parseInt(entry.heartRate) : null,
+                  medications: entry.medications,
+                  food_time: entry.foodTime,
+                  food_intake: entry.foodTaken,
+                  symptoms_notes: entry.activity
+                });
+              }
+              console.log('✓ Demo health history created and saved to database - 8 entries');
+            } catch (dbError) {
+              console.error('Failed to save demo data to database:', dbError);
+            }
+          }
+          
+          console.log('⚠️ Abnormal reading (185 mg/dL):', demoEntries[4]);
+        } else {
+          console.log('Alice already has data:', existingData.length + ' localStorage entries, dbHasData:', dbHasData);
+        }
+      } else {
+        console.log('Not Alice - demo data will not be created');
       }
+    }
+
+    // Initialize demo data before rendering
+    initializeDemoData();
+
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('loggedInPatient');
+      alert('You have been logged out.');
+      window.location.href = 'index.html';
     });
+
+    renderTable();
+    loadSpecialistAssignment();
   </script>
 </body>
 

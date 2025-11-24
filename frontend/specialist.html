@@ -190,27 +190,62 @@
          =============================== -->
     <script>
       const demoSpecialists = [
-        { username: 'jsmith', password: 'smith123', fullName: 'Dr. John Smith', specialty: 'Endocrinologist' },
-        { username: 'ajones', password: 'jones123', fullName: 'Dr. Alex Jones', specialty: 'Diabetes Specialist' },
-        { username: 'clee', password: 'lee123', fullName: 'Dr. Christina Lee', specialty: 'Nutritionist & Endocrinologist' }
+        { id: 1, username: 'jsmith', password: 'smith123', fullName: 'Dr. John Smith', specialty: 'Endocrinologist' },
+        { id: 2, username: 'ajones', password: 'jones123', fullName: 'Dr. Alex Jones', specialty: 'Diabetes Specialist' },
+        { id: 3, username: 'clee', password: 'lee123', fullName: 'Dr. Christina Lee', specialty: 'Nutritionist & Endocrinologist' }
       ];
 
       const form = document.getElementById('loginForm');
       const errEl = document.getElementById('error');
 
-      form.addEventListener('submit', function (e) {
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
         errEl.textContent = '';
 
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
 
+        try {
+          // Try database login first
+          const response = await loginUser(username, password, 'specialist');
+          
+          if (response && response.user && response.user.role === 'specialist') {
+            const user = response.user;
+            
+            // Store specialist info from database
+            localStorage.setItem('specialistUsername', username);
+            localStorage.setItem('specialistFullName', `${user.first_name || ''} ${user.last_name || ''}`.trim() || username);
+            localStorage.setItem('specialistSpecialty', user.specialty || 'Specialist');
+            localStorage.setItem('specialistId', String(user.user_id || user.id));
+            
+            // Store token if available
+            if (response.token || response.access_token) {
+              localStorage.setItem('bsm_token', response.token || response.access_token);
+            }
+            
+            window.location.href = 'specialist_dashboard.html';
+            return;
+          }
+        } catch (error) {
+          console.warn('Database login failed, trying demo accounts:', error);
+        }
+
+        // Fallback to demo accounts
         const found = demoSpecialists.find(s => s.username === username && s.password === password);
 
         if (found) {
           localStorage.setItem('specialistUsername', found.username);
           localStorage.setItem('specialistFullName', found.fullName);
           localStorage.setItem('specialistSpecialty', found.specialty);
+          localStorage.setItem('specialistId', String(found.id));
+
+          // Also cache the specialists list for dashboard reference
+          localStorage.setItem('specialists', JSON.stringify(demoSpecialists.map(s => ({
+            id: s.id,
+            username: s.username,
+            full_name: s.fullName,
+            specialty: s.specialty
+          }))));
 
           window.location.href = 'specialist_dashboard.html';
         } else {

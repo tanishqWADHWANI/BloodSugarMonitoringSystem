@@ -3,60 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Specialist Dashboard - Blood Sugar Monitor Clinic</title>
-  <link rel="stylesheet" href="css/style.css"><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Patient Details - Online Blood Sugar Monitor</title>
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/demo_users.js"></script>
   <style>
-   
-    .logout-btn { background:#cc0000; border:none; border-radius:5px; padding:8px 12px; cursor:pointer; color:white; }
+    .logout-btn {
+      background:#cc0000;
+      border:none;
+      border-radius:5px;
+      padding:8px 12px;
+      cursor:pointer;
+      color:white;
+    }
     .logout-btn:hover { background:#ff3333; }
 
     .container { max-width:1100px; margin:20px auto; padding:0 15px; }
     h1,h2,h3,h4,p { margin-bottom:10px; }
 
     .section-card {
-      background:white; border-radius:8px; box-shadow:0 3px 8px rgba(0,0,0,0.1);
-      padding:20px; margin-bottom:25px;
+      background:white;
+      border-radius:8px;
+      box-shadow:0 3px 8px rgba(0,0,0,0.1);
+      padding:20px;
+      margin-bottom:25px;
     }
 
     table {
-      width:100%; border-collapse:collapse; font-size:0.9rem;
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.9rem;
     }
-    th, td { border:1px solid #ccc; padding:8px; text-align:left; }
-    th { background:#004080; color:white; }
+    th, td {
+      border:1px solid #ccc;
+      padding:8px;
+      text-align:left;
+    }
+    th {
+      background:#004080;
+      color:white;
+    }
 
     .info-grid {
-      display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr));
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(250px,1fr));
       gap:10px;
     }
     .info-item {
-      background:#f9f9f9; border:1px solid #ddd; border-radius:6px;
+      background:#f9f9f9;
+      border:1px solid #ddd;
+      border-radius:6px;
       padding:10px;
     }
 
-    /* Comments */
     #comment-text {
-      width:100%; padding:10px; border-radius:5px; border:1px solid #ccc;
-      resize:vertical; min-height:80px;
+      width:100%;
+      padding:10px;
+      border-radius:5px;
+      border:1px solid #ccc;
+      resize:vertical;
+      min-height:80px;
     }
     #save-comment {
-      margin-top:10px; padding:8px 15px; background:#004080; color:white;
-      border:none; border-radius:5px; cursor:pointer;
+      margin-top:10px;
+      padding:8px 15px;
+      background:#004080;
+      color:white;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
     }
     #save-comment:hover { background:#0066cc; }
-    #comment-list { list-style:none; padding:0; margin-top:10px; }
+    #comment-list {
+      list-style:none;
+      padding:0;
+      margin-top:10px;
+    }
     #comment-list li {
-      background:#f2f4f8; border-left:4px solid #004080; margin-bottom:8px;
-      padding:8px; border-radius:4px;
+      background:#f2f4f8;
+      border-left:4px solid #004080;
+      margin-bottom:8px;
+      padding:8px;
+      border-radius:4px;
     }
 
-    footer { background:#004080; color:white; text-align:center; padding:10px; margin-top:40px; }
-    .back-btn { background:#999; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
+    footer {
+      background:#004080;
+      color:white;
+      text-align:center;
+      padding:10px;
+      margin-top:40px;
+    }
+    .back-btn {
+      background:#999;
+      color:white;
+      padding:8px 12px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+      margin-bottom:15px;
+    }
     .back-btn:hover { background:#777; }
   </style>
 </head>
@@ -67,13 +112,17 @@
         <li><a href="index.html">Home</a></li>
         <li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
         <li><a href="contact.html">Contact</a></li>
-        <li style="margin-left:auto;"><button id="logoutBtn" class="logout-btn">Logout</button></li>
+        <li style="margin-left:auto;">
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </li>
       </ul>
     </nav>
   </header>
 
   <main class="container">
-    <button class="back-btn" onclick="window.location.href='specialist_dashboard.html'">&larr; Back to Dashboard</button>
+    <button class="back-btn" onclick="window.location.href='specialist_dashboard.html'">
+      &larr; Back to Dashboard
+    </button>
 
     <h1>Patient: <span id="patientName"></span></h1>
     <p>Patient ID: <span id="patientNumber"></span></p>
@@ -81,7 +130,12 @@
     <!-- PERSONAL INFO -->
     <section class="section-card">
       <h2>Personal Information</h2>
-      <div class="info-grid" id="personal-info"></div>
+      <div class="info-grid" id="personal-info">
+        <!-- filled by JS -->
+      </div>
+      <div style="margin-top:12px">
+        <strong>Assigned Specialist:</strong> <span id="assignedSpecialist">Dr. Christina Lee</span>
+      </div>
     </section>
 
     <!-- HEALTH DATA -->
@@ -100,8 +154,11 @@
             <th>Activity / Notes</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <!-- filled by JS -->
+        </tbody>
       </table>
+      <p id="health-msg" style="margin-top:10px; color:#666;"></p>
     </section>
 
     <!-- COMMENTS -->
@@ -110,8 +167,9 @@
       <textarea id="comment-text" placeholder="Add a comment about this patient's readings..."></textarea>
       <button id="save-comment">Save Comment</button>
 
-      <h3>Previous Comments</h3>
+      <h3 style="margin-top:20px;">Previous Comments</h3>
       <ul id="comment-list"></ul>
+      <p id="comment-msg" style="margin-top:10px; color:#666;"></p>
     </section>
   </main>
 
@@ -119,96 +177,248 @@
     <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
   </footer>
 
-  <script>
+<script>
+  const API_BASE = 'http://127.0.0.1:5000';
+
   // ============================
-  // LOAD SELECTED PATIENT
+  // CONTEXT FROM DASHBOARD
   // ============================
+  const specialistId = localStorage.getItem('specialistId') || '3';
   const patientNumber = localStorage.getItem('viewingPatientNumber');
   const patientName = localStorage.getItem('viewingPatientName');
-  if (!patientNumber || !patientName) {
-    alert("No patient selected. Redirecting...");
+  const patientUserId = localStorage.getItem('viewingPatientUserId'); // users.user_id
+  const patientId = localStorage.getItem('viewingPatientId');        // patients.patient_id
+
+  // If some IDs are missing (e.g., selection came from cached data), try to resolve them
+  let resolvedUserId = patientUserId;
+  let resolvedPatientId = patientId;
+  if ((!resolvedUserId || !resolvedPatientId) && patientNumber) {
+    try {
+      // ensure demo patient exists for preview
+      (function(){ try{ const key='patients'; const raw=localStorage.getItem(key); const arr=raw?JSON.parse(raw):null; const exists=Array.isArray(arr)&&arr.some(p=>p.number==='001'||p.id==='001'||p.patientId==='001'); if(!exists){ const demo={ number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', id:'001', patientId:'001' }; const out=Array.isArray(arr)?[demo,...arr]:[demo]; localStorage.setItem(key, JSON.stringify(out)); } }catch(e){} })();
+      const cached = JSON.parse(localStorage.getItem('patients') || 'null');
+      if (Array.isArray(cached)) {
+        const found = cached.find(p => String(p.number) === String(patientNumber) || String(p.patientId) === String(patientNumber));
+        if (found) {
+          resolvedUserId = resolvedUserId || found.userId || found.user_id || null;
+          resolvedPatientId = resolvedPatientId || found.patientId || found.patient_id || null;
+          // Persist for future pages
+          if (resolvedUserId) localStorage.setItem('viewingPatientUserId', String(resolvedUserId));
+          if (resolvedPatientId) localStorage.setItem('viewingPatientId', String(resolvedPatientId));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not resolve patient IDs from cache', e);
+    }
+  }
+
+  if (!patientNumber || !patientName || !resolvedUserId || !resolvedPatientId) {
+    alert('No patient selected. Redirecting to dashboard...');
     window.location.href = 'specialist_dashboard.html';
   }
-  document.getElementById('patientNumber').textContent = patientNumber;
-  document.getElementById('patientName').textContent = patientName;
+
+  // Use resolved ids for subsequent calls
+  const patientUserIdFinal = resolvedUserId;
+  const patientIdFinal = resolvedPatientId;
+
+  const patientNumberSpan = document.getElementById('patientNumber');
+  const patientNameSpan = document.getElementById('patientName');
+  if (patientNumberSpan) patientNumberSpan.textContent = patientNumber;
+  if (patientNameSpan) patientNameSpan.textContent = patientName;
 
   // ============================
-  // PERSONAL INFO (mock or saved)
+  // LOAD READINGS
   // ============================
-  const info = JSON.parse(localStorage.getItem(`personal_${patientNumber}`)) || {
-    age: "Not provided",
-    gender: "Not provided",
-    email: "Not provided",
-    phone: "Not provided",
-    address: "Not provided"
-  };
-  document.getElementById('personal-info').innerHTML = `
-    <div class="info-item"><strong>Age:</strong> ${info.age}</div>
-    <div class="info-item"><strong>Gender:</strong> ${info.gender}</div>
-    <div class="info-item"><strong>Email:</strong> ${info.email}</div>
-    <div class="info-item"><strong>Phone:</strong> ${info.phone}</div>
-    <div class="info-item"><strong>Address:</strong> ${info.address}</div>
-  `;
+  const readingsBody = document.querySelector('#health-data-table tbody');
 
-  // ============================
-  // HEALTH DATA
-  // ============================
-  const tbody = document.querySelector('#health-data-table tbody');
-  const healthData = JSON.parse(localStorage.getItem(`health_${patientName.toLowerCase()}`)) || [];
+  function renderReadings(readings) {
+    if (!readingsBody) return;
 
-  if (healthData.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8">No health data recorded yet.</td></tr>`;
-  } else {
-    tbody.innerHTML = healthData.map(entry => `
-      <tr>
-        <td>${entry.date}</td>
-        <td>${entry.time}</td>
-        <td>${entry.bloodPressure || '-'}</td>
-        <td>${entry.heartRate || '-'}</td>
-        <td>${entry.medications || '-'}</td>
-        <td>${entry.foodTime || '-'}</td>
-        <td>${entry.foodTaken || '-'}</td>
-        <td>${entry.activity || '-'}</td>
-      </tr>
-    `).join('');
+    readingsBody.innerHTML = '';
+    if (!readings || readings.length === 0) {
+      readingsBody.innerHTML =
+        '<tr><td colspan="5">No readings found for this patient.</td></tr>';
+      return;
+    }
+
+    readings.forEach(r => {
+      const tr = document.createElement('tr');
+
+      const dt = r.date_time || r.dateTime || '';
+      const datePart = dt ? String(dt).split('T')[0] : '';
+      const timePart = dt && String(dt).includes('T')
+        ? String(dt).split('T')[1].substring(0, 5)
+        : '';
+
+      tr.innerHTML = `
+        <td>${datePart}</td>
+        <td>${timePart}</td>
+        <td>${r.value} ${r.unit || ''}</td>
+        <td>${r.status || 'normal'}</td>
+        <td>${r.food_intake || ''}</td>
+      `;
+      readingsBody.appendChild(tr);
+    });
+  }
+
+  async function loadReadings() {
+    if (!readingsBody) return;
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/readings/${patientUserIdFinal}?days=30`
+      );
+      if (!res.ok) {
+        throw new Error(`Server responded ${res.status}`);
+      }
+      const data = await res.json();
+      renderReadings(data.readings || []);
+    } catch (err) {
+      console.error('Error loading readings:', err);
+      readingsBody.innerHTML =
+        '<tr><td colspan="5">Error loading readings from server.</td></tr>';
+    }
   }
 
   // ============================
-  // COMMENTS SECTION
+  // LOAD COMMENTS (FEEDBACK)
   // ============================
-  const specialistName = localStorage.getItem('specialistFullName') || "Dr. John Smith";
   const commentList = document.getElementById('comment-list');
-  const commentKey = `comments_${patientNumber}`;
 
-  function loadComments() {
-    const comments = JSON.parse(localStorage.getItem(commentKey)) || [];
-    commentList.innerHTML = comments.length === 0
-      ? "<li>No comments yet.</li>"
-      : comments.map(c => `<li>${c}</li>`).join('');
+  function renderComments(feedback) {
+    if (!commentList) return;
+
+    commentList.innerHTML = '';
+    if (!feedback || feedback.length === 0) {
+      commentList.innerHTML = '<li>No comments yet.</li>';
+      return;
+    }
+
+    feedback.forEach(fb => {
+      const li = document.createElement('li');
+      const author = fb.specialist_name || 'Specialist';
+      const text = fb.feedback_text || '';
+      const created =
+        fb.createdAt || fb.created_at || fb.created_at || '';
+
+      li.innerHTML = `
+        <strong>${author}:</strong> ${text}
+        <br><small>${created}</small>
+      `;
+      commentList.appendChild(li);
+    });
   }
-  loadComments();
 
-  document.getElementById('save-comment').addEventListener('click', () => {
-    const text = document.getElementById('comment-text').value.trim();
-    if (!text) return;
-    const comments = JSON.parse(localStorage.getItem(commentKey)) || [];
-    const timestamp = new Date().toLocaleString();
-    comments.push(`${specialistName} (${timestamp}): ${text}`);
-    localStorage.setItem(commentKey, JSON.stringify(comments));
-    document.getElementById('comment-text').value = '';
-    loadComments();
-  });
+  async function loadComments() {
+    if (!commentList) return;
+
+    try {
+        const res = await fetch(
+        `${API_BASE}/api/patient/${patientIdFinal}/feedback`
+      );
+      if (!res.ok) {
+        throw new Error(`Server responded ${res.status}`);
+      }
+      const data = await res.json();
+      renderComments(data.feedback || []);
+    } catch (err) {
+      console.error('Error loading comments:', err);
+      commentList.innerHTML = '<li>Error loading comments from server.</li>';
+    }
+  }
+
+  // Load/resolve assigned specialist to display
+  (function loadAssignedSpecialist(){
+    try{
+      // try patient-level assignment from cached patients
+      const cached = JSON.parse(localStorage.getItem('patients') || 'null');
+      let specialistName = null;
+      if (Array.isArray(cached)){
+        const found = cached.find(p => String(p.number) === String(patientNumber) || String(p.patientId) === String(patientNumber));
+        if (found) {
+          specialistName = (found.assigned_specialist && (found.assigned_specialist.full_name || found.assigned_specialist.name)) || found.specialist_name || found.specialist || null;
+          // if specialist is an id, try to resolve
+          const specId = (found.assigned_specialist && found.assigned_specialist.id) || found.specialist_id || found.specialistId || null;
+          if (!specialistName && specId) {
+            const specs = JSON.parse(localStorage.getItem('specialists') || '[]');
+            const sp = Array.isArray(specs) && specs.find(s => String(s.id) === String(specId) || String(s.user_id) === String(specId) || String(s.username) === String(specId));
+            if (sp) specialistName = sp.full_name || sp.name || sp.username;
+          }
+        }
+      }
+      // fallback: try a patient-level API? skip for now
+      const el = document.getElementById('assignedSpecialist');
+      if (el) el.textContent = specialistName || 'Not assigned';
+    }catch(e){ console.warn('Could not resolve assigned specialist', e); }
+  })();
+
+  // ============================
+  // SAVE NEW COMMENT
+  // ============================
+  const commentText = document.getElementById('comment-text');
+  const saveCommentBtn = document.getElementById('save-comment');
+
+  if (saveCommentBtn) {
+    saveCommentBtn.addEventListener('click', async () => {
+      const text = (commentText?.value || '').trim();
+      if (!text) {
+        alert('Please enter a comment before saving.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/specialist/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            specialistId: parseInt(specialistId, 10),
+            // Backend expects data.patientId to be user_id, and it maps to patient
+            patientId: parseInt(patientUserIdFinal, 10),
+            feedbackText: text,
+            readingId: null
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to save feedback');
+        }
+
+        alert('Feedback saved successfully.');
+        if (commentText) commentText.value = '';
+        loadComments();
+      } catch (err) {
+        console.error('Error saving feedback:', err);
+        alert(err.message || 'Error saving feedback.');
+      }
+    });
+  }
+
+  // ============================
+  // INITIAL LOAD
+  // ============================
+  loadReadings();
+  loadComments();
 
   // ============================
   // LOGOUT
   // ============================
-  document.getElementById('logoutBtn').addEventListener('click', e => {
-    e.preventDefault();
-    localStorage.removeItem('specialistUsername');
-    localStorage.removeItem('specialistFullName');
-    alert("You have been logged out.");
-    window.location.href = 'specialist.html';
-  });
-  </script>
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Clear specialist session keys
+      localStorage.removeItem('specialistUsername');
+      localStorage.removeItem('specialistFullName');
+      localStorage.removeItem('specialistSpecialty');
+      localStorage.removeItem('specialistId');
+      try { localStorage.removeItem('bsm_token'); } catch (e) {}
+      // Match patient logout UX: inform the user and redirect to home
+      alert('You have been logged out.');
+      window.location.href = 'index.html';
+    });
+  }
+</script>
+
 </body>
 </html>

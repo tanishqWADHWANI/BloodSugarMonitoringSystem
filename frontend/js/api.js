@@ -151,6 +151,9 @@ const getAllUsers = () => apiRequest('/api/admin/users/all');
 const getAdminMonthlyReport = (month, year) =>
   apiRequest(`/api/admin/reports/monthly?month=${month}&year=${year}`);
 
+// Patients (for staff/admin)
+const getAllPatients = () => apiRequest('/api/patients');
+
 // Staff Dashboard - Assign Patients to Doctors
 const assignPatientToSpecialist = (patientUserId, specialistUserId) =>
   apiRequest('/api/assignments/assign', {

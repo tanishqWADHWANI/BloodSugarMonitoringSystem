@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Patient Records</title>
 <link rel="stylesheet" href="css/style.css">
+<script src="js/api.js"></script>
+<script src="js/demo_users.js"></script>
 <style>
   h1 { color: #004080; margin-bottom: 20px; }
   .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -18,7 +20,6 @@
   th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
   th { background: #004080; color: white; }
 </style>
-<script src="js/api.js"></script>
 </head>
 <body>
 
@@ -61,7 +62,8 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody id="patientTableBody">
+      <tbody>
+        <!-- Rows will be populated from localStorage.patients (cached) when available; otherwise the demo rows below will be shown. -->
       </tbody>
     </table>
   </div>
@@ -72,143 +74,192 @@
 </footer>
 
 <script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    // 1) Only allow staff 
-    let authUser;
-    try {
-      authUser = requireRole('staff');   
-    } catch (err) {
-      // requireRole already redirected; just stop.
+  // Utility: populate table rows from a patients array
+  function renderPatientsTable(patients) {
+    const tbody = document.querySelector('#patientTable tbody');
+    tbody.innerHTML = '';
+    if (!Array.isArray(patients) || patients.length === 0) {
+      // Show message if no patients found
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px;">
+            <strong>No patients found in database.</strong><br><br>
+            <p>Please ensure:</p>
+            <ul style="list-style:none;padding:0;">
+              <li>✓ Flask server is running (port 5000)</li>
+              <li>✓ MySQL database is running</li>
+              <li>✓ Demo patients have been created</li>
+            </ul>
+            <p style="margin-top:15px;">Check browser console (F12) for detailed error messages.</p>
+          </td>
+        </tr>`;
       return;
     }
 
-    const tbody = document.getElementById('patientTableBody');
-    const searchForm = document.getElementById('searchForm');
+    patients.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-patient-id="${p.patientId || ''}" data-user-id="${p.userId || ''}">${p.number || ''}</td>
+        <td>${p.name || ''}</td>
+        <td>${p.age || ''}</td>
+        <td>${p.gender || ''}</td>
+        <td>${p.phone || ''}</td>
+        <td>${p.medical_history || ''}</td>
+        <td>${p.lastChecked || ''}</td>
+        <td>
+          <a href="#" class="btn secondary actionBtn" data-action="view">View</a>
+          <a href="#" class="btn secondary actionBtn" data-action="update">Update</a>
+          <a href="#" class="btn secondary actionBtn" data-action="upload">Upload Documents</a>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
 
-    // Show a quick loading row
-    tbody.innerHTML = '<tr><td colspan="8">Loading patients…</td></tr>';
-
-    try {
-      // 2) Get all users from backend and filter to patients
-      const { users } = await getAllUsers();   // api.js helper → /api/admin/users/all
-      const patients = (users || []).filter(u => u.role === 'patient');
-
-      // 3) Render table rows
-      tbody.innerHTML = '';
-
-     async function renderPatients(patients) {
-      const tbody = document.querySelector('#patientTable tbody');
-      tbody.innerHTML = '';
-
-      for (const p of patients) {
-        const tr = document.createElement('tr');
-
-        // store real DB id on the row
-        tr.dataset.patientId = p.user_id;
-
-        const fullName = `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email;
-        const contact  = p.phone || p.email || '-';
-
-        // look up latest reading for this patient 
-        let lastTestText = '-';
+  // Load patients from cache if available
+  (async function initPatientRecords() {
+    // Load patients from database
+    async function loadPatientsFromDB() {
+      try {
+        console.log('Fetching patients from database: /api/patients');
+        const response = await getAllPatients();
+        console.log('API Response:', response);
+        
+        // Extract patients array from response
+        const patientsData = response.patients || [];
+        console.log('Loaded', patientsData.length, 'patients from database');
+        
+        const patients = patientsData.map(p => ({
+          number: p.user_id || p.patient_id || p.id || '',
+          name: `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.name || '',
+          age: p.age || '',
+          gender: p.gender || '',
+          phone: p.phone || p.contact || '',
+          medical_history: p.medical_history || p.condition || '',
+          lastChecked: p.last_checked || '',
+          patientId: p.patient_id || p.user_id || p.id || '',
+          userId: p.user_id || p.id || ''
+        }));
+        
+        // Cache to localStorage for offline access
         try {
-          // if you changed getReadings to accept a limit:
-          // const readings = await getReadings(p.user_id, 1);
-          const readings = await getReadings(p.user_id);   // from api.js
-          const last = readings && readings[0];
-
-          if (last) {
-            const value =
-              last.value ??
-              last.blood_sugar ??
-              last.bloodSugar ??
-              last.reading ??
-              '-';
-            const unit = last.unit || 'mg/dL';
-            lastTestText = `Blood Sugar: ${value} ${unit}`;
-          }
-        } catch (err) {
-          console.error('Failed to fetch last reading for user', p.user_id, err);
+          localStorage.setItem('patients', JSON.stringify(patients));
+          localStorage.setItem('patients_cache_time', new Date().toISOString());
+        } catch(e) {
+          console.warn('Failed to cache patients:', e);
         }
-
-        tr.innerHTML = `
-          <td>${String(p.user_id).padStart(3, '0')}</td>
-          <td>${fullName}</td>
-          <td>-</td>
-          <td>${p.gender || '-'}</td>
-          <td>${contact}</td>
-          <td>-</td>
-          <td>${lastTestText}</td>
-          <td>
-            <a href="#" class="btn actionBtn" data-action="view">View</a>
-            <a href="#" class="btn actionBtn" data-action="update">Update</a>
-            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
-          </td>
-        `;
-
-          tbody.appendChild(tr);
+        
+        return patients;
+      } catch (error) {
+        console.error('❌ Failed to load patients from database:', error);
+        console.error('Error details:', error.message);
+        console.warn('Falling back to localStorage cache...');
+        // Fallback to localStorage
+        return loadLocalPatientsMerged();
       }
     }
+    
+    // Build a canonical merged patients array from localStorage.users and localStorage.patients
+    function loadLocalPatientsMerged(){
+      try {
+        const out = [];
+        const seen = new Set();
+        const seenNames = new Set();
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+        if (!Array.isArray(users)) users = [];
+        users.forEach(u => {
+          if ((u.role||'').toLowerCase() === 'patient'){
+            const key = (u.email || u.user_id || u.id || '').toString().toLowerCase();
+            const name = (((u.first_name||'') + ' ' + (u.last_name||'')).trim() || '').toLowerCase();
+            if (!seen.has(key) && !(name && seenNames.has(name))){
+              if (name) seenNames.add(name);
+              seen.add(key);
+              out.push({ number: u.user_id || u.id || '', name: ((u.first_name||'') + ' ' + (u.last_name||'')).trim(), age: u.age || '', gender: u.gender || '', phone: u.phone || '', medical_history: u.medical_history || '', lastChecked: u.last_checked || u.lastChecked || '', patientId: u.patientId || u.user_id || u.id || '', userId: u.user_id || u.id || '' });
+            }
+          }
+        });
 
-      // 4) Hook up search + actions now that rows exist
-      wireSearch(searchForm, tbody);
-      wireActions(tbody);
-    } catch (err) {
-      console.error('Failed to load patients:', err);
-      tbody.innerHTML = `<tr><td colspan="8" style="color:red">Failed to load patients: ${err.message}</td></tr>`;
+        let raw = localStorage.getItem('patients') || '[]';
+        let patientsRaw = JSON.parse(raw);
+        if (patientsRaw && !Array.isArray(patientsRaw) && typeof patientsRaw === 'object') patientsRaw = Object.values(patientsRaw || {});
+        if (Array.isArray(patientsRaw)){
+          patientsRaw.forEach(p => {
+            const key = (p.email || p.patientId || p.id || p.number || '').toString().toLowerCase();
+            const name = ((p.name || p.fullName || p.patient_name || '')).toString().toLowerCase();
+            if (!seen.has(key) && !(name && seenNames.has(name))){
+              if (name) seenNames.add(name);
+              seen.add(key);
+              out.push({ number: p.number || p.patientId || p.id || '', name: p.name || p.fullName || p.patient_name || '', age: p.age || '', gender: p.gender || '', phone: p.phone || p.contact || '', medical_history: p.medical_history || p.medicalHistory || '', lastChecked: p.lastChecked || p.last_checked || p.last_update || '', patientId: p.patientId || p.patient_id || p.id || '', userId: p.userId || p.user_id || p.id || '' });
+            }
+          });
+        }
+        // Ensure at least a demo patient exists for preview
+        if (out.length === 0) {
+          const demo = { number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', patientId:'001' };
+          out.push(demo);
+          // also persist to localStorage.patients for consistency
+          try { localStorage.setItem('patients', JSON.stringify([demo])); } catch(e){}
+        }
+        return out;
+      } catch(e){ return []; }
     }
-  });
 
-  // Search is still front-end only, just against whatever rows are currently rendered
-  function wireSearch(form, tbody) {
-    form.addEventListener('submit', function (e) {
+    // Load from database first, fallback to localStorage
+    const patients = await loadPatientsFromDB();
+    renderPatientsTable(patients);
+
+    // Search functionality
+    const searchForm = document.getElementById('searchForm');
+    searchForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const number = document.getElementById('patientNumber').value.toLowerCase();
       const name = document.getElementById('patientName').value.toLowerCase();
-
-      Array.from(tbody.rows).forEach(row => {
-        const rowNumber = row.cells[0].innerText.toLowerCase();
-        const rowName = row.cells[1].innerText.toLowerCase();
-
-        const numberMismatch = number && !rowNumber.includes(number);
-        const nameMismatch = name && !rowName.includes(name);
-
-        row.style.display = (numberMismatch || nameMismatch) ? 'none' : '';
-      });
-    });
-  }
-
-  // Actions: store the real patient id + display data in localStorage and navigate
-  function wireActions(tbody) {
-    tbody.addEventListener('click', function (e) {
-      const btn = e.target.closest('.actionBtn');
-      if (!btn) return;
-      e.preventDefault();
-
-      const row = btn.closest('tr');
-      const patient = {
-        id: row.dataset.patientId,              // REAL user_id from backend
-        number: row.cells[0].innerText,
-        name: row.cells[1].innerText,
-        age: row.cells[2].innerText,
-        gender: row.cells[3].innerText,
-        contact: row.cells[4].innerText,
-        medicalHistory: row.cells[5].innerText,
-        lastTestResults: row.cells[6].innerText
-      };
-
-      localStorage.setItem('selectedPatient', JSON.stringify(patient));
-
-      const action = btn.getAttribute('data-action');
-      if (action === 'view') {
-        window.location.href = 'staff_view_patient.html';
-      } else if (action === 'update') {
-        window.location.href = 'update_medical.html';
-      } else if (action === 'upload') {
-        window.location.href = 'upload_documents.html';
+      const tbody = document.querySelector('#patientTable tbody');
+      for (let row of tbody.rows) {
+        const rowNumber = (row.cells[0].innerText || '').toLowerCase();
+        const rowName = (row.cells[1].innerText || '').toLowerCase();
+        if ((number && !rowNumber.includes(number)) || (name && !rowName.includes(name))) {
+          row.style.display = 'none';
+        } else {
+          row.style.display = '';
+        }
       }
     });
-  }
+
+    // Action handlers (delegated)
+    document.querySelector('#patientTable tbody').addEventListener('click', function (ev) {
+      const a = ev.target.closest('.actionBtn');
+      if (!a) return;
+      ev.preventDefault();
+      const row = a.closest('tr');
+      const number = row.cells[0].innerText;
+      const name = row.cells[1].innerText;
+      const patientId = row.cells[0].dataset.patientId || '';
+      const userId = row.cells[0].dataset.userId || '';
+
+      if (userId) localStorage.setItem('viewingPatientUserId', String(userId));
+      if (patientId) localStorage.setItem('viewingPatientId', String(patientId));
+      localStorage.setItem('viewingPatientNumber', String(number));
+      localStorage.setItem('viewingPatientName', String(name));
+
+      // Also set the selectedPatient object expected by update_medical.html
+      const selectedPatient = {
+        id: patientId || number || userId || '',
+        name: name || '',
+        age: row.cells[2].innerText || '',
+        gender: row.cells[3].innerText || '',
+        contact: row.cells[4].innerText || '',
+        medicalHistory: row.cells[5].innerText || ''
+      };
+      try { localStorage.setItem('selectedPatient', JSON.stringify(selectedPatient)); } catch(e){}
+      // also keep a copy of all patients for update page to update
+      try { localStorage.setItem('allPatients', JSON.stringify(Array.from(document.querySelectorAll('#patientTable tbody tr')).map(r=>({ id: r.cells[0].dataset.patientId||r.cells[0].innerText, name: r.cells[1].innerText, age: r.cells[2].innerText, gender: r.cells[3].innerText, contact: r.cells[4].innerText, medicalHistory: r.cells[5].innerText }))) ); } catch(e){}
+
+      const action = a.getAttribute('data-action');
+      if (action === 'view') window.location.href = 'staff_view.html';
+      if (action === 'update') window.location.href = 'update_medical.html';
+      if (action === 'upload') window.location.href = 'upload_documents.html';
+    });
+  })(); // End async IIFE
 </script>
 
 </body>

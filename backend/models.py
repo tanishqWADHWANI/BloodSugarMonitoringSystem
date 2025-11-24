@@ -671,6 +671,21 @@ class Database:
         finally:
             cursor.close()
     
+    def get_all_patients(self):
+        """Get all patients in the system (for staff/admin)"""
+        cursor = self._get_cursor()
+        try:
+            sql = """
+                SELECT p.patient_id, u.* 
+                FROM patients p
+                JOIN users u ON p.user_id = u.user_id
+                ORDER BY p.patient_id
+            """
+            cursor.execute(sql)
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+    
     def get_specialist_dashboard(self, specialist_id):
         """Get dashboard data for specialist using pre-built view"""
         cursor = self._get_cursor()

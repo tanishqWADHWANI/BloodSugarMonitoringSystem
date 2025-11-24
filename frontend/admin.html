@@ -7,6 +7,7 @@
   <title>Admin Login</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="js/api.js"></script>
+  <script src="js/demo_users.js"></script>
  
 </head>
 
@@ -86,37 +87,43 @@
         e.preventDefault();
         msgEl.textContent = '';
 
-        const email = emailEl.value.trim();
-        const pass = passEl.value.trim();
-
+        const email = (emailEl.value || '').trim();
+        const pass = (passEl.value || '').trim();
         if (!email || !pass) {
           msgEl.textContent = 'Please enter email and password.';
           return;
         }
 
-        msgEl.textContent = 'Signing in…';
-
         try {
-          // Call the new, centralized loginUser function from api.js
-          const response = await loginUser(email, pass);
-          
-          // Extract the 'user' object from the backend response structure
-          const userData = response.user; 
+          // Try database login using the global loginUser function
+          const resp = await loginUser(email, pass, 'admin');
 
-          // CRITICAL CHECK: Ensure the role is appropriate for this page
-          if (userData.role !== 'admin' && userData.role !== 'staff') {
-              throw new Error(`Access Denied: Role is ${userData.role}. This is an Admin page.`);
+          // Persist token if present
+          const token = resp && (resp.token || resp.access_token);
+          if (token) {
+            try { localStorage.setItem('bsm_token', token); } catch(e) {}
           }
 
-          //  Store the extracted user data
-          localStorage.setItem('loggedInAdmin', JSON.stringify(userData));
-          
-          // Success redirect
-          window.location.href = 'admin_dashboard.html';
-
+          if (resp && resp.user && (resp.user.role === 'admin' || resp.user.is_admin)) {
+            const u = resp.user;
+            const adminObj = {
+              email: u.email || email,
+              role: 'admin',
+              id: u.user_id || u.id || 0,
+              firstName: u.firstName || u.first_name || (u.email || email).split('@')[0],
+              lastName: u.lastName || u.last_name || ''
+            };
+            try { localStorage.setItem('loggedInAdmin', JSON.stringify(adminObj)); } catch(e) {}
+            
+            msgEl.textContent = 'Signing in…';
+            msgEl.style.color = 'green';
+            setTimeout(() => { window.location.href = 'admin_dashboard.html'; }, 200);
+          } else {
+            msgEl.textContent = 'Invalid credentials or insufficient permissions.';
+          }
         } catch (err) {
-          console.error(err);
-          msgEl.textContent = err.message || 'Login failed. Check server status or credentials.';
+          console.error('Admin login failed', err);
+          msgEl.textContent = 'Login failed: ' + (err && err.message ? err.message : err);
         }
       });
 
