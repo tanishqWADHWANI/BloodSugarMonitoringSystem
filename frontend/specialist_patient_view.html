@@ -103,6 +103,20 @@
       margin-bottom:15px;
     }
     .back-btn:hover { background:#777; }
+    
+    .abnormal {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .abnormal-row {
+      background-color: #ffe6e6 !important;
+      border-left: 4px solid #dc3545;
+    }
+
+    .abnormal-row:hover {
+      background-color: #ffd4d4 !important;
+    }
   </style>
 </head>
 <body>
@@ -146,12 +160,11 @@
           <tr>
             <th>Date</th>
             <th>Time</th>
-            <th>Blood Pressure</th>
+            <th>Blood Sugar</th>
             <th>Heart Rate</th>
             <th>Medications</th>
             <th>Food Time</th>
-            <th>Food Taken</th>
-            <th>Activity / Notes</th>
+            <th>Food Taken / Activity</th>
           </tr>
         </thead>
         <tbody>
@@ -238,6 +251,27 @@
   // ============================
   const readingsBody = document.querySelector('#health-data-table tbody');
 
+  // Helper functions to check abnormal values
+  function isAbnormalBloodSugar(value) {
+    const num = parseFloat(value);
+    return !isNaN(num) && (num < 70 || num > 130);
+  }
+
+  function isAbnormalBloodPressure(value) {
+    if (value === '-' || !value) return false;
+    const parts = String(value).split('/');
+    if (parts.length !== 2) return false;
+    const systolic = parseFloat(parts[0]);
+    const diastolic = parseFloat(parts[1]);
+    return (!isNaN(systolic) && (systolic < 90 || systolic > 130)) ||
+           (!isNaN(diastolic) && (diastolic < 60 || diastolic > 85));
+  }
+
+  function isAbnormalHeartRate(value) {
+    const num = parseFloat(value);
+    return !isNaN(num) && (num < 60 || num > 100);
+  }
+
   function renderReadings(readings) {
     if (!readingsBody) return;
 
@@ -257,11 +291,27 @@
         ? String(dt).split('T')[1].substring(0, 5)
         : '';
 
+      // Check for abnormal values
+      const bsValue = r.value || '';
+      const hrValue = r.heart_rate || '';
+      const bsAbnormal = isAbnormalBloodSugar(bsValue);
+      const hrAbnormal = isAbnormalHeartRate(hrValue);
+      const hasAbnormal = bsAbnormal || hrAbnormal;
+
+      // Add abnormal class to row if any value is abnormal
+      if (hasAbnormal) {
+        tr.classList.add('abnormal-row');
+      }
+
+      const warningIcon = hasAbnormal ? '⚠️ ' : '';
+      const bsClass = bsAbnormal ? ' class="abnormal"' : '';
+      const hrClass = hrAbnormal ? ' class="abnormal"' : '';
+
       tr.innerHTML = `
-        <td>${datePart}</td>
+        <td>${warningIcon}${datePart}</td>
         <td>${timePart}</td>
-        <td>${r.value} ${r.unit || ''}</td>
-        <td>${r.heart_rate || '-'}</td>
+        <td${bsClass}>${bsValue} ${r.unit || 'mg/dL'}</td>
+        <td${hrClass}>${hrValue || '-'}</td>
         <td>${r.medications || '-'}</td>
         <td>${r.food_time || '-'}</td>
         <td>${r.food_intake || '-'} / ${r.activity || '-'}</td>
