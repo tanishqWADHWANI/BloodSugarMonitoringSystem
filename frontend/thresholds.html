@@ -116,18 +116,7 @@
 
     <!-- LOGIC -->
     <script>
-        // ====== Storage key and helpers ======
-        const LS_KEY = 'thresholds';
-
-        function loadThresholds() {
-            try {
-                const arr = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-                return Array.isArray(arr) ? arr : [];
-            } catch { return []; }
-        }
-        function saveThresholds(rows) {
-            localStorage.setItem(LS_KEY, JSON.stringify(rows));
-        }
+        const API_BASE = 'http://127.0.0.1:5000';
 
         // ====== Elements ======
         const form = document.getElementById('thresholdForm');
@@ -144,70 +133,156 @@
             patientWrap.style.display = scopeEl.value === 'PatientOverride' ? 'block' : 'none';
         });
 
-        // ====== Render ======
-        function render() {
-            const rows = loadThresholds();
-            tbody.innerHTML = rows.map(r => `
-        <tr style="border-bottom: 1px solid #e9ecef;">
-          <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${r.id}</td>
-          <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${r.status}</td>
-          <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${r.value}</td>
-          <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${r.scope}</td>
-          <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${r.patient ?? ''}</td>
-          <td style="padding: 14px 16px;">
-            <button type="button" class="del-btn" data-id="${r.id}" style="background: #dc3545; color: white; padding: 6px 14px; border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer; font-weight: 500;">Delete</button>
-          </td>
-        </tr>
-      `).join('');
+        // ====== Load from backend ======
+        async function loadThresholds() {
+            try {
+                const response = await fetch(`${API_BASE}/api/thresholds`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                renderThresholds(data.thresholds || []);
+            } catch (error) {
+                console.error('Error loading thresholds:', error);
+                alert('Failed to load thresholds: ' + error.message);
+            }
         }
 
-        // ====== Add ======
-        form.addEventListener('submit', (e) => {
+        // ====== Render ======
+        function renderThresholds(thresholds) {
+            tbody.innerHTML = thresholds.map(t => `
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.threshold_id}</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.status}</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.min_value || '-'} - ${t.max_value || '-'} mg/dL</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.user_id ? 'Patient Override' : 'System'}</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.patient_name || '-'}</td>
+                    <td style="padding: 14px 16px;">
+                        <button type="button" class="del-btn" data-id="${t.threshold_id}" style="background: #dc3545; color: white; padding: 6px 14px; border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer; font-weight: 500;">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ====== Add/Update threshold ======
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const row = {
-                id: Date.now(),
-                status: statusEl.value,
-                value: Number(valueEl.value),
-                scope: scopeEl.value,
-                patient: scopeEl.value === 'PatientOverride' ? Number(patientIdEl.value || 0) : null
+            const isOverride = scopeEl.value === 'PatientOverride';
+            const patientId = isOverride ? Number(patientIdEl.value) : 0;
+
+            if (isOverride && !patientId) {
+                alert('Please enter a patient ID for override');
+                return;
+            }
+
+            // Convert status to match backend enum
+            const statusMap = {
+                'Normal': 'normal',
+                'Borderline': 'borderline',
+                'AbnormalLow': 'abnormal',
+                'AbnormalHigh': 'abnormal'
             };
 
-            const rows = loadThresholds();
-            rows.push(row);
-            saveThresholds(rows);
-            form.reset();
-            patientWrap.style.display = 'none';
-            render();
-            alert('Threshold added.');
+            const value = Number(valueEl.value);
+            const status = statusMap[statusEl.value];
+
+            // Determine min/max based on status
+            let minValue = null, maxValue = null;
+            if (statusEl.value === 'Normal') {
+                maxValue = value; // Normal max is the value
+            } else if (statusEl.value === 'Borderline') {
+                maxValue = value; // Borderline max
+            } else if (statusEl.value === 'AbnormalLow') {
+                minValue = value; // Abnormal low minimum
+            } else if (statusEl.value === 'AbnormalHigh') {
+                maxValue = value; // Abnormal high maximum
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/thresholds/${patientId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: status,
+                        minValue: minValue,
+                        maxValue: maxValue
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                alert('Threshold saved successfully');
+                form.reset();
+                patientWrap.style.display = 'none';
+                loadThresholds();
+            } catch (error) {
+                console.error('Error saving threshold:', error);
+                alert('Failed to save threshold: ' + error.message);
+            }
         });
 
         // ====== Delete (event delegation) ======
-        tbody.addEventListener('click', (e) => {
+        tbody.addEventListener('click', async (e) => {
             const btn = e.target.closest('button.del-btn');
             if (!btn) return;
 
+            if (!confirm('Are you sure you want to delete this threshold?')) return;
+
             const id = Number(btn.dataset.id);
-            const rows = loadThresholds().filter(r => r.id !== id);
-            saveThresholds(rows);
-            render();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/thresholds/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                alert('Threshold deleted successfully');
+                loadThresholds();
+            } catch (error) {
+                console.error('Error deleting threshold:', error);
+                alert('Failed to delete threshold: ' + error.message);
+            }
         });
 
         // ====== Reset to defaults ======
-        resetBtn.addEventListener('click', () => {
-            if (!confirm('Reset system defaults to Normal=130, Borderline=180, AbnormalLow=70 (and clear overrides)?')) return;
+        resetBtn.addEventListener('click', async () => {
+            if (!confirm('This will set default thresholds for user_id=0 (system defaults). Continue?')) return;
+
             const defaults = [
-                { id: Date.now() + 1, status: 'Normal', value: 130, scope: 'SystemDefault', patient: null },
-                { id: Date.now() + 2, status: 'Borderline', value: 180, scope: 'SystemDefault', patient: null },
-                { id: Date.now() + 3, status: 'AbnormalLow', value: 70, scope: 'SystemDefault', patient: null }
-                // AbnormalHigh is optional; Borderline is effectively the upper bound used by the patient page.
+                { status: 'normal', minValue: 70, maxValue: 130 },
+                { status: 'borderline', minValue: null, maxValue: 180 },
+                { status: 'abnormal', minValue: 70, maxValue: null }
             ];
-            saveThresholds(defaults);
-            render();
+
+            try {
+                for (const def of defaults) {
+                    const response = await fetch(`${API_BASE}/api/thresholds/0`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(def)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                }
+
+                alert('Default thresholds reset successfully');
+                loadThresholds();
+            } catch (error) {
+                console.error('Error resetting defaults:', error);
+                alert('Failed to reset defaults: ' + error.message);
+            }
         });
 
         // Init
-        render();
+        loadThresholds();
     </script>
 </body>
 

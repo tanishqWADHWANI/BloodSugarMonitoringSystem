@@ -1200,7 +1200,12 @@
         } else {
           const errorText = await response.text();
           console.error('API error:', response.status, errorText);
-          container.innerHTML = '<p class="info-text">Unable to load insights. Please ensure you have logged some readings.</p>';
+          
+          if (response.status === 404) {
+            container.innerHTML = '<p class="info-text">📊 No readings found. Start logging your blood sugar readings to get personalized insights!</p>';
+          } else {
+            container.innerHTML = `<p class="info-text">Unable to load insights (Error ${response.status}). Please try refreshing the page.</p>`;
+          }
         }
       } catch (error) {
         console.error('Error loading personalized insights:', error);

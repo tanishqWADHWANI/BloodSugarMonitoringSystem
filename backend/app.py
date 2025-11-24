@@ -797,6 +797,38 @@ def set_threshold(user_id):
         logger.error(f"Error setting threshold: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/thresholds', methods=['GET'])
+def get_all_thresholds():
+    """Get all thresholds (for staff management)"""
+    try:
+        thresholds = db.get_all_thresholds()
+        
+        return jsonify({
+            "thresholds": thresholds,
+            "count": len(thresholds)
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error fetching all thresholds: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/thresholds/<int:threshold_id>', methods=['DELETE'])
+def delete_threshold(threshold_id):
+    """Delete a threshold by ID"""
+    try:
+        success = db.delete_threshold(threshold_id)
+        
+        if success:
+            return jsonify({
+                "message": "Threshold deleted successfully"
+            }), 200
+        else:
+            return jsonify({"error": "Threshold not found"}), 404
+    
+    except Exception as e:
+        logger.error(f"Error deleting threshold: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 # Diet Recommendations
 @app.route('/api/diet/<condition>', methods=['GET'])
 def get_diet_recommendations(condition):

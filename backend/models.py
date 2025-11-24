@@ -581,6 +581,45 @@ class Database:
         finally:
             cursor.close()
     
+    def get_all_thresholds(self):
+        """Get all thresholds in system (for staff management)"""
+        cursor = self._get_cursor()
+        try:
+            sql = """
+                SELECT t.*, 
+                       CONCAT(u.first_name, ' ', u.last_name) as patient_name
+                FROM thresholds t
+                LEFT JOIN users u ON t.user_id = u.user_id
+                ORDER BY t.user_id, t.status
+            """
+            cursor.execute(sql)
+            thresholds = cursor.fetchall()
+            
+            for threshold in thresholds:
+                if threshold.get('min_value'):
+                    threshold['min_value'] = float(threshold['min_value'])
+                if threshold.get('max_value'):
+                    threshold['max_value'] = float(threshold['max_value'])
+            
+            return thresholds
+        finally:
+            cursor.close()
+    
+    def delete_threshold(self, threshold_id):
+        """Delete a threshold by ID"""
+        cursor = self._get_cursor()
+        try:
+            sql = "DELETE FROM thresholds WHERE threshold_id = %s"
+            cursor.execute(sql, (threshold_id,))
+            self.connection.commit()
+            return cursor.rowcount > 0
+        except Error as e:
+            self.connection.rollback()
+            logger.error(f"Error deleting threshold: {e}")
+            raise
+        finally:
+            cursor.close()
+    
     # Diet Recommendations
     def get_diet_recommendations(self, condition_name, meal_type=None):
         """Get diet recommendations for a condition"""
