@@ -6,119 +6,165 @@
 -- Generation Time: Nov 07, 2025 at 03:59 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
-
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+ /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+ /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+ /*!40101 SET NAMES utf8mb4 */;
 
---
--- Database: `blood_sugar_db`
---
+-- =====================================================
+--   Database + User Setup
+-- =====================================================
 
--- --------------------------------------------------------
+CREATE DATABASE IF NOT EXISTS blood_sugar_db;
 
---
--- Table structure for table `aiinsights`
---
+CREATE USER IF NOT EXISTS 'bsmuser'@'localhost' IDENTIFIED BY 'admin';
+CREATE USER IF NOT EXISTS 'bsmuser'@'127.0.0.1' IDENTIFIED BY 'admin';
+
+ALTER USER 'bsmuser'@'localhost' IDENTIFIED BY 'admin';
+ALTER USER 'bsmuser'@'127.0.0.1' IDENTIFIED BY 'admin';
+
+GRANT ALL PRIVILEGES ON blood_sugar_db.* TO 'bsmuser'@'localhost';
+GRANT ALL PRIVILEGES ON blood_sugar_db.* TO 'bsmuser'@'127.0.0.1';
+
+FLUSH PRIVILEGES;
+
+-- =====================================================
+--   Table: aiinsights
+-- =====================================================
 
 CREATE TABLE `aiinsights` (
-  `insight_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `pattern` text DEFAULT NULL,
-  `suggestion` text DEFAULT NULL,
-  `confidence` decimal(4,2) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `insight_id` INT(11) NOT NULL,
+  `user_id` INT(11) NOT NULL,
+  `pattern` TEXT DEFAULT NULL,
+  `suggestion` TEXT DEFAULT NULL,
+  `confidence` DECIMAL(4,2) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `aiinsights`
---
+INSERT INTO `aiinsights`
+(`insight_id`, `user_id`, `pattern`, `suggestion`, `confidence`, `created_at`) VALUES
+(1, 1, 'Post-breakfast spikes observed this week (150–170 mg/dL).',
+ 'Lower-GI breakfast (eggs + veggies), hydrate, 10–15 min walk after eating.', 0.82, '2025-10-23 07:23:24'),
 
-INSERT INTO `aiinsights` (`insight_id`, `user_id`, `pattern`, `suggestion`, `confidence`, `created_at`) VALUES
-(1, 1, 'Post-breakfast spikes observed this week (150–170 mg/dL).', 'Lower-GI breakfast (eggs + veggies), hydrate, 10–15 min walk after eating.', 0.82, '2025-10-23 07:23:24'),
-(2, 1, 'Reading: 155 mg/dL - prediabetic', 'Reading is in prediabetic range (155 mg/dL). Lifestyle changes may help.', 0.90, '2025-10-27 05:42:43'),
-(3, 1, 'Reading: 145 mg/dL - prediabetic', 'Reading is in prediabetic range (145 mg/dL). Lifestyle changes may help.', 0.90, '2025-11-06 02:32:02'),
-(4, 1, 'Reading: 220 mg/dL - high', 'Blood sugar is elevated (220 mg/dL). Monitor and consult doctor.', 0.90, '2025-11-06 02:45:35');
+(2, 1, 'Reading: 155 mg/dL - prediabetic',
+ 'Reading is in prediabetic range (155 mg/dL). Lifestyle changes may help.', 0.90, '2025-10-27 05:42:43'),
 
--- --------------------------------------------------------
+(3, 1, 'Reading: 145 mg/dL - prediabetic',
+ 'Reading is in prediabetic range (145 mg/dL). Lifestyle changes may help.', 0.90, '2025-11-06 02:32:02'),
 
---
--- Table structure for table `alerts`
---
+(4, 1, 'Reading: 220 mg/dL - high',
+ 'Blood sugar is elevated (220 mg/dL). Monitor and consult doctor.', 0.90, '2025-11-06 02:45:35');
+
+-- =====================================================
+--   Table: alerts
+-- =====================================================
 
 CREATE TABLE `alerts` (
-  `alert_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `specialist_id` int(11) DEFAULT NULL,
-  `date_sent` datetime DEFAULT current_timestamp(),
-  `reason` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `alert_id` INT(11) NOT NULL,
+  `user_id` INT(11) NOT NULL,
+  `specialist_id` INT(11) DEFAULT NULL,
+  `date_sent` DATETIME DEFAULT CURRENT_TIMESTAMP(),
+  `reason` TEXT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `alerts`
---
+INSERT INTO `alerts`
+(`alert_id`, `user_id`, `specialist_id`, `date_sent`, `reason`, `created_at`) VALUES
+(1, 1, NULL, '2025-10-23 00:25:46',
+ 'Blood sugar reading (165 mg/dL) exceeded normal threshold.', '2025-10-23 07:25:46'),
 
-INSERT INTO `alerts` (`alert_id`, `user_id`, `specialist_id`, `date_sent`, `reason`, `created_at`) VALUES
-(1, 1, NULL, '2025-10-23 00:25:46', 'Blood sugar reading (165 mg/dL) exceeded normal threshold.', '2025-10-23 07:25:46'),
-(2, 1, NULL, '2025-10-24 00:09:10', 'Abnormal reading detected: 190.00 mg/dL', '2025-10-24 07:09:10'),
-(3, 1, NULL, '2025-10-24 00:21:56', 'Abnormal reading detected: 145.00 mg/dL', '2025-10-24 07:21:56'),
-(4, 1, NULL, '2025-10-26 22:42:43', 'Abnormal reading detected: 155.00 mg/dL', '2025-10-27 05:42:43'),
-(5, 1, NULL, '2025-11-05 18:32:02', 'Abnormal reading detected: 145.00 mg/dL', '2025-11-06 02:32:02'),
-(6, 1, NULL, '2025-11-05 18:45:35', 'Abnormal reading detected: 220.00 mg/dL', '2025-11-06 02:45:35');
+(2, 1, NULL, '2025-10-24 00:09:10',
+ 'Abnormal reading detected: 190.00 mg/dL', '2025-10-24 07:09:10'),
 
--- --------------------------------------------------------
+(3, 1, NULL, '2025-10-24 00:21:56',
+ 'Abnormal reading detected: 145.00 mg/dL', '2025-10-24 07:21:56'),
 
---
--- Table structure for table `bloodsugarreadings`
---
+(4, 1, NULL, '2025-10-26 22:42:43',
+ 'Abnormal reading detected: 155.00 mg/dL', '2025-10-27 05:42:43'),
+
+(5, 1, NULL, '2025-11-05 18:32:02',
+ 'Abnormal reading detected: 145.00 mg/dL', '2025-11-06 02:32:02'),
+
+(6, 1, NULL, '2025-11-05 18:45:35',
+ 'Abnormal reading detected: 220.00 mg/dL', '2025-11-06 02:45:35');
+
+-- =====================================================
+--   Table: bloodsugarreadings
+-- =====================================================
 
 CREATE TABLE `bloodsugarreadings` (
-  `reading_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `date_time` datetime NOT NULL,
-  `value` decimal(5,2) NOT NULL,
-  `unit` varchar(10) DEFAULT 'mg/dL',
-  `fasting` tinyint(1) DEFAULT NULL,
-  `food_intake` text DEFAULT NULL,
-  `activity` text DEFAULT NULL,
-  `event` varchar(120) DEFAULT NULL,
-  `symptoms_notes` text DEFAULT NULL,
-  `additional_note` text DEFAULT NULL,
-  `status` enum('normal','borderline','abnormal') DEFAULT 'normal',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `reading_id` INT(11) NOT NULL,
+  `user_id` INT(11) NOT NULL,
+  `date_time` DATETIME NOT NULL,
+  `value` DECIMAL(5,2) NOT NULL,
+  `unit` VARCHAR(10) DEFAULT 'mg/dL',
+  `fasting` TINYINT(1) DEFAULT NULL,
+  `food_intake` TEXT DEFAULT NULL,
+  `activity` TEXT DEFAULT NULL,
+  `event` VARCHAR(120) DEFAULT NULL,
+  `symptoms_notes` TEXT DEFAULT NULL,
+  `additional_note` TEXT DEFAULT NULL,
+  `status` ENUM('normal','borderline','abnormal') DEFAULT 'normal',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+       ON UPDATE CURRENT_TIMESTAMP()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `bloodsugarreadings`
---
+INSERT INTO `bloodsugarreadings`
+(`reading_id`, `user_id`, `date_time`, `value`, `unit`,
+ `fasting`, `food_intake`, `activity`, `event`, `symptoms_notes`,
+ `additional_note`, `status`, `created_at`, `updated_at`) VALUES
 
-INSERT INTO `bloodsugarreadings` (`reading_id`, `user_id`, `date_time`, `value`, `unit`, `fasting`, `food_intake`, `activity`, `event`, `symptoms_notes`, `additional_note`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, '2025-10-23 09:19:54', 165.00, 'mg/dL', 0, 'Cereal and milk', 'Morning walk', 'After breakfast', 'Felt slightly dizzy', 'Need to monitor morning spikes', 'abnormal', '2025-10-23 07:21:32', '2025-10-23 07:21:32'),
-(2, 1, '2025-10-24 00:09:10', 190.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'abnormal', '2025-10-24 07:09:10', '2025-10-24 07:09:10'),
-(3, 1, '2025-10-24 00:21:56', 145.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'abnormal', '2025-10-24 07:21:56', '2025-10-24 07:21:56'),
-(4, 1, '2025-10-24 00:27:27', 110.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'normal', '2025-10-24 07:27:27', '2025-10-24 07:27:27'),
-(6, 1, '2025-10-26 22:42:43', 140.00, 'mg/dL', 0, 'rice instead of pasta', 'None', 'After meal', 'Feeling better now', NULL, 'abnormal', '2025-10-27 05:42:43', '2025-11-06 03:42:14'),
-(7, 1, '2025-11-05 18:32:02', 145.00, 'mg/dL', 0, 'pasta with sauce', '30 min walking', 'After lunch exercise', 'Felt slightly dizzy', 'Forgot morning medication', 'abnormal', '2025-11-06 02:32:02', '2025-11-06 02:32:02'),
-(8, 1, '2025-11-05 18:45:35', 220.00, 'mg/dL', NULL, NULL, NULL, NULL, NULL, NULL, 'abnormal', '2025-11-06 02:45:35', '2025-11-06 02:45:35');
+(1, 1, '2025-10-23 09:19:54', 165.00, 'mg/dL', 0,
+ 'Cereal and milk', 'Morning walk', 'After breakfast',
+ 'Felt slightly dizzy', 'Need to monitor morning spikes',
+ 'abnormal', '2025-10-23 07:21:32', '2025-10-23 07:21:32'),
 
---
--- Triggers `bloodsugarreadings`
---
+(2, 1, '2025-10-24 00:09:10', 190.00, 'mg/dL', NULL,
+ NULL, NULL, NULL, NULL, NULL,
+ 'abnormal', '2025-10-24 07:09:10', '2025-10-24 07:09:10'),
+
+(3, 1, '2025-10-24 00:21:56', 145.00, 'mg/dL', NULL,
+ NULL, NULL, NULL, NULL, NULL,
+ 'abnormal', '2025-10-24 07:21:56', '2025-10-24 07:21:56'),
+
+(4, 1, '2025-10-24 00:27:27', 110.00, 'mg/dL', NULL,
+ NULL, NULL, NULL, NULL, NULL,
+ 'normal', '2025-10-24 07:27:27', '2025-10-24 07:27:27'),
+
+(6, 1, '2025-10-26 22:42:43', 140.00, 'mg/dL', 0,
+ 'rice instead of pasta', 'None', 'After meal',
+ 'Feeling better now', NULL,
+ 'abnormal', '2025-10-27 05:42:43', '2025-11-06 03:42:14'),
+
+(7, 1, '2025-11-05 18:32:02', 145.00, 'mg/dL', 0,
+ 'pasta with sauce', '30 min walking', 'After lunch exercise',
+ 'Felt slightly dizzy', 'Forgot morning medication',
+ 'abnormal', '2025-11-06 02:32:02', '2025-11-06 02:32:02'),
+
+(8, 1, '2025-11-05 18:45:35', 220.00, 'mg/dL', NULL,
+ NULL, NULL, NULL, NULL, NULL,
+ 'abnormal', '2025-11-06 02:45:35', '2025-11-06 02:45:35');
+
+-- =====================================================
+--   Triggers for bloodsugarreadings
+-- =====================================================
+
 DELIMITER $$
-CREATE TRIGGER `trg_bloodsugar_abnormal_alert` AFTER INSERT ON `bloodsugarreadings` FOR EACH ROW BEGIN
+
+CREATE TRIGGER `trg_bloodsugar_abnormal_alert`
+AFTER INSERT ON `bloodsugarreadings`
+FOR EACH ROW
+BEGIN
   IF NEW.status = 'abnormal' THEN
     INSERT INTO alerts (user_id, specialist_id, reason)
     VALUES (
       NEW.user_id,
-      (SELECT specialist_id 
+      (SELECT specialist_id
          FROM specialistpatient sp
          JOIN patients p ON sp.patient_id = p.patient_id
         WHERE p.user_id = NEW.user_id
@@ -126,14 +172,14 @@ CREATE TRIGGER `trg_bloodsugar_abnormal_alert` AFTER INSERT ON `bloodsugarreadin
       CONCAT('Abnormal reading detected: ', NEW.value, ' ', NEW.unit)
     );
   END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_bsr_set_status` BEFORE INSERT ON `bloodsugarreadings` FOR EACH ROW BEGIN
+END $$
+
+CREATE TRIGGER `trg_bsr_set_status`
+BEFORE INSERT ON `bloodsugarreadings`
+FOR EACH ROW
+BEGIN
   DECLARE v_status VARCHAR(15);
 
-  -- Only set status if not provided
   IF NEW.status IS NULL OR NEW.status = '' THEN
     SELECT t.status
       INTO v_status
@@ -150,9 +196,9 @@ CREATE TRIGGER `trg_bsr_set_status` BEFORE INSERT ON `bloodsugarreadings` FOR EA
 
     SET NEW.status = v_status;
   END IF;
-END
-$$
-DELIMITER ;
+END $$
+
+
 DELIMITER $$
 CREATE TRIGGER `trg_classify_reading` BEFORE INSERT ON `bloodsugarreadings` FOR EACH ROW BEGIN
   DECLARE nmin DECIMAL(5,2); DECLARE nmax DECIMAL(5,2);
@@ -1007,10 +1053,10 @@ INSERT INTO `dietrecommendations` (`rec_id`, `condition_name`, `meal_type`, `foo
 -- --------------------------------------------------------
 
 --
--- Table structure for table `diet recommendations dataset`
+-- Table structure for table `diet_recommendations_dataset`
 --
 
-CREATE TABLE `diet recommendations dataset` (
+CREATE TABLE `diet_recommendations_dataset` (
   `Patient_ID` varchar(20) DEFAULT NULL,
   `Age` int(11) DEFAULT NULL,
   `Gender` varchar(10) DEFAULT NULL,
@@ -1034,10 +1080,10 @@ CREATE TABLE `diet recommendations dataset` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `diet recommendations dataset`
+-- Dumping data for table `diet_recommendations_dataset`
 --
 
-INSERT INTO `diet recommendations dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
+INSERT INTO `diet_recommendations_dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
 ('Patient_ID', 0, 'Gender', 0, 0, 0, 'Disease_Type', 'Severity', 'Physical_Activity_Level', 0, 0, 0, 0, 'Dietary_Restrictions', 'Allergies', 'Preferred_Cuisine', 0, 0, 0, 'Diet_Recommendation'),
 ('P0001', 56, 'Male', 58.4, 160, 22.8, 'Obesity', 'Moderate', 'Moderate', 3079, 173.3, 133, 116.3, 'None', 'Peanuts', 'Mexican', 3.1, 96.6, 3.1, 'Balanced'),
 ('P0002', 69, 'Male', 101.2, 169, 35.4, 'Diabetes', 'Mild', 'Moderate', 3032, 199.2, 120, 137.1, 'None', 'Peanuts', 'Chinese', 4.5, 63.2, 0.6, 'Low_Carb'),
@@ -1353,7 +1399,7 @@ INSERT INTO `diet recommendations dataset` (`Patient_ID`, `Age`, `Gender`, `Weig
 ('P0312', 22, 'Female', 51.5, 174, 17, 'Diabetes', 'Moderate', 'Active', 3216, 178.1, 130, 84.3, 'None', 'Peanuts', 'Indian', 8.2, 90.6, 0.5, 'Low_Carb'),
 ('P0313', 69, 'Female', 95.7, 163, 36, 'Obesity', 'Mild', 'Moderate', 1865, 157, 174, 143.7, 'Low_Sodium', 'Peanuts', 'Italian', 4.1, 55.4, 4, 'Balanced'),
 ('P0314', 51, 'Male', 73.3, 160, 28.6, 'Diabetes', 'Moderate', 'Moderate', 2701, 155.7, 124, 190.7, 'None', 'Gluten', 'Chinese', 9.9, 62.5, 4.6, 'Low_Carb');
-INSERT INTO `diet recommendations dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
+INSERT INTO `diet_recommendations_dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
 ('P0315', 23, 'Female', 88, 184, 26, 'Obesity', 'Severe', 'Moderate', 2154, 162, 113, 77.1, 'None', 'Peanuts', 'Chinese', 4.7, 94.7, 3.8, 'Balanced'),
 ('P0316', 39, 'Female', 84.5, 190, 23.4, 'Obesity', 'Severe', 'Sedentary', 2885, 208.1, 169, 124.8, 'Low_Sugar', 'None', 'Mexican', 5.5, 85.8, 4.1, 'Balanced'),
 ('P0317', 28, 'Female', 55.7, 163, 21, 'None', 'Moderate', 'Moderate', 2259, 242.9, 170, 162, 'Low_Sugar', 'None', 'Mexican', 5.3, 82, 1.1, 'Balanced'),
@@ -1668,7 +1714,7 @@ INSERT INTO `diet recommendations dataset` (`Patient_ID`, `Age`, `Gender`, `Weig
 ('P0626', 46, 'Male', 105.2, 179, 32.8, 'Diabetes', 'Moderate', 'Moderate', 1594, 180, 142, 105, 'Low_Sugar', 'Gluten', 'Mexican', 3.6, 75, 4.9, 'Low_Carb'),
 ('P0627', 72, 'Female', 110.5, 191, 30.3, 'Diabetes', 'Mild', 'Sedentary', 1761, 165.1, 111, 175.5, 'Low_Sodium', 'Peanuts', 'Indian', 6.1, 66.8, 1.9, 'Low_Carb'),
 ('P0628', 20, 'Female', 92.6, 186, 26.8, 'Diabetes', 'Moderate', 'Sedentary', 3348, 178.5, 123, 139.4, 'None', 'Gluten', 'Mexican', 1.5, 64.8, 0.5, 'Low_Carb');
-INSERT INTO `diet recommendations dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
+INSERT INTO `diet_recommendations_dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
 ('P0629', 29, 'Male', 85.5, 186, 24.7, 'Hypertension', 'Mild', 'Moderate', 2396, 187.6, 110, 76.9, 'Low_Sugar', 'Peanuts', 'Chinese', 0.7, 53.4, 2.5, 'Low_Sodium'),
 ('P0630', 43, 'Male', 61.2, 191, 16.8, 'Diabetes', 'Moderate', 'Moderate', 2594, 225.6, 167, 129.4, 'Low_Sugar', 'Gluten', 'Mexican', 2.2, 94.8, 4.4, 'Low_Carb'),
 ('P0631', 33, 'Female', 54.4, 186, 15.7, 'Obesity', 'Severe', 'Sedentary', 3477, 204, 125, 192.5, 'Low_Sugar', 'Peanuts', 'Chinese', 1.3, 84.6, 4.4, 'Balanced'),
@@ -1983,7 +2029,7 @@ INSERT INTO `diet recommendations dataset` (`Patient_ID`, `Age`, `Gender`, `Weig
 ('P0940', 27, 'Male', 84.7, 178, 26.7, 'Diabetes', 'Severe', 'Moderate', 2943, 152.1, 135, 195.1, 'None', 'Gluten', 'Mexican', 2.3, 79.1, 4.2, 'Low_Carb'),
 ('P0941', 49, 'Female', 62.5, 182, 18.9, 'None', 'Moderate', 'Moderate', 3267, 222.3, 128, 178.4, 'None', 'Peanuts', 'Indian', 0.2, 67.6, 0.7, 'Balanced'),
 ('P0942', 33, 'Male', 98, 176, 31.6, 'Hypertension', 'Moderate', 'Sedentary', 2764, 153.2, 154, 133.7, 'Low_Sodium', 'Gluten', 'Indian', 3.8, 61.6, 4.3, 'Low_Sodium');
-INSERT INTO `diet recommendations dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
+INSERT INTO `diet_recommendations_dataset` (`Patient_ID`, `Age`, `Gender`, `Weight_kg`, `Height_cm`, `BMI`, `Disease_Type`, `Severity`, `Physical_Activity_Level`, `Daily_Caloric_Intake`, `Cholesterol_mg_dL`, `Blood_Pressure_mmHg`, `Glucose_mg_dL`, `Dietary_Restrictions`, `Allergies`, `Preferred_Cuisine`, `Weekly_Exercise_Hours`, `Adherence_to_Diet_Plan`, `Dietary_Nutrient_Imbalance_Score`, `Diet_Recommendation`) VALUES
 ('P0943', 25, 'Female', 119.4, 174, 39.4, 'Hypertension', 'Severe', 'Moderate', 1854, 209.5, 135, 169.1, 'Low_Sodium', 'Gluten', 'Chinese', 1.4, 80.8, 3.4, 'Low_Sodium'),
 ('P0944', 55, 'Female', 102.3, 159, 40.5, 'None', 'Mild', 'Moderate', 3372, 203.9, 131, 178.3, 'Low_Sugar', 'None', 'Chinese', 7.1, 75.5, 0.9, 'Balanced'),
 ('P0945', 29, 'Male', 101.8, 196, 26.5, 'Obesity', 'Moderate', 'Sedentary', 2269, 246.9, 167, 115.2, 'Low_Sugar', 'None', 'Mexican', 6.6, 99.6, 0.9, 'Balanced'),
@@ -12113,10 +12159,10 @@ INSERT INTO `heart_disease_raw` (`Age`, `Gender`, `Blood Pressure`, `Cholesterol
 -- --------------------------------------------------------
 
 --
--- Table structure for table `ml ready diabetes dataset`
+-- Table structure for table `ml_ready_diabetes_dataset`
 --
 
-CREATE TABLE `ml ready diabetes dataset` (
+CREATE TABLE `ml_ready_diabetes_dataset` (
   `Age` int(11) DEFAULT NULL,
   `Gender` varchar(10) DEFAULT NULL,
   `Polyuria` varchar(5) DEFAULT NULL,
@@ -12137,10 +12183,10 @@ CREATE TABLE `ml ready diabetes dataset` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `ml ready diabetes dataset`
+-- Dumping data for table `ml_ready_diabetes_dataset`
 --
 
-INSERT INTO `ml ready diabetes dataset` (`Age`, `Gender`, `Polyuria`, `Polydipsia`, `sudden weight loss`, `weakness`, `Polyphagia`, `Genital thrush`, `visual blurring`, `Itching`, `Irritability`, `delayed healing`, `partial paresis`, `muscle stiffness`, `Alopecia`, `Obesity`, `class`) VALUES
+INSERT INTO `ml_ready_diabetes_dataset` (`Age`, `Gender`, `Polyuria`, `Polydipsia`, `sudden weight loss`, `weakness`, `Polyphagia`, `Genital thrush`, `visual blurring`, `Itching`, `Irritability`, `delayed healing`, `partial paresis`, `muscle stiffness`, `Alopecia`, `Obesity`, `class`) VALUES
 (0, 'Gender', 'Polyu', 'Polyd', 'sudde', 'weakn', 'Polyp', 'Genit', 'visua', 'Itchi', 'Irrit', 'delay', 'parti', 'muscl', 'Alope', 'Obesi', 'class'),
 (40, 'Male', 'No', 'Yes', 'No', 'Yes', 'No', 'No', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Positive'),
 (58, 'Male', 'No', 'No', 'No', 'Yes', 'No', 'No', 'Yes', 'No', 'No', 'No', 'Yes', 'No', 'Yes', 'No', 'Positive'),
@@ -12574,7 +12620,7 @@ INSERT INTO `ml ready diabetes dataset` (`Age`, `Gender`, `Polyuria`, `Polydipsi
 (58, 'Male', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'Positive'),
 (32, 'Male', 'No', 'No', 'No', 'No', 'No', 'Yes', 'No', 'No', 'Yes', 'Yes', 'No', 'No', 'No', 'Yes', 'Positive'),
 (42, 'Male', 'No', 'No', 'No', 'Yes', 'Yes', 'No', 'No', 'No', 'Yes', 'No', 'No', 'Yes', 'No', 'No', 'Positive');
-INSERT INTO `ml ready diabetes dataset` (`Age`, `Gender`, `Polyuria`, `Polydipsia`, `sudden weight loss`, `weakness`, `Polyphagia`, `Genital thrush`, `visual blurring`, `Itching`, `Irritability`, `delayed healing`, `partial paresis`, `muscle stiffness`, `Alopecia`, `Obesity`, `class`) VALUES
+INSERT INTO `ml_ready_diabetes_dataset` (`Age`, `Gender`, `Polyuria`, `Polydipsia`, `sudden weight loss`, `weakness`, `Polyphagia`, `Genital thrush`, `visual blurring`, `Itching`, `Irritability`, `delayed healing`, `partial paresis`, `muscle stiffness`, `Alopecia`, `Obesity`, `class`) VALUES
 (52, 'Male', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'No', 'No', 'Positive'),
 (38, 'Male', 'No', 'Yes', 'No', 'No', 'No', 'Yes', 'No', 'No', 'No', 'No', 'No', 'No', 'Yes', 'No', 'Positive'),
 (53, 'Male', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'No', 'Positive'),
@@ -12667,10 +12713,10 @@ INSERT INTO `ml ready diabetes dataset` (`Age`, `Gender`, `Polyuria`, `Polydipsi
 -- --------------------------------------------------------
 
 --
--- Table structure for table `ml ready diabetes dataset - labelencoded`
+-- Table structure for table `ml_ready_diabetes_dataset_labelencoded`
 --
 
-CREATE TABLE `ml ready diabetes dataset - labelencoded` (
+CREATE TABLE `ml_ready_diabetes_dataset_labelencoded` (
   `Age` int(11) DEFAULT NULL,
   `Gender` tinyint(4) DEFAULT NULL,
   `Polyuria` tinyint(4) DEFAULT NULL,
@@ -12691,10 +12737,10 @@ CREATE TABLE `ml ready diabetes dataset - labelencoded` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `ml ready diabetes dataset - labelencoded`
+-- Dumping data for table `ml_ready_diabetes_dataset_labelencoded`
 --
 
-INSERT INTO `ml ready diabetes dataset - labelencoded` (`Age`, `Gender`, `Polyuria`, `Polydipsia`, `sudden weight loss`, `weakness`, `Polyphagia`, `Genital thrush`, `visual blurring`, `Itching`, `Irritability`, `delayed healing`, `partial paresis`, `muscle stiffness`, `Alopecia`, `Obesity`, `class`) VALUES
+INSERT INTO `ml_ready_diabetes_dataset_labelencoded` (`Age`, `Gender`, `Polyuria`, `Polydipsia`, `sudden weight loss`, `weakness`, `Polyphagia`, `Genital thrush`, `visual blurring`, `Itching`, `Irritability`, `delayed healing`, `partial paresis`, `muscle stiffness`, `Alopecia`, `Obesity`, `class`) VALUES
 (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 (40, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0),
 (58, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0),
@@ -13220,10 +13266,10 @@ INSERT INTO `ml ready diabetes dataset - labelencoded` (`Age`, `Gender`, `Polyur
 -- --------------------------------------------------------
 
 --
--- Table structure for table `ml ready diabetes dataset - onehotencoded`
+-- Table structure for table `ml_ready_diabetes_dataset_onehotencoded`
 --
 
-CREATE TABLE `ml ready diabetes dataset - onehotencoded` (
+CREATE TABLE `ml_ready_diabetes_dataset_onehotencoded` (
   `Age` int(11) DEFAULT NULL,
   `class` tinyint(4) DEFAULT NULL,
   `Gender_Female` tinyint(4) DEFAULT NULL,
@@ -13259,10 +13305,10 @@ CREATE TABLE `ml ready diabetes dataset - onehotencoded` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `ml ready diabetes dataset - onehotencoded`
+-- Dumping data for table `ml_ready_diabetes_dataset_onehotencoded`
 --
 
-INSERT INTO `ml ready diabetes dataset - onehotencoded` (`Age`, `class`, `Gender_Female`, `Gender_Male`, `Polyuria_No`, `Polyuria_Yes`, `Polydipsia_No`, `Polydipsia_Yes`, `sudden weight loss_No`, `sudden weight loss_Yes`, `weakness_No`, `weakness_Yes`, `Polyphagia_No`, `Polyphagia_Yes`, `Genital thrush_No`, `Genital thrush_Yes`, `visual blurring_No`, `visual blurring_Yes`, `Itching_No`, `Itching_Yes`, `Irritability_No`, `Irritability_Yes`, `delayed healing_No`, `delayed healing_Yes`, `partial paresis_No`, `partial paresis_Yes`, `muscle stiffness_No`, `muscle stiffness_Yes`, `Alopecia_No`, `Alopecia_Yes`, `Obesity_No`, `Obesity_Yes`) VALUES
+INSERT INTO `ml_ready_diabetes_dataset_onehotencoded` (`Age`, `class`, `Gender_Female`, `Gender_Male`, `Polyuria_No`, `Polyuria_Yes`, `Polydipsia_No`, `Polydipsia_Yes`, `sudden weight loss_No`, `sudden weight loss_Yes`, `weakness_No`, `weakness_Yes`, `Polyphagia_No`, `Polyphagia_Yes`, `Genital thrush_No`, `Genital thrush_Yes`, `visual blurring_No`, `visual blurring_Yes`, `Itching_No`, `Itching_Yes`, `Irritability_No`, `Irritability_Yes`, `delayed healing_No`, `delayed healing_Yes`, `partial paresis_No`, `partial paresis_Yes`, `muscle stiffness_No`, `muscle stiffness_Yes`, `Alopecia_No`, `Alopecia_Yes`, `Obesity_No`, `Obesity_Yes`) VALUES
 (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 (40, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1),
 (58, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0),
@@ -13771,7 +13817,7 @@ INSERT INTO `ml ready diabetes dataset - onehotencoded` (`Age`, `class`, `Gender
 (38, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0),
 (35, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0),
 (61, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0);
-INSERT INTO `ml ready diabetes dataset - onehotencoded` (`Age`, `class`, `Gender_Female`, `Gender_Male`, `Polyuria_No`, `Polyuria_Yes`, `Polydipsia_No`, `Polydipsia_Yes`, `sudden weight loss_No`, `sudden weight loss_Yes`, `weakness_No`, `weakness_Yes`, `Polyphagia_No`, `Polyphagia_Yes`, `Genital thrush_No`, `Genital thrush_Yes`, `visual blurring_No`, `visual blurring_Yes`, `Itching_No`, `Itching_Yes`, `Irritability_No`, `Irritability_Yes`, `delayed healing_No`, `delayed healing_Yes`, `partial paresis_No`, `partial paresis_Yes`, `muscle stiffness_No`, `muscle stiffness_Yes`, `Alopecia_No`, `Alopecia_Yes`, `Obesity_No`, `Obesity_Yes`) VALUES
+INSERT INTO `ml_ready_diabetes_dataset_onehotencoded` (`Age`, `class`, `Gender_Female`, `Gender_Male`, `Polyuria_No`, `Polyuria_Yes`, `Polydipsia_No`, `Polydipsia_Yes`, `sudden weight loss_No`, `sudden weight loss_Yes`, `weakness_No`, `weakness_Yes`, `Polyphagia_No`, `Polyphagia_Yes`, `Genital thrush_No`, `Genital thrush_Yes`, `visual blurring_No`, `visual blurring_Yes`, `Itching_No`, `Itching_Yes`, `Irritability_No`, `Irritability_Yes`, `delayed healing_No`, `delayed healing_Yes`, `partial paresis_No`, `partial paresis_Yes`, `muscle stiffness_No`, `muscle stiffness_Yes`, `Alopecia_No`, `Alopecia_Yes`, `Obesity_No`, `Obesity_Yes`) VALUES
 (60, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1),
 (58, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0),
 (54, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0),
@@ -13924,38 +13970,20 @@ CREATE TABLE `users` (
 --
 -- Dumping data for table `users`
 --
+
 INSERT INTO `users` (`user_id`, `role`, `first_name`, `last_name`, `email`, `phone`, `date_of_birth`, `password_hash`, `profile_image`, `created_at`, `updated_at`) VALUES
 (1, 'patient', 'Demo', 'User', 'newemail@test.com', '604-999-8888', '2000-01-01', 'demo1234', NULL, '2025-10-23 07:17:27', '2025-11-05 22:56:09'),
 (4, 'patient', 'John', 'Doe', 'test@example.com', NULL, NULL, 'pass123', NULL, '2025-10-27 05:41:28', '2025-10-27 05:41:28'),
-
--- ================================
--- DEMO SPECIALIST 1: jsmith / smith123
--- ================================
-(10, 'specialist', 'John', 'Smith', 'jsmith@example.com', NULL, NULL, 'smith123', NULL, '2025-11-06 04:54:31', '2025-11-06 04:54:31'),
-
+(10, 'specialist', 'Sarah', 'Smith', 'dr.smith@example.com', NULL, NULL, 'secret', NULL, '2025-11-06 04:54:31', '2025-11-06 04:54:31'),
 (11, 'patient', 'Tanishq', 'Wadhwani', 'tanishq@gmail.com', '604-555-1234', '2004-10-11', 'password123', NULL, '2025-11-05 22:16:57', '2025-11-05 22:16:57'),
-
--- ================================
--- DEMO SPECIALIST 2: ajones / jones123
--- ================================
-(12, 'specialist', 'Alex', 'Jones', 'ajones@example.com', NULL, NULL, 'jones123', NULL, '2025-11-05 22:24:52', '2025-11-05 22:24:52'),
-
+(12, 'specialist', 'Dr. Sarah', 'Johnson', 'specialist2@test.com', '604-555-5678', NULL, 'spec123', NULL, '2025-11-05 22:24:52', '2025-11-05 22:24:52'),
 (13, 'staff', 'Jane', 'Smith', 'staff2@test.com', '604-555-9012', NULL, 'staff123', NULL, '2025-11-05 22:25:34', '2025-11-05 22:25:34'),
-
--- ================================
--- DEMO SPECIALIST 3: clee / lee123
--- ================================
-(14, 'specialist', 'Christina', 'Lee', 'clee@example.com', NULL, NULL, 'lee123', NULL, '2025-11-06 02:23:42', '2025-11-06 02:23:42'),
-
+(14, 'specialist', 'Jia', 'Rana', 'demo.patient@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:23:42', '2025-11-06 02:23:42'),
 (17, 'specialist', 'Jia', 'Rana', 'kavya.rana@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:27:29', '2025-11-06 02:27:29'),
-
 (18, 'patient', 'John', 'Doe', 'patient1@test.com', '604-555-1234', '1990-05-15', 'pass123', NULL, '2025-11-06 04:07:02', '2025-11-06 04:07:02'),
 (20, 'patient', 'John', 'Doe', 'john.doe@example.com', NULL, NULL, 'pass123', NULL, '2025-11-06 04:54:48', '2025-11-06 04:54:48');
 
 -- --------------------------------------------------------
-UPDATE specialists SET working_id = 'jsmith' WHERE user_id = 10;
-UPDATE specialists SET working_id = 'ajones' WHERE user_id = 12;
-UPDATE specialists SET working_id = 'clee'   WHERE user_id = 14;
 
 --
 -- Stand-in structure for view `v_specialist_alerts`

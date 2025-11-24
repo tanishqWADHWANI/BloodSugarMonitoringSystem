@@ -75,6 +75,133 @@
 <footer>
 <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
 </footer>
+<script>
+  (function () {
+    // ============================
+    // CONFIG
+    // ============================
+    const API_BASE = 'http://127.0.0.1:5000/api';
+
+    // ============================
+    // BASIC ACCESS CHECK
+    // ============================
+    const loggedStaff = localStorage.getItem('loggedInStaff');
+    if (!loggedStaff) {
+      alert('Please log in as staff first.');
+      window.location.href = 'staff.html';
+      return;
+    }
+
+    const patientNumber = localStorage.getItem('viewingPatientNumber');
+    const patientName   = localStorage.getItem('viewingPatientName');
+
+    const statusMsg     = document.getElementById('statusMsg');
+    const pNumberEl     = document.getElementById('pNumber');
+    const pNameEl       = document.getElementById('pName');
+    const pAgeEl        = document.getElementById('pAge');
+    const pGenderEl     = document.getElementById('pGender');
+    const pContactEl    = document.getElementById('pContact');
+    const pHistoryEl    = document.getElementById('pHistory');
+    const pLastResultsEl= document.getElementById('pLastResults');
+    const logoutBtn     = document.getElementById('logoutBtn');
+
+    if (!patientNumber) {
+      alert('No patient selected. Redirecting back to dashboard.');
+      window.location.href = 'staff_dashboard.html';
+      return;
+    }
+
+    pNumberEl.textContent = patientNumber;
+    pNameEl.textContent   = patientName || '';
+
+    function buildAuthHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('staffToken');
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return headers;
+    }
+
+    // ============================
+    // LOAD PATIENT FROM BACKEND
+    // ============================
+    async function loadPatientDetails() {
+      statusMsg.textContent = 'Loading patient details from server...';
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/staff/patients/${encodeURIComponent(patientNumber)}`,
+          { headers: buildAuthHeaders() }
+        );
+
+        if (!res.ok) {
+          throw new Error('Failed to load patient details');
+        }
+
+        const data = await res.json();
+        const p = data.patient || data || {};
+
+        const fullName      = p.full_name || p.name || patientName || 'Unknown';
+        const age           = (p.age != null) ? p.age : 'Not provided';
+        const gender        = p.gender || 'Not provided';
+        const contact       = p.phone || p.contact || 'Not provided';
+        const medicalHistory= p.medical_history || p.history || 'Not recorded';
+        const lastResults   = p.last_results || p.last_test_results || '';
+
+        pNameEl.textContent        = fullName;
+        pAgeEl.textContent         = age;
+        pGenderEl.textContent      = gender;
+        pContactEl.textContent     = contact;
+        pHistoryEl.textContent     = medicalHistory || 'Not recorded';
+        pLastResultsEl.textContent = lastResults || 'No recent results recorded.';
+
+        statusMsg.textContent = '';
+      } catch (err) {
+        console.error(err);
+        statusMsg.textContent =
+          'Unable to load patient details from server. Showing basic info only.';
+      }
+    }
+
+    // OPTIONAL SUMMARY (safe if it fails)
+    async function loadPatientSummary() {
+      try {
+        const res = await fetch(
+          `${API_BASE}/staff/patients/${encodeURIComponent(patientNumber)}/summary`,
+          { headers: buildAuthHeaders() }
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const history = data.medical_history || data.history || null;
+        const results = data.last_results || data.last_test_results || null;
+
+        if (history)  pHistoryEl.textContent     = history;
+        if (results)  pLastResultsEl.textContent = results;
+      } catch (err) {
+        console.warn('Summary endpoint not available or failed.', err);
+      }
+    }
+
+    // LOGOUT
+    logoutBtn.addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.removeItem('loggedInStaff');
+      localStorage.removeItem('staffUsername');
+      localStorage.removeItem('staffFullName');
+      localStorage.removeItem('staffId');
+      localStorage.removeItem('staffRole');
+      localStorage.removeItem('staffToken');
+      localStorage.removeItem('viewingPatientNumber');
+      localStorage.removeItem('viewingPatientName');
+      alert('You have been logged out.');
+      window.location.href = 'staff.html';
+    });
+
+    // INIT
+    loadPatientDetails();
+    loadPatientSummary();
+  })();
+</script>
 
 </body>
 </html>

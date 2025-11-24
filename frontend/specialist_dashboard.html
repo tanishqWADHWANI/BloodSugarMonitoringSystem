@@ -137,201 +137,156 @@
   </footer>
 
   <script>
-    (function () {
-      // ================================
-      // CONFIG
-      // ================================
-      const API_BASE = 'http://127.0.0.1:5000/api';
+  const API_BASE = 'http://127.0.0.1:5000';
 
-      // ================================
-      // SECURE ACCESS
-      // ================================
-      const loggedInSpecialist = localStorage.getItem('specialistUsername');
-      if (!loggedInSpecialist) {
-        // Not logged in, go back to specialist login page
-        window.location.href = 'specialist.html';
-        return;
-      }
+  // ============================
+  // AUTH / BASIC INFO
+  // ============================
+  const loggedInSpecialist = localStorage.getItem('specialistUsername');
+  if (!loggedInSpecialist) {
+    // Not logged in, send back to login page
+    window.location.href = 'specialist.html';
+  }
 
-      const specialistName =
-        localStorage.getItem('specialistFullName') || 'Specialist';
-      document.getElementById('specialistNameDisplay').textContent = specialistName;
+  const specialistName =
+    localStorage.getItem('specialistFullName') || 'Specialist';
+  const specialistNameDisplay = document.getElementById('specialistNameDisplay');
+  if (specialistNameDisplay) {
+    specialistNameDisplay.textContent = specialistName;
+  }
 
-      const token = localStorage.getItem('specialistToken') || null;
+  // This ID is stored in specialist.html login script
+  const specialistId = localStorage.getItem('specialistId') || '3';
 
-      function buildAuthHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) {
-          headers['Authorization'] = 'Bearer ' + token;
-        }
-        return headers;
-      }
+  const tableBody = document.querySelector('#patient-table tbody');
+  let patientsCache = [];
 
-      // ================================
-      // DOM ELEMENTS
-      // ================================
-      const tableBody = document.querySelector('#patient-table tbody');
-      const statusMsg = document.getElementById('statusMsg');
-      const searchNameEl = document.getElementById('search-name');
-      const searchNumberEl = document.getElementById('search-number');
-      const startDateEl = document.getElementById('start-date');
-      const endDateEl = document.getElementById('end-date');
-      const searchBtn = document.getElementById('search-btn');
-      const resetBtn = document.getElementById('reset-btn');
-      const logoutBtn = document.getElementById('logoutBtn');
+  function renderTable(data) {
+    if (!tableBody) return;
 
-      let patients = [];        // full list from backend
-      let patientsLoaded = false;
+    tableBody.innerHTML = '';
+    if (!data || data.length === 0) {
+      tableBody.innerHTML =
+        '<tr><td colspan="3">No patients assigned in database.</td></tr>';
+      return;
+    }
 
-      // ================================
-      // RENDER TABLE
-      // ================================
-      function renderTable(data) {
-        tableBody.innerHTML = '';
-        if (!data || data.length === 0) {
-          tableBody.innerHTML = `
-            <tr>
-              <td colspan="3">No patients found.</td>
-            </tr>`;
-          return;
-        }
+    data.forEach(p => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${p.number}</td>
+        <td>${p.name}</td>
+        <td>${p.lastChecked}</td>
+      `;
 
-        data.forEach(p => {
-          const row = document.createElement('tr');
-
-          const number = p.number || p.patient_number || p.id || '';
-          const name = p.name || p.full_name || p.patient_name || '';
-          const lastChecked = p.last_checked || p.lastChecked || p.last_update || '';
-
-          row.innerHTML = `
-            <td>${number}</td>
-            <td>${name}</td>
-            <td>${lastChecked || '-'}</td>
-          `;
-
-          row.addEventListener('click', () => {
-            localStorage.setItem('viewingPatientNumber', number);
-            localStorage.setItem('viewingPatientName', name);
-            window.location.href = 'specialist_patient_view.html';
-          });
-
-          tableBody.appendChild(row);
-        });
-      }
-
-      // ================================
-      // LOAD PATIENTS FROM BACKEND
-      // ================================
-      async function loadPatients() {
-        statusMsg.textContent = 'Loading patients from server...';
-
-        try {
-          const res = await fetch(`${API_BASE}/specialist/patients`, {
-            headers: buildAuthHeaders()
-          });
-
-          if (!res.ok) {
-            throw new Error('Failed to load patients');
-          }
-
-          const data = await res.json();
-          // Expect: { patients: [...] } or just [...]
-          patients = data.patients || data || [];
-          patientsLoaded = true;
-
-          if (!Array.isArray(patients)) {
-            patients = [];
-          }
-
-          renderTable(patients);
-          statusMsg.textContent = `Loaded ${patients.length} patient(s).`;
-        } catch (err) {
-          console.error(err);
-          // Optional fallback: use existing localStorage demo list if present
-          const lsPatients = JSON.parse(localStorage.getItem('patients') || '[]');
-          if (lsPatients.length) {
-            patients = lsPatients;
-            patientsLoaded = true;
-            renderTable(patients);
-            statusMsg.textContent =
-              'Could not reach server. Showing local demo patient list.';
-          } else {
-            tableBody.innerHTML = `
-              <tr>
-                <td colspan="3">Unable to load patients from server.</td>
-              </tr>`;
-            statusMsg.textContent =
-              'Could not load patients. Please try again later.';
-          }
-        }
-      }
-
-      // ================================
-      // FILTERING / SEARCH
-      // ================================
-      function applyFilters() {
-        if (!patientsLoaded) return;
-        const nameVal = (searchNameEl.value || '').toLowerCase();
-        const numberVal = (searchNumberEl.value || '').toLowerCase();
-        const startDate = startDateEl.value;
-        const endDate = endDateEl.value;
-
-        const filtered = patients.filter(p => {
-          const number = (p.number || p.patient_number || p.id || '').toString();
-          const name = (p.name || p.full_name || p.patient_name || '').toLowerCase();
-          const lastChecked = (p.last_checked || p.lastChecked || p.last_update || '') || '';
-
-          const matchName = !nameVal || name.includes(nameVal);
-          const matchNumber =
-            !numberVal || number.toLowerCase().includes(numberVal);
-
-          let matchDate = true;
-          if (startDate || endDate) {
-            // Compare as strings in YYYY-MM-DD format if backend sends that
-            if (startDate && lastChecked < startDate) matchDate = false;
-            if (endDate && lastChecked > endDate) matchDate = false;
-          }
-
-          return matchName && matchNumber && matchDate;
-        });
-
-        renderTable(filtered);
-        statusMsg.textContent =
-          filtered.length + ' patient(s) match your filters.';
-      }
-
-      searchBtn.addEventListener('click', applyFilters);
-
-      resetBtn.addEventListener('click', () => {
-        searchNameEl.value = '';
-        searchNumberEl.value = '';
-        startDateEl.value = '';
-        endDateEl.value = '';
-        renderTable(patients);
-        statusMsg.textContent = `Showing all ${patients.length} patient(s).`;
+      // When you click a patient row, go to patient detail page
+      row.addEventListener('click', () => {
+        localStorage.setItem('viewingPatientNumber', p.number);
+        localStorage.setItem('viewingPatientName', p.name);
+        localStorage.setItem('viewingPatientUserId', p.userId);
+        localStorage.setItem('viewingPatientId', p.patientId);
+        window.location.href = 'specialist_patient_view.html';
       });
 
-      // ================================
-      // LOGOUT
-      // ================================
-      logoutBtn.addEventListener('click', e => {
-        e.preventDefault();
-        localStorage.removeItem('specialistId');
-        localStorage.removeItem('specialistUsername');
-        localStorage.removeItem('specialistFullName');
-        localStorage.removeItem('specialistSpecialty');
-        localStorage.removeItem('specialistToken');
-        localStorage.removeItem('viewingPatientNumber');
-        localStorage.removeItem('viewingPatientName');
-        alert('You have been logged out.');
-        window.location.href = 'specialist.html';
+      tableBody.appendChild(row);
+    });
+  }
+
+  // ============================
+  // LOAD PATIENTS FROM BACKEND
+  // ============================
+  async function loadPatientsFromServer() {
+    if (!tableBody) return;
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/specialist/${specialistId}/patients`
+      );
+      if (!res.ok) {
+        throw new Error(`Server responded ${res.status}`);
+      }
+
+      const data = await res.json();
+      // data.patients is an array of rows from the DB:
+      // patient_id, user_id, first_name, last_name, last_date_time, ...
+      const mapped = (data.patients || []).map(p => ({
+        patientId: p.patient_id,
+        userId: p.user_id,
+        number: p.patient_id, // Using patient_id as "Patient Number"
+        name: `${p.first_name} ${p.last_name}`,
+        lastChecked: p.last_date_time
+          ? String(p.last_date_time).split('T')[0]
+          : 'Not available'
+      }));
+
+      patientsCache = mapped;
+      renderTable(mapped);
+      localStorage.setItem('patients', JSON.stringify(mapped));
+    } catch (err) {
+      console.error('Error loading patients from server:', err);
+      tableBody.innerHTML =
+        '<tr><td colspan="3">Error loading patients from server.</td></tr>';
+    }
+  }
+
+  // Load on page start
+  loadPatientsFromServer();
+
+  // ============================
+  // SEARCH / FILTER (local only)
+  // ============================
+  const searchNameInput = document.getElementById('search-name');
+  const searchNumberInput = document.getElementById('search-number');
+  const startDateInput = document.getElementById('start-date');
+  const endDateInput = document.getElementById('end-date');
+  const searchBtn = document.getElementById('search-btn');
+  const resetBtn = document.getElementById('reset-btn');
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      const nameVal = (searchNameInput?.value || '').toLowerCase();
+      const numberVal = (searchNumberInput?.value || '').toLowerCase();
+      const startDate = startDateInput?.value || '';
+      const endDate = endDateInput?.value || '';
+
+      const filtered = patientsCache.filter(p => {
+        const matchName = p.name.toLowerCase().includes(nameVal);
+        const matchNumber = String(p.number).toLowerCase().includes(numberVal);
+        const matchDate =
+          (!startDate || p.lastChecked >= startDate) &&
+          (!endDate || p.lastChecked <= endDate);
+        return matchName && matchNumber && matchDate;
       });
 
-      // ================================
-      // INIT
-      // ================================
-      loadPatients();
-    })();
-  </script>
+      renderTable(filtered);
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (searchNameInput) searchNameInput.value = '';
+      if (searchNumberInput) searchNumberInput.value = '';
+      if (startDateInput) startDateInput.value = '';
+      if (endDateInput) endDateInput.value = '';
+      renderTable(patientsCache);
+    });
+  }
+
+  // ============================
+  // LOGOUT
+  // ============================
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('specialistUsername');
+      localStorage.removeItem('specialistFullName');
+      localStorage.removeItem('specialistSpecialty');
+      localStorage.removeItem('specialistId');
+      window.location.href = 'specialist.html';
+    });
+  }
+</script>
+
 </body>
 </html>

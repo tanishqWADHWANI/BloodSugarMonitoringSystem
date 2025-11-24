@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Staff Login</title>
   <link rel="stylesheet" href="css/style.css" />
-  
+  <!-- Removed js/api.js to avoid old loginUser() conflicts -->
 </head>
 
 <body>
@@ -14,41 +14,75 @@
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="patient.html">Patient</a></li>
-        <li><a href="specialist.html">Specialist</a></li>
         <li><a href="clinic.html">Clinic</a></li>
         <li><a href="staff.html" class="active">Staff</a></li>
-        <li><a href="contact.html">Contact Us</a></li>
       </ul>
     </nav>
   </header>
 
   <main class="container">
-    <section class="login-section">
-      <h2>Staff Login</h2>
-      <form id="staffLoginForm" class="form-grid">
-        <div class="form-field">
-          <label for="staffEmail">Username or Email</label>
-          <input id="staffEmail" name="email" type="text" placeholder="staff@x.com" required />
+    <!-- ===========================
+         Staff Login Form
+    ============================ -->
+    <section class="login-section card">
+      <h1>Staff Login</h1>
+      <p class="subtext">
+        Log in with your staff credentials to access the clinic staff dashboard.
+      </p>
+
+      <!-- You can show demo account info right on the page -->
+      <div class="info-box">
+        <p><strong>Demo staff account:</strong></p>
+        <ul>
+          <li>Email: <code>staff2@test.com</code></li>
+          <li>Password: <code>staff123</code></li>
+        </ul>
+      </div>
+
+      <form id="staffLoginForm" novalidate>
+        <div class="form-group">
+          <label for="staffEmail">Email</label>
+          <input
+            type="text"
+            id="staffEmail"
+            name="staffEmail"
+            required
+            placeholder="Enter your staff email"
+          />
         </div>
-        <div class="form-field">
+
+        <div class="form-group">
           <label for="staffPassword">Password</label>
-          <input id="staffPassword" name="password" type="password" placeholder="••••••••" required />
+          <input
+            type="password"
+            id="staffPassword"
+            name="staffPassword"
+            required
+            placeholder="Enter your password"
+          />
         </div>
-        <div class="form-actions">
+
+        <p id="loginMsg" class="error-message"></p>
+
+        <div class="button-row">
           <button type="submit">Login</button>
           <button type="button" id="demoStaffLogin">Demo Staff Login</button>
         </div>
       </form>
     </section>
 
+    <!-- ===========================
+         Staff Panel Info
+    ============================ -->
     <section class="card">
       <h2>Staff Panel</h2>
-      <p class="subtext">Access patient records, manage appointments, and update data as permitted.</p>
+      <p class="subtext">
+        After login, you will be redirected to your staff dashboard.
+      </p>
       <ul>
         <li>After logging in, you’ll be redirected to <code>staff_dashboard.html</code>.</li>
-        <li>View and update patient records.</li>
-        <li>Manage daily tasks and schedules.</li>
+        <li>View and update patient records as permitted.</li>
+        <li>Manage daily tasks, schedules, and clinic operations.</li>
         <li>Access reports and notifications relevant to your role.</li>
       </ul>
     </section>
@@ -58,31 +92,96 @@
     <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
   </footer>
 
-  <script>
-    const staffForm = document.getElementById('staffLoginForm');
-    const staffEmail = document.getElementById('staffEmail');
-    const staffPassword = document.getElementById('staffPassword');
-    const demoStaffBtn = document.getElementById('demoStaffLogin');
+<script>
+// -----------------------------------------------------------
+// FIXED API BASE: paste your Codespaces 5000 URL here
+// -----------------------------------------------------------
+const API_BASE = "https://5000-penjen30-bloodsugarmonitoringsystem-xxxxx.app.github.dev";
+// ^^^^^^^^^^^^^^ REPLACE THIS WITH YOUR ACTUAL 5000 URL FROM PORTS TAB
 
-    staffForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (!staffEmail.value.trim() || !staffPassword.value.trim()) {
-        alert('Please enter email and password.');
-        return;
+// -----------------------------------------------------------
+// Staff Login Handler
+// -----------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("staffLoginForm");
+  const emailInput = document.getElementById("staffEmail");
+  const passInput = document.getElementById("staffPassword");
+  const msgBox = document.getElementById("loginMsg");
+  const demoBtn = document.getElementById("demoStaffLogin");
+
+  if (!form) return;
+
+  // Demo autofill
+  if (demoBtn) {
+    demoBtn.addEventListener("click", () => {
+      emailInput.value = "staff2@test.com";
+      passInput.value = "staff123";
+      if (msgBox) msgBox.textContent = "";
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (msgBox) msgBox.textContent = "";
+
+    try {
+      const emailVal = emailInput.value.trim();
+      const passVal = passInput.value.trim();
+
+      if (!emailVal || !passVal) {
+        throw new Error("Enter email and password.");
       }
-      localStorage.setItem('loggedInStaff', staffEmail.value.trim());
-      window.location.href = 'staff_dashboard.html';
-    });
 
-    demoStaffBtn.addEventListener('click', function () {
-      const demoEmail = 'demo@staff.com';
-      const demoPass = 'demo123';
-      staffEmail.value = demoEmail;
-      staffPassword.value = demoPass;
-      localStorage.setItem('loggedInStaff', demoEmail);
-      window.location.href = 'staff_dashboard.html';
-    });
-  </script>
+      console.log("Logging in via:", `${API_BASE}/api/login`);
+
+      const res = await fetch(`${API_BASE}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: emailVal,
+          password: passVal,
+        }),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Non-JSON response:", res.status, text.slice(0, 200));
+        throw new Error(`Server returned HTML (status ${res.status}). Check that API_BASE uses port 5000 and Flask is running.`);
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed. Check your credentials.");
+      }
+
+      const user = data.user;
+      if (!user) {
+        throw new Error("Server did not return a valid user object.");
+      }
+
+      if (user.role !== "staff" && user.role !== "admin") {
+        throw new Error("This account does not have staff access.");
+      }
+
+      localStorage.setItem("authUser", JSON.stringify(user));
+
+      window.location.href =
+        "staff_dashboard.html?user_id=" + encodeURIComponent(user.user_id);
+    } catch (err) {
+      console.error(err);
+      if (msgBox) {
+        msgBox.textContent = err.message || "Login failed.";
+      } else {
+        alert(err.message || "Login failed.");
+      }
+    }
+  });
+});
+</script>
+
 </body>
 
 </html>

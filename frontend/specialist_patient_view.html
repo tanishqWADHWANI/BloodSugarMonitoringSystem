@@ -54,7 +54,6 @@
       padding:10px;
     }
 
-    /* Comments */
     #comment-text {
       width:100%;
       padding:10px;
@@ -174,231 +173,192 @@
     <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
   </footer>
 
-  <script>
-    (function () {
-      // Same base as specialist.html
-      const API_BASE = 'http://127.0.0.1:5000/api';
+<script>
+  const API_BASE = 'http://127.0.0.1:5000';
 
-      const patientNumber = localStorage.getItem('viewingPatientNumber');
-      const patientName = localStorage.getItem('viewingPatientName');
-      const token = localStorage.getItem('specialistToken') || null;
-      const specialistFullName = localStorage.getItem('specialistFullName') || 'Specialist';
+  // ============================
+  // CONTEXT FROM DASHBOARD
+  // ============================
+  const specialistId = localStorage.getItem('specialistId') || '3';
+  const patientNumber = localStorage.getItem('viewingPatientNumber');
+  const patientName = localStorage.getItem('viewingPatientName');
+  const patientUserId = localStorage.getItem('viewingPatientUserId'); // users.user_id
+  const patientId = localStorage.getItem('viewingPatientId');        // patients.patient_id
 
-      // Require specialist login
-      if (!localStorage.getItem('specialistUsername')) {
-        alert('Please log in as specialist first.');
-        window.location.href = 'specialist.html';
+  if (!patientNumber || !patientName || !patientUserId || !patientId) {
+    alert('No patient selected. Redirecting to dashboard...');
+    window.location.href = 'specialist_dashboard.html';
+  }
+
+  const patientNumberSpan = document.getElementById('patientNumber');
+  const patientNameSpan = document.getElementById('patientName');
+  if (patientNumberSpan) patientNumberSpan.textContent = patientNumber;
+  if (patientNameSpan) patientNameSpan.textContent = patientName;
+
+  // ============================
+  // LOAD READINGS
+  // ============================
+  const readingsBody = document.querySelector('#readings-table tbody');
+
+  function renderReadings(readings) {
+    if (!readingsBody) return;
+
+    readingsBody.innerHTML = '';
+    if (!readings || readings.length === 0) {
+      readingsBody.innerHTML =
+        '<tr><td colspan="5">No readings found for this patient.</td></tr>';
+      return;
+    }
+
+    readings.forEach(r => {
+      const tr = document.createElement('tr');
+
+      const dt = r.date_time || r.dateTime || '';
+      const datePart = dt ? String(dt).split('T')[0] : '';
+      const timePart = dt && String(dt).includes('T')
+        ? String(dt).split('T')[1].substring(0, 5)
+        : '';
+
+      tr.innerHTML = `
+        <td>${datePart}</td>
+        <td>${timePart}</td>
+        <td>${r.value} ${r.unit || ''}</td>
+        <td>${r.status || 'normal'}</td>
+        <td>${r.food_intake || ''}</td>
+      `;
+      readingsBody.appendChild(tr);
+    });
+  }
+
+  async function loadReadings() {
+    if (!readingsBody) return;
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/readings/${patientUserId}?days=30`
+      );
+      if (!res.ok) {
+        throw new Error(`Server responded ${res.status}`);
+      }
+      const data = await res.json();
+      renderReadings(data.readings || []);
+    } catch (err) {
+      console.error('Error loading readings:', err);
+      readingsBody.innerHTML =
+        '<tr><td colspan="5">Error loading readings from server.</td></tr>';
+    }
+  }
+
+  // ============================
+  // LOAD COMMENTS (FEEDBACK)
+  // ============================
+  const commentList = document.getElementById('comment-list');
+
+  function renderComments(feedback) {
+    if (!commentList) return;
+
+    commentList.innerHTML = '';
+    if (!feedback || feedback.length === 0) {
+      commentList.innerHTML = '<li>No comments yet.</li>';
+      return;
+    }
+
+    feedback.forEach(fb => {
+      const li = document.createElement('li');
+      const author = fb.specialist_name || 'Specialist';
+      const text = fb.feedback_text || '';
+      const created =
+        fb.createdAt || fb.created_at || fb.created_at || '';
+
+      li.innerHTML = `
+        <strong>${author}:</strong> ${text}
+        <br><small>${created}</small>
+      `;
+      commentList.appendChild(li);
+    });
+  }
+
+  async function loadComments() {
+    if (!commentList) return;
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/patient/${patientId}/feedback`
+      );
+      if (!res.ok) {
+        throw new Error(`Server responded ${res.status}`);
+      }
+      const data = await res.json();
+      renderComments(data.feedback || []);
+    } catch (err) {
+      console.error('Error loading comments:', err);
+      commentList.innerHTML = '<li>Error loading comments from server.</li>';
+    }
+  }
+
+  // ============================
+  // SAVE NEW COMMENT
+  // ============================
+  const commentText = document.getElementById('comment-text');
+  const saveCommentBtn = document.getElementById('save-comment');
+
+  if (saveCommentBtn) {
+    saveCommentBtn.addEventListener('click', async () => {
+      const text = (commentText?.value || '').trim();
+      if (!text) {
+        alert('Please enter a comment before saving.');
         return;
       }
 
-      // Require a selected patient
-      if (!patientNumber || !patientName) {
-        alert('No patient selected. Redirecting...');
-        window.location.href = 'specialist_dashboard.html';
-        return;
-      }
+      try {
+        const res = await fetch(`${API_BASE}/api/specialist/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            specialistId: parseInt(specialistId, 10),
+            // Backend expects data.patientId to be user_id, and it maps to patient
+            patientId: parseInt(patientUserId, 10),
+            feedbackText: text,
+            readingId: null
+          })
+        });
 
-      // Fill basic header
-      document.getElementById('patientNumber').textContent = patientNumber;
-      document.getElementById('patientName').textContent = patientName;
-
-      const personalInfoEl = document.getElementById('personal-info');
-      const healthTbody = document.querySelector('#health-data-table tbody');
-      const healthMsgEl = document.getElementById('health-msg');
-      const commentList = document.getElementById('comment-list');
-      const commentMsg = document.getElementById('comment-msg');
-      const commentText = document.getElementById('comment-text');
-      const saveCommentBtn = document.getElementById('save-comment');
-
-      function buildAuthHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) {
-          headers['Authorization'] = 'Bearer ' + token;
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to save feedback');
         }
-        return headers;
+
+        alert('Feedback saved successfully.');
+        if (commentText) commentText.value = '';
+        loadComments();
+      } catch (err) {
+        console.error('Error saving feedback:', err);
+        alert(err.message || 'Error saving feedback.');
       }
+    });
+  }
 
-      // ============================
-      // LOAD PERSONAL INFO
-      // ============================
-      async function loadPersonalInfo() {
-        try {
-          const res = await fetch(`${API_BASE}/specialist/patients/${encodeURIComponent(patientNumber)}`, {
-            headers: buildAuthHeaders()
-          });
+  // ============================
+  // INITIAL LOAD
+  // ============================
+  loadReadings();
+  loadComments();
 
-          if (!res.ok) {
-            throw new Error('Failed to load personal info');
-          }
+  // ============================
+  // LOGOUT
+  // ============================
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('specialistUsername');
+      localStorage.removeItem('specialistFullName');
+      localStorage.removeItem('specialistSpecialty');
+      localStorage.removeItem('specialistId');
+      window.location.href = 'specialist.html';
+    });
+  }
+</script>
 
-          const data = await res.json();
-          const p = data.patient || data || {};
-          const age = p.age || 'Not provided';
-          const gender = p.gender || 'Not provided';
-          const email = p.email || 'Not provided';
-          const phone = p.phone || 'Not provided';
-          const address = p.address || 'Not provided';
-
-          personalInfoEl.innerHTML = `
-            <div class="info-item"><strong>Age:</strong> ${age}</div>
-            <div class="info-item"><strong>Gender:</strong> ${gender}</div>
-            <div class="info-item"><strong>Email:</strong> ${email}</div>
-            <div class="info-item"><strong>Phone:</strong> ${phone}</div>
-            <div class="info-item"><strong>Address:</strong> ${address}</div>
-          `;
-        } catch (err) {
-          console.error(err);
-          personalInfoEl.innerHTML = `
-            <div class="info-item">
-              Unable to load personal information from server.
-            </div>
-          `;
-        }
-      }
-
-      // ============================
-      // LOAD HEALTH DATA
-      // ============================
-      async function loadHealthData() {
-        healthMsgEl.textContent = 'Loading health data from server...';
-        healthTbody.innerHTML = '';
-
-        try {
-          const res = await fetch(
-            `${API_BASE}/specialist/patients/${encodeURIComponent(patientNumber)}/readings`,
-            { headers: buildAuthHeaders() }
-          );
-
-          if (!res.ok) {
-            throw new Error('Failed to load health data');
-          }
-
-          const data = await res.json();
-          const readings = data.readings || data || [];
-
-          if (!Array.isArray(readings) || readings.length === 0) {
-            healthTbody.innerHTML = `
-              <tr><td colspan="8">No health data recorded yet.</td></tr>
-            `;
-            healthMsgEl.textContent = '';
-            return;
-          }
-
-          healthTbody.innerHTML = readings.map(entry => `
-            <tr>
-              <td>${entry.date || '-'}</td>
-              <td>${entry.time || '-'}</td>
-              <td>${entry.blood_pressure || entry.bloodPressure || '-'}</td>
-              <td>${entry.heart_rate || entry.heartRate || '-'}</td>
-              <td>${entry.medications || '-'}</td>
-              <td>${entry.food_time || entry.foodTime || '-'}</td>
-              <td>${entry.food_taken || entry.foodTaken || '-'}</td>
-              <td>${entry.activity || entry.notes || '-'}</td>
-            </tr>
-          `).join('');
-          healthMsgEl.textContent = '';
-        } catch (err) {
-          console.error(err);
-          healthTbody.innerHTML = `
-            <tr><td colspan="8">Error loading health data from server.</td></tr>
-          `;
-          healthMsgEl.textContent = 'Could not load health data. Please try again later.';
-        }
-      }
-
-      // ============================
-      // LOAD COMMENTS
-      // ============================
-      async function loadComments() {
-        commentMsg.textContent = 'Loading comments...';
-        commentList.innerHTML = '';
-
-        try {
-          const res = await fetch(
-            `${API_BASE}/specialist/patients/${encodeURIComponent(patientNumber)}/comments`,
-            { headers: buildAuthHeaders() }
-          );
-
-          if (!res.ok) {
-            throw new Error('Failed to load comments');
-          }
-
-          const data = await res.json();
-          const comments = data.comments || data || [];
-
-          if (!Array.isArray(comments) || comments.length === 0) {
-            commentList.innerHTML = '<li>No comments yet.</li>';
-            commentMsg.textContent = '';
-            return;
-          }
-
-          commentList.innerHTML = comments.map(c => {
-            const author = c.author || c.specialist_name || specialistFullName;
-            const ts = c.timestamp || c.created_at || '';
-            const text = c.text || c.comment || '';
-            return `<li><strong>${author}</strong>${ts ? ' (' + ts + ')' : ''}: ${text}</li>`;
-          }).join('');
-          commentMsg.textContent = '';
-        } catch (err) {
-          console.error(err);
-          commentList.innerHTML = '<li>Error loading comments from server.</li>';
-          commentMsg.textContent = 'Could not load comments. Please try again later.';
-        }
-      }
-
-      // ============================
-      // SAVE COMMENT
-      // ============================
-      saveCommentBtn.addEventListener('click', async () => {
-        const text = (commentText.value || '').trim();
-        if (!text) return;
-
-        commentMsg.textContent = 'Saving comment...';
-
-        try {
-          const res = await fetch(
-            `${API_BASE}/specialist/patients/${encodeURIComponent(patientNumber)}/comments`,
-            {
-              method: 'POST',
-              headers: buildAuthHeaders(),
-              body: JSON.stringify({ text: text })
-            }
-          );
-
-          if (!res.ok) {
-            throw new Error('Failed to save comment');
-          }
-
-          commentText.value = '';
-          await loadComments();
-          commentMsg.textContent = 'Comment saved.';
-        } catch (err) {
-          console.error(err);
-          commentMsg.textContent = 'Error saving comment. Please try again.';
-        }
-      });
-
-      // ============================
-      // LOGOUT
-      // ============================
-      document.getElementById('logoutBtn').addEventListener('click', e => {
-        e.preventDefault();
-        localStorage.removeItem('specialistId');
-        localStorage.removeItem('specialistUsername');
-        localStorage.removeItem('specialistFullName');
-        localStorage.removeItem('specialistSpecialty');
-        localStorage.removeItem('specialistToken');
-        localStorage.removeItem('viewingPatientNumber');
-        localStorage.removeItem('viewingPatientName');
-        alert('You have been logged out.');
-        window.location.href = 'specialist.html';
-      });
-
-      // Initial loads
-      loadPersonalInfo();
-      loadHealthData();
-      loadComments();
-    })();
-  </script>
 </body>
 </html>

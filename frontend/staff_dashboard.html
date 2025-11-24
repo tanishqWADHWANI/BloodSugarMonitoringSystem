@@ -1,127 +1,367 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Staff Dashboard</title>
+  <title>Staff Dashboard - Online Blood Sugar Monitor</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
-
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .card h2 {
-      color: #004080;
-      margin-top: 0;
-    }
-
-    .card ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    .card ul li {
-      margin-bottom: 10px;
-    }
-
-    .card ul li a {
-      text-decoration: none;
-      color: #004080;
-      font-weight: bold;
-    }
-
-    .card ul li a:hover {
-      text-decoration: underline;
-    }
-
     .logout-btn {
+      background: #cc0000;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: white;
+    }
+    .logout-btn:hover { background: #ff3333; }
+
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    h1, h2, h3, h4, p {
+      margin: 0 0 15px 0;
+    }
+    .dashboard-section {
       margin-top: 30px;
-      padding: 12px 25px;
+    }
+
+    .task-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .summary-card {
+      background: #f9f9f9;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .summary-card h3 {
+      margin-bottom: 8px;
+      color: #004080;
+    }
+
+    .patient-search {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+      margin-top: 5px;
+    }
+    .patient-search input,
+    .patient-search button {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .patient-search button {
       background: #004080;
       color: white;
       border: none;
-      border-radius: 8px;
+      cursor: pointer;
+    }
+    .patient-search button:hover {
+      background: #0066cc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #004080;
+      color: white;
+    }
+    tr:hover {
+      background: #f1f1f1;
       cursor: pointer;
     }
 
-    .logout-btn:hover {
-      background: #0066cc;
+    #statusMsg {
+      margin-top: 10px;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    footer {
+      background: #004080;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 40px;
     }
   </style>
 </head>
-
 <body>
-<header>
-  <nav>
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="patient.html">Patient</a></li>
-      <li><a href="specialist.html">Specialist</a></li>
-      <li><a href="clinic.html">Clinic</a></li>
-      <li><a href="contact.html">Contact Us</a></li>
-    </ul>
-  </nav>
-</header>
-
-<main class="container">
-  <h1 id="welcomeMsg">Welcome, Staff!</h1>
-
-  <div class="dashboard-grid">
-    <!-- Patient Records -->
-    <div class="card">
-      <h2>Patient Records</h2>
+  <header>
+    <nav>
       <ul>
-        <li><a href="patient_records.html">View/Edit Patient Details</a></li>
-        <li><a href="assign_patients.html">Assign Patients to Doctors</a></li>
+        <!-- Staff-focused nav -->
+        <li><a href="staff_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="patient_records.html">Patient Records</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li style="margin-left:auto;">
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </li>
       </ul>
-    </div>
+    </nav>
+  </header>
 
-    <!-- Reports -->
-    <div class="card">
-      <h2>Reports</h2>
-      <ul>
-        <li><a href="view_reports.html">View Reports Relevant to Staff</a></li>
-        <li><a href="download_summaries.html">Download Summaries</a></li>
-        <li><a href="track_progress.html">Track Progress Over Time</a></li>
-      </ul>
-    </div>
-  </div>
+  <main class="container">
+    <h1>Welcome, <span id="staffNameDisplay">Staff</span></h1>
+    <p>Manage patients, update records, and assist with daily clinic operations.</p>
 
-  <button class="logout-btn" id="logoutBtn">Logout</button>
-</main>
+    <!-- Summary cards -->
+    <section class="dashboard-section">
+      <h2>Today’s Summary</h2>
+      <div class="task-summary">
+        <div class="summary-card">
+          <h3>Total Patients</h3>
+          <p id="summaryTotalPatients">0</p>
+        </div>
+        <div class="summary-card">
+          <h3>Email Specialists</h3>
+          <p>Quickly contact specialists about flagged patients or urgent updates.</p>
+        </div>
+        <div class="summary-card">
+          <h3>Email Patients</h3>
+          <p>Send reminders, instructions, or follow-up messages to patients.</p>
+        </div>
+      </div>
+    </section>
 
-<footer>
-  <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
-</footer>
+    <!-- Patient table -->
+    <section class="dashboard-section">
+      <h2>Patient List</h2>
+      <div class="patient-search">
+        <input type="text" id="search-name" placeholder="Search by Name">
+        <input type="text" id="search-number" placeholder="Search by Patient ID">
+        <button id="search-btn">Search</button>
+        <button id="reset-btn">Reset</button>
+      </div>
 
-<script>
-  // Display staff email from localStorage
-  const welcomeMsg = document.getElementById('welcomeMsg');
-  const loggedInStaff = localStorage.getItem('loggedInStaff');
-  if (loggedInStaff) {
-    welcomeMsg.textContent = `Welcome, ${loggedInStaff}!`;
-  } else {
-    // redirect to login if not logged in
-    window.location.href = 'staff.html';
-  }
+      <table id="patient-table">
+        <thead>
+          <tr>
+            <th>Patient Number</th>
+            <th>Name</th>
+            <th>Last Checked</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
 
-  // Logout functionality
-  const logoutBtn = document.getElementById('logoutBtn');
-  logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('loggedInStaff');
-    window.location.href = 'staff.html';
-  });
-</script>
+      <p id="statusMsg"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+    (function () {
+      // ================================
+      // CONFIG – DB API
+      // ================================
+      const API_BASE = 'https://penjen30-bloodsugarmonitoringsystem-5000.app.github.dev/api';
+      console.log('[staff_dashboard] API_BASE =', API_BASE);
+
+      // ================================
+      // SECURE ACCESS (staff only)
+      // ================================
+      const loggedKey = localStorage.getItem('loggedInStaff');
+
+      if (!loggedKey) {
+        console.warn('[staff_dashboard] No loggedInStaff, redirecting to staff.html');
+        window.location.href = 'staff.html';
+        return;
+      }
+
+      const fullName =
+        localStorage.getItem('staffFullName') ||
+        loggedKey ||
+        'Staff';
+
+      document.getElementById('staffNameDisplay').textContent = fullName;
+
+      const staffToken = localStorage.getItem('staffToken') || null;
+
+      function buildAuthHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (staffToken) headers['Authorization'] = 'Bearer ' + staffToken;
+        return headers;
+      }
+
+      // ================================
+      // DOM ELEMENTS
+      // ================================
+      const tableBody = document.querySelector('#patient-table tbody');
+      const statusMsg = document.getElementById('statusMsg');
+      const searchNameEl = document.getElementById('search-name');
+      const searchNumberEl = document.getElementById('search-number');
+      const searchBtn = document.getElementById('search-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const summaryTotalPatients = document.getElementById('summaryTotalPatients');
+
+      let patients = [];
+      let patientsLoaded = false;
+
+      // ================================
+      // RENDER TABLE
+      // ================================
+      function renderTable(data) {
+        tableBody.innerHTML = '';
+        if (!data || data.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="3">No patients found.</td>
+            </tr>`;
+          return;
+        }
+
+        data.forEach(p => {
+          const row = document.createElement('tr');
+
+          const number = p.patient_number || p.number || p.id || '';
+          const name = p.name || p.full_name || p.patient_name || '';
+          const lastChecked = p.last_checked || p.lastChecked || p.last_update || '';
+
+          row.innerHTML = `
+            <td>${number}</td>
+            <td>${name}</td>
+            <td>${lastChecked || '-'}</td>
+          `;
+
+          row.addEventListener('click', () => {
+            localStorage.setItem('viewingPatientNumber', number);
+            localStorage.setItem('viewingPatientName', name);
+            window.location.href = 'staff_view.html';
+          });
+
+          tableBody.appendChild(row);
+        });
+      }
+
+      // ================================
+      // LOAD PATIENTS FROM DB
+      // ================================
+      async function loadPatients() {
+        statusMsg.textContent = 'Loading patients from server...';
+        console.log('[staff_dashboard] Fetching /staff/patients...');
+
+        try {
+          const res = await fetch(`${API_BASE}/staff/patients`, {
+            headers: buildAuthHeaders()
+          });
+
+          console.log('[staff_dashboard] Response status:', res.status);
+
+          if (!res.ok) {
+            const text = await res.text();
+            console.error('[staff_dashboard] Error body:', text);
+            throw new Error('Failed to load patients');
+          }
+
+          const data = await res.json();
+          console.log('[staff_dashboard] Data received:', data);
+
+          patients = Array.isArray(data) ? data : (data.patients || []);
+          if (!Array.isArray(patients)) patients = [];
+
+          patientsLoaded = true;
+          renderTable(patients);
+          summaryTotalPatients.textContent = patients.length;
+
+          // cache optional
+          try {
+            localStorage.setItem('patients', JSON.stringify(patients));
+          } catch (e) {
+            console.warn('[staff_dashboard] Could not cache patients in localStorage', e);
+          }
+
+          statusMsg.textContent = `Loaded ${patients.length} patient(s).`;
+        } catch (err) {
+          console.error('[staff_dashboard] loadPatients error:', err);
+          statusMsg.textContent =
+            'Unable to load patients from server. Please try again later.';
+          tableBody.innerHTML = `
+            <tr><td colspan="3">Error loading patients from server.</td></tr>
+          `;
+        }
+      }
+
+      // ================================
+      // FILTERING / SEARCH
+      // ================================
+      function applyFilters() {
+        if (!patientsLoaded) return;
+        const nameVal = (searchNameEl.value || '').toLowerCase();
+        const numberVal = (searchNumberEl.value || '').toLowerCase();
+
+        const filtered = patients.filter(p => {
+          const number = (p.patient_number || p.number || p.id || '').toString().toLowerCase();
+          const name = (p.name || p.full_name || p.patient_name || '').toLowerCase();
+
+          const matchName = !nameVal || name.includes(nameVal);
+          const matchNumber = !numberVal || number.includes(numberVal);
+
+          return matchName && matchNumber;
+        });
+
+        renderTable(filtered);
+        statusMsg.textContent =
+          `${filtered.length} patient(s) match your filters.`;
+      }
+
+      searchBtn.addEventListener('click', applyFilters);
+
+      resetBtn.addEventListener('click', () => {
+        searchNameEl.value = '';
+        searchNumberEl.value = '';
+        if (patientsLoaded) {
+          renderTable(patients);
+          statusMsg.textContent = `Showing all ${patients.length} patient(s).`;
+        }
+      });
+
+      // ================================
+      // LOGOUT
+      // ================================
+      logoutBtn.addEventListener('click', e => {
+        e.preventDefault();
+        localStorage.removeItem('loggedInStaff');
+        localStorage.removeItem('staffUsername');
+        localStorage.removeItem('staffFullName');
+        localStorage.removeItem('staffId');
+        localStorage.removeItem('staffRole');
+        localStorage.removeItem('staffToken');
+        localStorage.removeItem('viewingPatientNumber');
+        localStorage.removeItem('viewingPatientName');
+        alert('You have been logged out.');
+        window.location.href = 'staff.html';
+      });
+
+      // ================================
+      // INIT
+      // ================================
+      loadPatients();
+    })();
+  </script>
 </body>
 </html>

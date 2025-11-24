@@ -12,15 +12,22 @@ class MLService:
         """Initialize ML service"""
         try:
             if os.path.exists('models/blood_sugar_model.joblib'):
-                self.model = joblib.load('models/blood_sugar_model.joblib')
-                self.scaler = joblib.load('models/scaler.joblib')
-                logger.info("ML models loaded")
+                try:
+                    self.model = joblib.load('models/blood_sugar_model.joblib')
+                    self.scaler = joblib.load('models/scaler.joblib')
+                    logger.info("ML models loaded")
+                except Exception:
+                    # Log full traceback to help diagnose deserialization/import errors
+                    logger.exception("Failed to load joblib ML models")
+                    # Leave model/scaler as None so service falls back to rules
+                    self.model = None
+                    self.scaler = None
             else:
                 self.model = None
                 self.scaler = None
                 logger.warning("ML models not found, using rules")
-        except Exception as e:
-            logger.error(f"Error loading models: {e}")
+        except Exception:
+            logger.exception("Unexpected error initializing MLService")
             self.model = None
             self.scaler = None
     

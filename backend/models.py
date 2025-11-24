@@ -3,36 +3,86 @@ from mysql.connector import Error
 from datetime import datetime, timedelta
 import os
 import logging
-import hashlib
+from werkzeug.security import generate_password_hash, check_password_hash
 
 logger = logging.getLogger(__name__)
+
 
 class Database:
     def __init__(self):
         """Initialize database connection"""
         self.connection = None
         self.connect()
-    
+
     def connect(self):
-        """Establish database connection"""
+        """Establish database connection (with fallback for Codespaces)"""
+        db_host = os.environ.get("DB_HOST", "127.0.0.1")
+        db_port = int(os.environ.get("DB_PORT", "3306"))
+        db_user = os.environ.get("DB_USER", "bsmuser")
+        db_password = os.environ.get("DB_PASSWORD", "admin")  # adjust if needed
+        db_name = os.environ.get("DB_NAME", "blood_sugar_db")
+
+        # 1) Try normal TCP connection (works on your Windows machine)
         try:
             self.connection = mysql.connector.connect(
-                host=os.environ.get('DB_HOST', '127.0.0.1'),
-                user=os.environ.get('DB_USER', 'root'),
-                password=os.environ.get('DB_PASSWORD'),
-                database=os.environ.get('DB_NAME', 'blood_sugar_db'),
-                autocommit=False
+                host=db_host,
+                port=db_port,
+                user=db_user,
+                password=db_password,
+                database=db_name,
+                autocommit=False,
             )
             if self.connection.is_connected():
-                logger.info("Database connection established")
+                logger.info("Database connection established via TCP")
+                return
         except Error as e:
-            logger.error(f"Database connection error: {e}")
+            logger.error(f"TCP database connection error: {e}")
+
+        # 2) Fallback for Codespaces / environments using UNIX socket
+        try:
+            self.connection = mysql.connector.connect(
+                unix_socket="/var/run/mysqld/mysqld.sock",
+                user=db_user,
+                password=db_password,
+                database=db_name,
+                autocommit=False,
+            )
+            if self.connection.is_connected():
+                logger.info("Database connection established via UNIX socket")
+                return
+        except Error as e2:
+            logger.error(f"Socket database connection error: {e2}")
+            # Give up for real
             raise
-    
+
+        # 2) Fallback for Codespaces / environments using UNIX socket
+        try:
+            self.connection = mysql.connector.connect(
+                unix_socket="/var/run/mysqld/mysqld.sock",
+                user=db_user,
+                password=db_password,
+                database=db_name,
+                autocommit=False,
+            )
+            if self.connection.is_connected():
+                logger.info("Database connection established via UNIX socket")
+                return
+        except Error as e2:
+            logger.error(f"Socket database connection error: {e2}")
+            # Give up for real
+            raise
+
     def _get_cursor(self):
         """Get a cursor, reconnecting if necessary"""
         if not self.connection or not self.connection.is_connected():
             self.connect()
+        # Ensure we are not inside a long-running transaction snapshot so
+        # that subsequent SELECTs see committed data from other connections.
+        try:
+            self.connection.commit()
+        except Exception:
+            # If commit fails (e.g., no transaction), ignore and continue
+            pass
         return self.connection.cursor(dictionary=True)
     
     # User Management
@@ -65,12 +115,15 @@ class Database:
         """
         cursor = self._get_cursor()
         try:
+            # Hash the password before storing
+            hashed = self.hash_password(password)
+
             # Insert into users table
             sql = """
                 INSERT INTO users (email, password_hash, first_name, last_name, role, date_of_birth, phone)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
-            values = (email, password, first_name, last_name, role, date_of_birth, phone)
+            values = (email, hashed, first_name, last_name, role, date_of_birth, phone)
             cursor.execute(sql, values)
             self.connection.commit()
             user_id = cursor.lastrowid
@@ -121,7 +174,7 @@ class Database:
             # Build updates for `users` table
             updates = {}
             if email is not None:          updates["email"] = email
-            if password is not None:       updates["password_hash"] = password
+            if password is not None:       updates["password_hash"] = self.hash_password(password)
             if first_name is not None:     updates["first_name"] = first_name
             if last_name is not None:      updates["last_name"] = last_name
             if role is not None:           updates["role"] = role
@@ -182,6 +235,35 @@ class Database:
             raise
         finally:
             cursor.close()
+
+    # Password helpers
+    def hash_password(self, password: str) -> str:
+        """Return a werkzeug PBKDF2 hashed password."""
+        if password is None:
+            return None
+        return generate_password_hash(password)
+
+    def verify_password(self, user_row: dict, password: str) -> bool:
+        """Verify a candidate password against stored hash or fallback to plain-text.
+
+        This supports existing plain-text passwords during migration and will
+        validate PBKDF2 hashes produced by `hash_password`.
+        """
+        if not user_row:
+            return False
+        stored = user_row.get('password_hash')
+        if stored is None:
+            return False
+
+        # If stored password looks like a hashed value (contains a scheme prefix like 'pbkdf2:' or 'scrypt:')
+        if isinstance(stored, str) and ':' in stored:
+            try:
+                return check_password_hash(stored, password)
+            except Exception:
+                return False
+
+        # Fallback for legacy plain-text values
+        return stored == password
 
     def delete_user(self, user_id) -> bool:
         """
