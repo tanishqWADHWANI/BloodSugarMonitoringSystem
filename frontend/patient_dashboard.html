@@ -1148,13 +1148,25 @@
     // Load personalized AI insights
     async function loadPersonalizedInsights() {
       const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
-      if (!userId) return;
+      if (!userId) {
+        console.warn('No userId found for personalized insights');
+        return;
+      }
       
       const container = document.getElementById('personalizedInsightsContainer');
+      if (!container) {
+        console.error('personalizedInsightsContainer not found');
+        return;
+      }
+      
       try {
+        console.log('Fetching personalized insights for user:', userId);
         const response = await fetch(`http://127.0.0.1:5000/api/insights/${userId}?days=30`);
+        console.log('Insights API response status:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('Insights data received:', data);
           const insights = data.insights || {};
           
           if (insights.personalized_recommendations && insights.personalized_recommendations.length > 0) {
@@ -1207,10 +1219,13 @@
             
             container.innerHTML = html;
           } else {
+            console.log('No personalized recommendations found');
             container.innerHTML = '<p class="info-text">📊 Keep logging your readings with food, activities, and symptoms to get personalized insights!</p>';
           }
         } else {
-          container.innerHTML = '<p class="info-text">Unable to load insights. Please try again later.</p>';
+          const errorText = await response.text();
+          console.error('API error:', response.status, errorText);
+          container.innerHTML = '<p class="info-text">Unable to load insights. Please ensure you have logged some readings.</p>';
         }
       } catch (error) {
         console.error('Error loading personalized insights:', error);
