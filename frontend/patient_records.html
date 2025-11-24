@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Patient Records</title>
 <link rel="stylesheet" href="css/style.css">
+<script src="js/demo_users.js"></script>
 <style>
   h1 { color: #004080; margin-bottom: 20px; }
   .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -61,6 +62,24 @@
         </tr>
       </thead>
       <tbody>
+        <!-- Rows will be populated from localStorage.patients (cached) when available; otherwise the demo rows below will be shown. -->
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+<p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+</footer>
+
+<script>
+  // Utility: populate table rows from a patients array
+  function renderPatientsTable(patients) {
+    const tbody = document.querySelector('#patientTable tbody');
+    tbody.innerHTML = '';
+    if (!Array.isArray(patients) || patients.length === 0) {
+      // leave demo/static rows in place if none
+      tbody.innerHTML = `
         <tr>
           <td>001</td>
           <td>John Doe</td>
@@ -74,89 +93,132 @@
             <a href="#" class="btn actionBtn" data-action="update">Update</a>
             <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
           </td>
-        </tr>
-        <tr>
-          <td>002</td>
-          <td>Jane Smith</td>
-          <td>28</td>
-          <td>Female</td>
-          <td>555-5678</td>
-          <td>Pre-diabetes</td>
-          <td>Blood Sugar: 110 mg/dL</td>
-          <td>
-            <a href="#" class="btn actionBtn" data-action="view">View</a>
-            <a href="#" class="btn actionBtn" data-action="update">Update</a>
-            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
-          </td>
-        </tr>
-        <tr>
-          <td>003</td>
-          <td>Mark Lee</td>
-          <td>42</td>
-          <td>Male</td>
-          <td>555-9876</td>
-          <td>Hypertension</td>
-          <td>Blood Sugar: 125 mg/dL</td>
-          <td>
-            <a href="#" class="btn actionBtn" data-action="view">View</a>
-            <a href="#" class="btn actionBtn" data-action="update">Update</a>
-            <a href="#" class="btn actionBtn" data-action="upload">Upload Documents</a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</main>
-
-<footer>
-<p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
-</footer>
-
-<script>
-  // Search functionality
-  const searchForm = document.getElementById('searchForm');
-  const table = document.getElementById('patientTable').getElementsByTagName('tbody')[0];
-
-  searchForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const number = document.getElementById('patientNumber').value.toLowerCase();
-    const name = document.getElementById('patientName').value.toLowerCase();
-
-    for (let row of table.rows) {
-      const rowNumber = row.cells[0].innerText.toLowerCase();
-      const rowName = row.cells[1].innerText.toLowerCase();
-      if ((number && !rowNumber.includes(number)) || (name && !rowName.includes(name))) {
-        row.style.display = 'none';
-      } else {
-        row.style.display = '';
-      }
+        </tr>`;
+      return;
     }
-  });
 
-  // Handle action buttons
-  const actionButtons = document.querySelectorAll('.actionBtn');
-  actionButtons.forEach(btn => {
-    btn.addEventListener('click', function(e) {
+    patients.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-patient-id="${p.patientId || ''}" data-user-id="${p.userId || ''}">${p.number || ''}</td>
+        <td>${p.name || ''}</td>
+        <td>${p.age || ''}</td>
+        <td>${p.gender || ''}</td>
+        <td>${p.phone || ''}</td>
+        <td>${p.medical_history || ''}</td>
+        <td>${p.lastChecked || ''}</td>
+        <td>
+          <a href="#" class="btn secondary actionBtn" data-action="view">View</a>
+          <a href="#" class="btn secondary actionBtn" data-action="update">Update</a>
+          <a href="#" class="btn secondary actionBtn" data-action="upload">Upload Documents</a>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Load patients from cache if available
+  (function initPatientRecords() {
+    // Build a canonical merged patients array from localStorage.users and localStorage.patients
+    function loadLocalPatientsMerged(){
+      try {
+        const out = [];
+        const seen = new Set();
+        const seenNames = new Set();
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+        if (!Array.isArray(users)) users = [];
+        users.forEach(u => {
+          if ((u.role||'').toLowerCase() === 'patient'){
+            const key = (u.email || u.user_id || u.id || '').toString().toLowerCase();
+            const name = (((u.first_name||'') + ' ' + (u.last_name||'')).trim() || '').toLowerCase();
+            if (!seen.has(key) && !(name && seenNames.has(name))){
+              if (name) seenNames.add(name);
+              seen.add(key);
+              out.push({ number: u.user_id || u.id || '', name: ((u.first_name||'') + ' ' + (u.last_name||'')).trim(), age: u.age || '', gender: u.gender || '', phone: u.phone || '', medical_history: u.medical_history || '', lastChecked: u.last_checked || u.lastChecked || '', patientId: u.patientId || u.user_id || u.id || '', userId: u.user_id || u.id || '' });
+            }
+          }
+        });
+
+        let raw = localStorage.getItem('patients') || '[]';
+        let patientsRaw = JSON.parse(raw);
+        if (patientsRaw && !Array.isArray(patientsRaw) && typeof patientsRaw === 'object') patientsRaw = Object.values(patientsRaw || {});
+        if (Array.isArray(patientsRaw)){
+          patientsRaw.forEach(p => {
+            const key = (p.email || p.patientId || p.id || p.number || '').toString().toLowerCase();
+            const name = ((p.name || p.fullName || p.patient_name || '')).toString().toLowerCase();
+            if (!seen.has(key) && !(name && seenNames.has(name))){
+              if (name) seenNames.add(name);
+              seen.add(key);
+              out.push({ number: p.number || p.patientId || p.id || '', name: p.name || p.fullName || p.patient_name || '', age: p.age || '', gender: p.gender || '', phone: p.phone || p.contact || '', medical_history: p.medical_history || p.medicalHistory || '', lastChecked: p.lastChecked || p.last_checked || p.last_update || '', patientId: p.patientId || p.patient_id || p.id || '', userId: p.userId || p.user_id || p.id || '' });
+            }
+          });
+        }
+        // Ensure at least a demo patient exists for preview
+        if (out.length === 0) {
+          const demo = { number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', patientId:'001' };
+          out.push(demo);
+          // also persist to localStorage.patients for consistency
+          try { localStorage.setItem('patients', JSON.stringify([demo])); } catch(e){}
+        }
+        return out;
+      } catch(e){ return []; }
+    }
+
+    const merged = loadLocalPatientsMerged();
+    renderPatientsTable(merged);
+
+    // Search functionality
+    const searchForm = document.getElementById('searchForm');
+    searchForm.addEventListener('submit', function(e) {
       e.preventDefault();
-      const row = this.closest('tr');
-      const patient = {
-        id: row.cells[0].innerText,
-        name: row.cells[1].innerText,
-        age: row.cells[2].innerText,
-        gender: row.cells[3].innerText,
-        contact: row.cells[4].innerText,
-        medicalHistory: row.cells[5].innerText,
-        lastTestResults: row.cells[6].innerText
-      };
-      localStorage.setItem('selectedPatient', JSON.stringify(patient));
+      const number = document.getElementById('patientNumber').value.toLowerCase();
+      const name = document.getElementById('patientName').value.toLowerCase();
+      const tbody = document.querySelector('#patientTable tbody');
+      for (let row of tbody.rows) {
+        const rowNumber = (row.cells[0].innerText || '').toLowerCase();
+        const rowName = (row.cells[1].innerText || '').toLowerCase();
+        if ((number && !rowNumber.includes(number)) || (name && !rowName.includes(name))) {
+          row.style.display = 'none';
+        } else {
+          row.style.display = '';
+        }
+      }
+    });
 
-      // Redirect based on action
-      const action = this.getAttribute('data-action');
+    // Action handlers (delegated)
+    document.querySelector('#patientTable tbody').addEventListener('click', function (ev) {
+      const a = ev.target.closest('.actionBtn');
+      if (!a) return;
+      ev.preventDefault();
+      const row = a.closest('tr');
+      const number = row.cells[0].innerText;
+      const name = row.cells[1].innerText;
+      const patientId = row.cells[0].dataset.patientId || '';
+      const userId = row.cells[0].dataset.userId || '';
+
+      if (userId) localStorage.setItem('viewingPatientUserId', String(userId));
+      if (patientId) localStorage.setItem('viewingPatientId', String(patientId));
+      localStorage.setItem('viewingPatientNumber', String(number));
+      localStorage.setItem('viewingPatientName', String(name));
+
+      // Also set the selectedPatient object expected by update_medical.html
+      const selectedPatient = {
+        id: patientId || number || userId || '',
+        name: name || '',
+        age: row.cells[2].innerText || '',
+        gender: row.cells[3].innerText || '',
+        contact: row.cells[4].innerText || '',
+        medicalHistory: row.cells[5].innerText || ''
+      };
+      try { localStorage.setItem('selectedPatient', JSON.stringify(selectedPatient)); } catch(e){}
+      // also keep a copy of all patients for update page to update
+      try { localStorage.setItem('allPatients', JSON.stringify(Array.from(document.querySelectorAll('#patientTable tbody tr')).map(r=>({ id: r.cells[0].dataset.patientId||r.cells[0].innerText, name: r.cells[1].innerText, age: r.cells[2].innerText, gender: r.cells[3].innerText, contact: r.cells[4].innerText, medicalHistory: r.cells[5].innerText }))) ); } catch(e){}
+
+      const action = a.getAttribute('data-action');
       if (action === 'view') window.location.href = 'staff_view.html';
       if (action === 'update') window.location.href = 'update_medical.html';
       if (action === 'upload') window.location.href = 'upload_documents.html';
     });
-  });
+  })();
 </script>
 
 </body>

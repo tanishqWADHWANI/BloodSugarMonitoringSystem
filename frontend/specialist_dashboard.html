@@ -6,85 +6,21 @@
   <title>Specialist Dashboard - Online Blood Sugar Monitor</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    .logout-btn {
-      background: #cc0000;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 12px;
-      cursor: pointer;
-      color: white;
-    }
+    .logout-btn { background: #cc0000; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer; color: white; }
     .logout-btn:hover { background: #ff3333; }
-
-    .container {
-      max-width: 1000px;
-      margin: 20px auto;
-      padding: 0 15px;
-    }
-    h1, h2, h3, h4, p {
-      margin: 0 0 15px 0;
-    }
-    .dashboard-section {
-      margin-top: 30px;
-    }
-
-    .patient-search {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    .patient-search input,
-    .patient-search button {
-      padding: 8px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    .patient-search button {
-      background: #004080;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .patient-search button:hover {
-      background: #0066cc;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-    th {
-      background: #004080;
-      color: white;
-    }
-    tr:hover {
-      background: #f1f1f1;
-      cursor: pointer;
-    }
-
-    #statusMsg {
-      margin-top: 10px;
-      color: #666;
-      font-size: 0.95rem;
-    }
-
-    footer {
-      background: #004080;
-      color: white;
-      text-align: center;
-      padding: 10px;
-      margin-top: 40px;
-    }
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+    h1, h2, h3, h4, p { margin: 0 0 15px 0; }
+    .dashboard-section { margin-top: 30px; }
+    .patient-search { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px; }
+    .patient-search input, .patient-search button { padding:8px; border-radius:5px; border:1px solid #ccc; }
+    .patient-search button { background:#004080; color:white; border:none; cursor:pointer; }
+    .patient-search button:hover { background:#0066cc; }
+    table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    th, td { padding:12px; text-align:left; border-bottom:1px solid #ddd; }
+    th { background:#004080; color:white; }
+    tr:hover { background:#f1f1f1; cursor:pointer; }
+    #statusMsg { margin-top:10px; color:#666; font-size:0.95rem; }
+    footer { background:#004080; color:white; text-align:center; padding:10px; margin-top:40px; }
   </style>
 </head>
 <body>
@@ -92,12 +28,10 @@
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="specialist.html">Specialist Login</a></li>
+        
         <li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
-        <li><a href="contact.html">Contact</a></li>
-        <li style="margin-left:auto;">
-          <button id="logoutBtn" class="logout-btn">Logout</button>
-        </li>
+        
+        <li style="margin-left:auto;"><button id="logoutBtn" class="logout-btn">Logout</button></li>
       </ul>
     </nav>
   </header>
@@ -115,6 +49,7 @@
         <input type="date" id="end-date">
         <button id="search-btn">Search</button>
         <button id="reset-btn">Reset</button>
+        <button id="refresh-assignments-btn" title="Reload assignments & patients">Refresh</button>
       </div>
 
       <table id="patient-table">
@@ -139,98 +74,269 @@
   <script>
   const API_BASE = 'http://127.0.0.1:5000';
 
-  // ============================
   // AUTH / BASIC INFO
-  // ============================
   const loggedInSpecialist = localStorage.getItem('specialistUsername');
   if (!loggedInSpecialist) {
     // Not logged in, send back to login page
     window.location.href = 'specialist.html';
   }
 
-  const specialistName =
-    localStorage.getItem('specialistFullName') || 'Specialist';
+  // Resolve a friendly display name for the logged-in specialist.
+  const storedUsername = (localStorage.getItem('specialistUsername') || '').toString().trim();
+  let storedFull = (localStorage.getItem('specialistFullName') || '').toString().trim();
+  const specialistDisplayMap = { 
+    'jsmith': 'Dr. John Smith', 
+    'ajones': 'Dr. Alex Jones', 
+    'clee': 'Dr. Christina Lee' 
+  };
+  
+  let specialistName = 'Specialist';
+  let specialistId = localStorage.getItem('specialistId') || '';
+  
+  if (storedUsername) {
+    const usernameLower = storedUsername.toLowerCase();
+    // First check the hardcoded map
+    if (specialistDisplayMap[usernameLower]) {
+      specialistName = specialistDisplayMap[usernameLower];
+      // Also try to get proper ID from specialists cache
+      try {
+        const specs = JSON.parse(localStorage.getItem('specialists') || '[]');
+        const found = Array.isArray(specs) ? specs.find(s => (s.username || '').toLowerCase() === usernameLower) : null;
+        if (found && found.id) {
+          specialistId = String(found.id);
+        }
+      } catch(e) {}
+    } else if (storedFull) {
+      specialistName = storedFull;
+    } else {
+      // Try to get from specialists cache as fallback
+      try {
+        const specs = JSON.parse(localStorage.getItem('specialists') || '[]');
+        const found = Array.isArray(specs) ? specs.find(s => (s.username || '').toLowerCase() === usernameLower) : null;
+        if (found && found.full_name) {
+          specialistName = found.full_name;
+        }
+        if (found && found.id) {
+          specialistId = String(found.id);
+        }
+      } catch(e) {}
+    }
+  } else if (storedFull) {
+    specialistName = storedFull;
+  }
+  
+  console.log('Specialist Info:', { username: storedUsername, name: specialistName, id: specialistId });
+  
   const specialistNameDisplay = document.getElementById('specialistNameDisplay');
   if (specialistNameDisplay) {
     specialistNameDisplay.textContent = specialistName;
   }
-
-  // This ID is stored in specialist.html login script
-  const specialistId = localStorage.getItem('specialistId') || '3';
 
   const tableBody = document.querySelector('#patient-table tbody');
   let patientsCache = [];
 
   function renderTable(data) {
     if (!tableBody) return;
-
     tableBody.innerHTML = '';
     if (!data || data.length === 0) {
-      tableBody.innerHTML =
-        '<tr><td colspan="3">No patients assigned in database.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="3">No patients assigned in database.</td></tr>';
       return;
     }
-
     data.forEach(p => {
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${p.number}</td>
-        <td>${p.name}</td>
-        <td>${p.lastChecked}</td>
-      `;
-
-      // When you click a patient row, go to patient detail page
+      row.innerHTML = `\
+        <td>${p.number || ''}</td>\
+        <td>${p.name || ''}</td>\
+        <td>${p.lastChecked || ''}</td>`;
       row.addEventListener('click', () => {
-        localStorage.setItem('viewingPatientNumber', p.number);
-        localStorage.setItem('viewingPatientName', p.name);
-        localStorage.setItem('viewingPatientUserId', p.userId);
-        localStorage.setItem('viewingPatientId', p.patientId);
+        try { localStorage.setItem('viewingPatientNumber', p.number || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientName', p.name || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientUserId', p.userId || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientId', p.patientId || p.id || ''); } catch(e){}
         window.location.href = 'specialist_patient_view.html';
       });
-
       tableBody.appendChild(row);
     });
   }
 
-  // ============================
-  // LOAD PATIENTS FROM BACKEND
-  // ============================
-  async function loadPatientsFromServer() {
-    if (!tableBody) return;
-
+  // Local fallback merge
+  function loadLocalPatientsMerged() {
+    const out = [];
     try {
-      const res = await fetch(
-        `${API_BASE}/api/specialist/${specialistId}/patients`
-      );
-      if (!res.ok) {
-        throw new Error(`Server responded ${res.status}`);
+      const cached = JSON.parse(localStorage.getItem('patients') || '[]');
+      if (Array.isArray(cached)) {
+        cached.forEach(p => out.push(p));
       }
+    } catch(e){}
+    try {
+      const users = JSON.parse(localStorage.getItem('patientUsers') || '[]');
+      if (Array.isArray(users)) {
+        users.forEach(u => {
+          out.push({
+            patientId: u.patient_id || u.id,
+            userId: u.user_id || u.id,
+            number: u.patient_id || u.id,
+            name: [u.first_name, u.last_name].filter(Boolean).join(' '),
+            lastChecked: u.last_date_time ? String(u.last_date_time).split('T')[0] : 'Not available'
+          });
+        });
+      }
+    } catch(e){}
+    // De-duplicate by number
+    const seen = new Set();
+    return out.filter(p => {
+      const key = String(p.number);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  async function loadPatientsFromServer(forceAssignmentsSync = false) {
+    const statusEl = document.getElementById('statusMsg');
+    if (statusEl) statusEl.textContent = 'Loading patients...';
+    if (!specialistId) {
+      if (statusEl) statusEl.textContent = 'Missing specialist ID. Cannot load patients.';
+      return;
+    }
 
+    if (forceAssignmentsSync) {
+      await updateAssignmentsCacheFromServer();
+    }
+
+    let mapped = [];
+    try {
+      const res = await fetch(`${API_BASE}/api/specialist/${specialistId}/patients`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('bsm_token') || ''}`
+        }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      // data.patients is an array of rows from the DB:
-      // patient_id, user_id, first_name, last_name, last_date_time, ...
-      const mapped = (data.patients || []).map(p => ({
+      mapped = (data.patients || []).map(p => ({
         patientId: p.patient_id,
         userId: p.user_id,
-        number: p.patient_id, // Using patient_id as "Patient Number"
+        number: p.patient_id,
         name: `${p.first_name} ${p.last_name}`,
-        lastChecked: p.last_date_time
-          ? String(p.last_date_time).split('T')[0]
-          : 'Not available'
+        lastChecked: p.last_date_time ? String(p.last_date_time).split('T')[0] : 'Not available'
       }));
-
-      patientsCache = mapped;
-      renderTable(mapped);
       localStorage.setItem('patients', JSON.stringify(mapped));
-    } catch (err) {
-      console.error('Error loading patients from server:', err);
-      tableBody.innerHTML =
-        '<tr><td colspan="3">Error loading patients from server.</td></tr>';
+    } catch(err) {
+      console.warn('Server patient load failed, using cache/fallback:', err);
+      mapped = loadLocalPatientsMerged();
+    }
+
+    // Always apply assignment filter
+    const filtered = filterPatientsByAssignments(mapped);
+    patientsCache = filtered;
+    renderTable(filtered);
+
+    if (statusEl) {
+      if (!mapped.length) {
+        statusEl.textContent = 'No patients found.';
+      } else if (!filtered.length) {
+        const assigns = getAssignmentsCached();
+        if (assigns.length === 0) {
+          statusEl.textContent = 'Patients loaded but no assignments stored yet.';
+        } else {
+          statusEl.textContent = 'No patients currently assigned to you.';
+        }
+      } else {
+        statusEl.textContent = `Showing ${filtered.length} assigned patient(s).`;
+      }
     }
   }
 
+  // ============================
+  // ASSIGNMENT SYNC HELPERS
+  // ============================
+  function getAssignmentsCached() {
+    try {
+      const assigns = JSON.parse(localStorage.getItem('assignments') || '[]');
+      return Array.isArray(assigns) ? assigns : [];
+    } catch(e) {
+      return [];
+    }
+  }
+
+  async function updateAssignmentsCacheFromServer() {
+    // Optional server endpoint; silent fail if missing
+    try {
+      const token = localStorage.getItem('bsm_token') || '';
+      const res = await fetch(`${API_BASE}/api/assignments`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.assignments)) {
+          localStorage.setItem('assignments', JSON.stringify(data.assignments));
+          return data.assignments;
+        }
+      }
+    } catch(e) {
+      // swallow
+    }
+    return getAssignmentsCached();
+  }
+
+  function filterPatientsByAssignments(list) {
+    const assigns = getAssignmentsCached();
+    if (!Array.isArray(assigns) || assigns.length === 0) return list; // nothing to filter
+    const myAssigns = assigns.filter(a => String(a.specialistId) === String(specialistId));
+    if (myAssigns.length === 0) return []; // assignments exist but none for this specialist
+    const allowed = new Set(myAssigns.map(a => String(a.patientId).toLowerCase()));
+    return list.filter(p => {
+      const keys = [p.patientId, p.number, p.userId, p.id].map(x => String(x || '').toLowerCase());
+      for (const k of keys) if (k && allowed.has(k)) return true;
+      return false;
+    });
+  }
+
   // Load on page start
-  loadPatientsFromServer();
+  loadPatientsFromServer(true);
+
+  // ============================
+  // MANUAL REFRESH
+  // ============================
+  const refreshBtn = document.getElementById('refresh-assignments-btn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+      const statusEl = document.getElementById('statusMsg');
+      if (statusEl) statusEl.textContent = 'Refreshing assignments & patients...';
+      await updateAssignmentsCacheFromServer();
+      await loadPatientsFromServer(false);
+    });
+  }
+
+  // ============================
+  // STORAGE EVENT (OTHER TAB UPDATES)
+  // ============================
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'assignments') {
+      // Re-filter with new assignments
+      patientsCache = filterPatientsByAssignments(patientsCache.length ? patientsCache : loadLocalPatientsMerged());
+      renderTable(patientsCache);
+      const statusEl = document.getElementById('statusMsg');
+      if (statusEl) statusEl.textContent = patientsCache.length
+        ? `Updated — ${patientsCache.length} assigned patient(s).`
+        : 'Assignments updated — no patients assigned.';
+    }
+    if (e.key === 'patients') {
+      // Patients changed (e.g., admin added new patient)
+      loadPatientsFromServer(false);
+    }
+  });
+
+  // ============================
+  // PERIODIC POLLING (60s)
+  // ============================
+  setInterval(async () => {
+    await updateAssignmentsCacheFromServer();
+    await loadPatientsFromServer(false);
+  }, 60000);
 
   // ============================
   // SEARCH / FILTER (local only)
@@ -275,18 +381,31 @@
   // ============================
   // LOGOUT
   // ============================
+  function doSpecialistLogout(e) {
+    if (e) e.preventDefault();
+    try {
+      [
+        'specialistUsername',
+        'specialistFullName',
+        'specialistSpecialty',
+        'specialistId',
+        'bsm_token',
+        'viewingPatientNumber',
+        'viewingPatientName',
+        'viewingPatientUserId',
+        'viewingPatientId'
+      ].forEach(k => localStorage.removeItem(k));
+    } catch(e){}
+    window.location.replace('specialist.html');
+  }
+  
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      localStorage.removeItem('specialistUsername');
-      localStorage.removeItem('specialistFullName');
-      localStorage.removeItem('specialistSpecialty');
-      localStorage.removeItem('specialistId');
-      window.location.href = 'specialist.html';
-    });
+    logoutBtn.addEventListener('click', doSpecialistLogout);
   }
-</script>
+  // Also expose globally
+  window.doSpecialistLogout = doSpecialistLogout;
+  </script>
 
 </body>
 </html>

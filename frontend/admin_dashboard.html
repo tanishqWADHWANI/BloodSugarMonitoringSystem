@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/dasshboard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/demo_users.js"></script>
 </head>
 
 <body>
@@ -16,10 +17,8 @@
         <nav>
             <ul>
                 <li><a href="index.html">Home</a></li>
-                <li><a href="patient.html">Patient</a></li>
-                <li><a href="specialist.html">Specialist</a></li>
+                
                 <li><a href="clinic.html">Clinic</a></li>
-                <li><a href="contact.html">Contact Us</a></li>
                 <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
             </ul>
         </nav>
@@ -35,34 +34,34 @@
 
         <section class="card">
             <h2>Create User</h2>
-            <form id="createUserForm" class="form-grid">
+            <form id="createUserForm" class="form-grid" autocomplete="off">
                 <div class="form-row">
                     <div class="form-field">
                         <label for="firstName">First name</label>
-                        <input id="firstName" required />
+                        <input id="firstName" type="text" placeholder="e.g. Alice" required />
                     </div>
                     <div class="form-field">
                         <label for="lastName">Last name</label>
-                        <input id="lastName" required />
+                        <input id="lastName" type="text" placeholder="e.g. Lee" required />
                     </div>
                     <div class="form-field">
                         <label for="email">Email</label>
-                        <input id="email" type="email" required />
+                        <input id="email" type="email" placeholder="name@example.com" required autocomplete="off" />
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-field">
                         <label for="password">Password</label>
-                        <input id="password" type="password" required />
+                        <input id="password" type="password" placeholder="Choose a secure password" required />
                     </div>
                     <div class="form-field">
                         <label for="phone">Phone</label>
-                        <input id="phone" type="tel" required />
+                        <input id="phone" type="tel" placeholder="+1 555 100 001" required />
                     </div>
                     <div class="form-field">
                         <label for="dob">Date of birth</label>
-                        <input id="dob" type="date" required />
+                        <input id="dob" type="date" placeholder="yyyy-mm-dd" required />
                     </div>
                 </div>
 
@@ -83,17 +82,24 @@
                 </div>
 
                 <div class="form-row">
-                    <div class="form-field" style="width:100%">
+                    <div class="form-field" style="flex-basis:100%">
                         <label for="imageUrl">Profile Image URL (optional)</label>
-                        <input id="imageUrl" type="url" placeholder="https://..." />
+                        <input id="imageUrl" type="url" placeholder="https://example.com/photo.jpg" />
+                        <div class="muted" style="margin-top:6px">Optional — shown on patient cards and reports.</div>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit">Create</button>
-                    <button type="button" id="seedDemoBtn" class="secondary">Seed Demo Users</button>
+                    <button type="submit" class="btn">Create</button>
+                    <button type="button" id="seedDemoBtn" class="secondary btn">Seed Demo Users</button>
                 </div>
             </form>
+        </section>
+
+        <section class="card">
+            <h2>Thresholds</h2>
+            <p>Manage system and per-user thresholds for blood sugar alerts.</p>
+            <div class="form-actions"><a class="btn" href="thresholds.html">Open Thresholds</a></div>
         </section>
 
         <section class="card">
@@ -217,59 +223,209 @@
             try {
                 const response = await getAllUsers();
                 USERS_CACHE = response.users || [];
+                if (!USERS_CACHE || USERS_CACHE.length === 0) {
+                    // fallback to demo users if API returns empty
+                    USERS_CACHE = [
+                        { user_id: 1, first_name: 'Alice', last_name: 'Lee', email: 'alice@example.com', phone: '+1 555 100 001', date_of_birth: '1985-04-12', role: 'patient' },
+                        { user_id: 2, first_name: 'Bob', last_name: 'Ray', email: 'bob@example.com', phone: '+1 555 100 002', date_of_birth: '1978-09-03', role: 'patient' },
+                        { user_id: 3, first_name: 'Dr. Christina', last_name: 'Lee', email: 'clee@clinic', phone: '+1 555 200 003', date_of_birth: '1975-01-15', role: 'specialist' },
+                        { user_id: 4, first_name: 'Staff', last_name: 'Member', email: 'staff@clinic', phone: '+1 555 300 004', date_of_birth: '1990-06-20', role: 'staff' },
+                        { user_id: 5, first_name: 'Admin', last_name: 'User', email: 'admin@clinic', phone: '+1 555 400 005', date_of_birth: '1980-02-28', role: 'admin' }
+                    ];
+                }
                 return USERS_CACHE;
             } catch (e) {
                 console.error("Failed to fetch users from API:", e);
-                alert("Error: Could not load users from the server.");
-                return [];
+                // fallback to offline demo users
+                USERS_CACHE = [
+                    { user_id: 1, first_name: 'Alice', last_name: 'Lee', email: 'alice@example.com', phone: '+1 555 100 001', date_of_birth: '1985-04-12', role: 'patient' },
+                    { user_id: 2, first_name: 'Bob', last_name: 'Ray', email: 'bob@example.com', phone: '+1 555 100 002', date_of_birth: '1978-09-03', role: 'patient' },
+                    { user_id: 101, first_name: 'Dr. John', last_name: 'Smith', email: 'jsmith@demo', phone: '+1 555 200 010', date_of_birth: '1970-11-11', role: 'specialist' },
+                    { user_id: 102, first_name: 'Dr. Alex', last_name: 'Jones', email: 'ajones@demo', phone: '+1 555 200 011', date_of_birth: '1972-03-22', role: 'specialist' },
+                    { user_id: 3, first_name: 'Dr. Christina', last_name: 'Lee', email: 'clee@clinic', phone: '+1 555 200 003', date_of_birth: '1975-01-15', role: 'specialist' },
+                    { user_id: 4, first_name: 'Staff', last_name: 'Member', email: 'staff@clinic', phone: '+1 555 300 004', date_of_birth: '1990-06-20', role: 'staff' },
+                    { user_id: 5, first_name: 'Admin', last_name: 'User', email: 'admin@clinic', phone: '+1 555 400 005', date_of_birth: '1980-02-28', role: 'admin' }
+                ];
+                return USERS_CACHE;
             }
         }
 
         // ===== Render Functions =====
         async function renderUsers() {
-            const users = USERS_CACHE.length ? USERS_CACHE : await fetchUsersFromAPI();
+            let users = USERS_CACHE.length ? USERS_CACHE : await fetchUsersFromAPI();
 
-            usersTableBody.innerHTML = users.map(u => `
+            // Merge patients from localStorage.patients (support both array and map formats)
+            try {
+                const raw = localStorage.getItem('patients');
+                if (raw) {
+                    let localPatients = JSON.parse(raw);
+                    // If stored as an object map keyed by email, convert to array
+                    if (localPatients && !Array.isArray(localPatients) && typeof localPatients === 'object') {
+                        localPatients = Object.values(localPatients || {});
+                    }
+                    if (Array.isArray(localPatients) && localPatients.length > 0) {
+                        // Convert local patient entries into the user shape expected by admin dashboard
+                        const converted = localPatients.map((p, idx) => ({
+                            user_id: p.user_id || p.id || (p.email ? ('local_' + (p.email)) : ('local_' + idx)),
+                            first_name: p.name ? String(p.name).split(' ')[0] : (p.fullName || p.first_name || ''),
+                            last_name: p.name ? String(p.name).split(' ').slice(1).join(' ') : (p.lastName || p.last_name || ''),
+                            email: p.email || (p.phone ? ('patient+' + (p.number || p.id || idx) + '@local') : ('patient' + idx + '@local')),
+                            phone: p.phone || p.contact || p.phone_number || p.phone || '',
+                            date_of_birth: p.dob || p.date_of_birth || '',
+                            role: 'patient'
+                        }));
+
+                            // Merge without duplicates (by email, name or id)
+                            users = Array.isArray(users) ? users.slice() : [];
+                            const existingEmails = new Set(users.map(u => (u.email || '').toLowerCase()));
+                            const existingNames = new Set(users.map(u => (((u.first_name || '') + ' ' + (u.last_name || '')).trim() || '').toLowerCase()));
+                            const existingIds = new Set(users.map(u => String(u.user_id || u.id || '').toLowerCase()));
+                            converted.forEach(c => {
+                                const cEmail = (c.email||'').toLowerCase();
+                                const cName = (((c.first_name||'') + ' ' + (c.last_name||'')).trim() || '').toLowerCase();
+                                const cId = String(c.user_id || '').toLowerCase();
+                                if (existingEmails.has(cEmail) || (cName && existingNames.has(cName)) || (cId && existingIds.has(cId))) {
+                                    // skip duplicate
+                                    return;
+                                }
+                                users.push(c);
+                                existingEmails.add(cEmail);
+                                if (cName) existingNames.add(cName);
+                                if (cId) existingIds.add(cId);
+                            });
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not merge local patients into users list', e);
+            }
+
+            // helper escape to avoid HTML injection from stored data
+            function escapeHtml(s) {
+                return String(s || '').replace(/[&<>"']/g, function(c){
+                    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+                });
+            }
+
+            usersTableBody.innerHTML = users.map(u => {
+                const name = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+                const email = u.email || '';
+                const phone = u.phone || '';
+                const dob = u.date_of_birth || '';
+                const role = (u.role || '').toLowerCase();
+                // render each field into its own column so columns align with the header
+                return `
                 <tr>
-                    <td>${u.user_id}</td>
-                    <td>${u.first_name} ${u.last_name}</td>
-                    <td>${u.email}</td>
-                    <td>${u.phone || 'N/A'}</td>
-                    <td>${u.date_of_birth || ''}</td>
-                    <td>${u.role}</td>
-                    <td>Active</td>
-                    <td>
-                        <button type="button" class="btn-sm btn-delete" data-id="${u.user_id}">Delete</button>
+                    <td style="white-space:nowrap;font-weight:600">${escapeHtml(String(u.user_id))}</td>
+                    <td style="padding:8px 12px">${escapeHtml(name || '—')}</td>
+                    <td style="padding:8px 12px;color:#666;font-size:0.95rem">${escapeHtml(email)}</td>
+                    <td style="white-space:nowrap;padding:8px 12px">${escapeHtml(phone || 'N/A')}</td>
+                    <td style="white-space:nowrap;padding:8px 12px">${escapeHtml(dob)}</td>
+                    <td style="padding:8px 12px">${escapeHtml(role)}</td>
+                    <td style="white-space:nowrap;color:green;font-weight:600;padding:8px 12px">Active</td>
+                    <td style="white-space:nowrap;padding:8px 12px">
+                        <button type="button" class="btn-sm btn-delete" data-id="${escapeHtml(String(u.user_id))}">Delete</button>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
 
             const patients = users.filter(u => u.role === 'patient');
             const specialists = users.filter(u => u.role === 'specialist');
 
-            patientSelect.innerHTML = patients.map(p => `
-                <option value="${p.user_id}">${p.first_name} ${p.last_name} (${p.email})</option>
-            `).join('');
+            patientSelect.innerHTML = patients.map(p => {
+                const label = `${p.first_name || ''} ${p.last_name || ''}`.trim() || (p.email || p.user_id);
+                return `<option value="${escapeHtml(String(p.user_id))}">${escapeHtml(label)} ${p.number ? ('(' + escapeHtml(p.number) + ')') : ''} ${p.email ? ('<' + escapeHtml(p.email) + '>') : ''}</option>`;
+            }).join('');
             specialistSelect.innerHTML = specialists.map(s => `
-                <option value="${s.user_id}">${s.first_name} ${s.last_name} (${s.email})</option>
+                <option value="${escapeHtml(String(s.user_id))}">${escapeHtml((s.first_name || '') + ' ' + (s.last_name || '')).trim()} (${escapeHtml(s.email || '')})</option>
             `).join('');
         }
 
         function renderAssignments() {
-            const users = USERS_CACHE;
-            const assigns = loadAssignments();
+            const users = USERS_CACHE || [];
+            let assigns = loadAssignments() || [];
 
-            function fmtUser(id) {
-                const u = users.find(x => x.user_id === id);
-                return u ? `${u.first_name} ${u.last_name} (${u.email})` : '—';
+            // Sync assignments from patient records in localStorage (e.g., patient.assigned_specialist or specialist_id)
+            try {
+                const raw = localStorage.getItem('patients');
+                if (raw) {
+                    let localPatients = JSON.parse(raw);
+                    if (localPatients && !Array.isArray(localPatients) && typeof localPatients === 'object') localPatients = Object.values(localPatients || {});
+                    if (Array.isArray(localPatients)) {
+                        localPatients.forEach(p => {
+                            // possible specialist references in patient record
+                            const specRef = (p.assigned_specialist && (p.assigned_specialist.id || p.assigned_specialist.user_id)) || p.specialist_id || p.specialistId || p.specialist || null;
+                            if (!specRef) return;
+
+                            // Resolve patient id to a consistent id to store in assignments
+                            const patientIdVal = p.user_id || p.userId || p.patientId || p.patient_id || p.id || p.number || null;
+                            if (!patientIdVal) return;
+
+                            // Try to resolve specialist id to a numeric user_id if possible (search USERS_CACHE)
+                            const specUser = users.find(u => String(u.user_id) === String(specRef) || String(u.id) === String(specRef) || (u.email && String(u.email).toLowerCase() === String(specRef).toLowerCase()) || ((u.first_name||'') + ' ' + (u.last_name||'')).toLowerCase().includes(String(specRef).toLowerCase()));
+                            const specIdVal = specUser ? (specUser.user_id || specUser.id) : specRef;
+
+                            // If an assignment for this patient already exists, update specialistId if different
+                            const existing = assigns.find(a => String(a.patientId) === String(patientIdVal));
+                            if (existing) {
+                                if (String(existing.specialistId) !== String(specIdVal)) {
+                                    existing.specialistId = specIdVal;
+                                }
+                            } else {
+                                assigns.push({ id: Date.now().toString() + Math.floor(Math.random()*1000), patientId: patientIdVal, specialistId: specIdVal });
+                            }
+                        });
+                        // persist any changes
+                        saveAssignments(assigns);
+                    }
+                }
+            } catch (e) { /* ignore sync errors */ }
+
+            // helper escape to avoid HTML injection
+            function escapeHtml(s) {
+                return String(s || '').replace(/[&<>'"]/g, function(c){
+                    return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c];
+                });
+            }
+
+            // Helper: try to resolve a user (patient/specialist) by several sources and return HTML
+            function resolveUserLabel(idOrVal, roleHint) {
+                if (idOrVal === null || idOrVal === undefined) return '—';
+                // 1) match by user_id in USERS_CACHE
+                const byId = users.find(u => String(u.user_id) === String(idOrVal) || String(u.id) === String(idOrVal));
+                if (byId) return `<div style="font-weight:600">${escapeHtml(((byId.first_name || '') + ' ' + (byId.last_name || '')).trim() || byId.email || '')}</div><div style="font-size:0.85rem;color:#666">${escapeHtml(byId.email || '')}</div>`;
+
+                // 2) if patients cached in localStorage (array or map), try to find by patientId / number / id / email
+                try {
+                    const raw = localStorage.getItem('patients');
+                    if (raw) {
+                        let localPatients = JSON.parse(raw);
+                        if (localPatients && !Array.isArray(localPatients) && typeof localPatients === 'object') localPatients = Object.values(localPatients || {});
+                        if (Array.isArray(localPatients)) {
+                            const p = localPatients.find(x => String(x.patientId) === String(idOrVal) || String(x.id) === String(idOrVal) || String(x.number) === String(idOrVal) || String(x.email) === String(idOrVal) || String((x.name||'')).toLowerCase().includes(String(idOrVal).toLowerCase()));
+                            if (p) return `<div style="font-weight:600">${escapeHtml(p.name || p.fullName || p.first_name || '')}</div><div style="font-size:0.85rem;color:#666">${escapeHtml(p.email || p.number || p.id || '')}</div>`;
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+
+                // 3) try to resolve from specialists cache in localStorage
+                try {
+                    const rawSpecs = JSON.parse(localStorage.getItem('specialists') || '[]');
+                    if (Array.isArray(rawSpecs)) {
+                        const s = rawSpecs.find(s => String(s.id) === String(idOrVal) || String(s.user_id) === String(idOrVal) || String(s.username) === String(idOrVal) || String(s.email) === String(idOrVal));
+                        if (s) return `<div style="font-weight:600">${escapeHtml(s.full_name || s.name || s.username || '')}</div><div style="font-size:0.85rem;color:#666">${escapeHtml(s.email || '')}</div>`;
+                    }
+                } catch (e) { /* ignore */ }
+
+                // final fallback: raw value
+                return escapeHtml(String(idOrVal));
             }
 
             assignTableBody.innerHTML = assigns.map(a => `
                 <tr>
-                    <td>${a.id}</td>
-                    <td>${fmtUser(a.patientId)}</td>
-                    <td>${fmtUser(a.specialistId)}</td>
-                    <td><button type="button" class="remove-assign" data-id="${a.id}">Remove</button></td>
+                    <td style="white-space:nowrap;padding:8px 12px">${escapeHtml(String(a.id))}</td>
+                    <td style="padding:8px 12px">${resolveUserLabel(a.patientId, 'patient')}</td>
+                    <td style="padding:8px 12px">${resolveUserLabel(a.specialistId, 'specialist')}</td>
+                    <td style="white-space:nowrap;padding:8px 12px"><button type="button" class="remove-assign" data-id="${escapeHtml(String(a.id))}">Remove</button></td>
                 </tr>
             `).join('');
         }
@@ -363,13 +519,15 @@
 
         function handleAssignSubmit(e) {
             e.preventDefault();
-            const patientId = Number(patientSelect.value);
-            const specialistId = Number(specialistSelect.value);
+            // Allow string or numeric IDs — patient IDs may be non-numeric (local/demo keys)
+            const patientId = (patientSelect && patientSelect.value) ? String(patientSelect.value) : null;
+            const specialistId = (specialistSelect && specialistSelect.value) ? String(specialistSelect.value) : null;
             if (!patientId || !specialistId) return;
 
             const assigns = loadAssignments();
-            const rest = assigns.filter(a => a.patientId !== patientId);
-            rest.push({ id: Date.now(), patientId, specialistId });
+            // remove previous assignment for the same patient (compare as strings)
+            const rest = assigns.filter(a => String(a.patientId) !== String(patientId));
+            rest.push({ id: Date.now().toString(), patientId, specialistId });
             saveAssignments(rest);
             renderAssignments();
             renderReport();
@@ -441,10 +599,55 @@
             }
 
             // Initial Load
-            await fetchUsersFromAPI();
-            renderUsers();
-            renderAssignments();
-            renderReport();
+                // Clear any stray autocomplete or demo values in the form fields
+                try {
+                    const emailEl = document.getElementById('email');
+                    if (emailEl) {
+                        emailEl.value = '';
+                        emailEl.setAttribute('autocomplete', 'off');
+                    }
+                    const formEl = document.getElementById('createUserForm');
+                    if (formEl) formEl.setAttribute('autocomplete', 'off');
+                } catch (e) { /* ignore */ }
+
+                await fetchUsersFromAPI();
+                renderUsers();
+                renderAssignments();
+                renderReport();
+
+                // Seed Demo button: re-run demo seeder and refresh UI
+                try {
+                    const seedBtn = document.getElementById('seedDemoBtn');
+                    if (seedBtn) seedBtn.addEventListener('click', async () => {
+                        try {
+                            // Re-run demo seeder if available
+                            if (window.demo_users_seed) {
+                                try { window.demo_users_seed(); } catch(e){}
+                            } else {
+                                // fallback: run the file by creating a script tag (safe in preview)
+                                const s = document.createElement('script');
+                                s.src = 'js/demo_users.js';
+                                document.head.appendChild(s);
+                            }
+                        } catch (e) { console.warn('Seed demo failed', e); }
+                        await fetchUsersFromAPI(); renderUsers(); renderAssignments(); renderReport();
+                    });
+                } catch (e) { /* ignore */ }
+
+            // Show alert if a new patient was registered (from create_account)
+            try {
+                const notifyRaw = localStorage.getItem('admin_patient_notify');
+                if (notifyRaw) {
+                    const n = JSON.parse(notifyRaw);
+                    if (n && n.name) {
+                        if (confirm(`New patient registered: ${n.name} (${n.email}).\nOpen Patient Records?`)) {
+                            // clear notify and open patient records
+                            localStorage.removeItem('admin_patient_notify');
+                            window.location.href = 'patient_records.html';
+                        }
+                    }
+                }
+            } catch (e) { console.warn('admin notify check failed', e); }
         });
     </script>
 </body>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>View Contact Message</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .container{max-width:900px;margin:24px auto;padding:16px}
+    .card{background:#fff;padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+    label{font-weight:600}
+    textarea, input{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn-primary{background:#004080;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+    .btn-ghost{background:#f6f6f6;border:1px solid #ddd;padding:10px 12px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="card">
+      <h1>Contact Message</h1>
+      <div id="meta" style="margin-bottom:10px;color:#444"></div>
+      <h3 id="subject"></h3>
+      <p id="messageBody" style="white-space:pre-wrap;border-left:4px solid #f0f0f0;padding-left:10px;color:#222"></p>
+
+      <hr />
+      <h3>Reply</h3>
+      <label for="replyText">Reply to sender</label>
+      <textarea id="replyText" rows="6" placeholder="Write your reply..."></textarea>
+      <div class="actions">
+        <button id="sendReply" class="btn secondary">Send Reply</button>
+        <button id="closeBtn" class="btn-ghost">Close</button>
+        <button id="dismissBtn" class="btn-ghost">Dismiss Alert</button>
+      </div>
+      <p id="status" style="margin-top:10px;color:#333"></p>
+    </div>
+  </main>
+
+  <script>
+    // get id from querystring
+    function qs(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }
+    const id = qs('id');
+
+    function findPendingById(id) {
+      try {
+        const pending = JSON.parse(localStorage.getItem('pending_emails') || '[]');
+        return pending.find(p => String(p.id) === String(id));
+      } catch (e) { return null; }
+    }
+
+    function findContactMsgById(id) {
+      try { const msgs = JSON.parse(localStorage.getItem('contact_messages') || '[]'); return msgs.find(m => String(m.id) === String(id)); } catch(e){return null}
+    }
+
+    const pending = findPendingById(id);
+    const contact = pending || findContactMsgById(id);
+
+    const subjectEl = document.getElementById('subject');
+    const bodyEl = document.getElementById('messageBody');
+    const metaEl = document.getElementById('meta');
+    const statusEl = document.getElementById('status');
+
+    if (!contact) {
+      subjectEl.textContent = 'Message not found';
+      bodyEl.textContent = '';
+      metaEl.textContent = '';
+    } else {
+      const from = (contact.meta && (contact.meta.name || contact.meta.from)) || (contact.name || 'Unknown');
+      const email = (contact.meta && contact.meta.from) || contact.email || '';
+      subjectEl.textContent = contact.subject || '(no subject)';
+      bodyEl.textContent = contact.message || contact.message_body || '';
+      metaEl.innerHTML = `<strong>From:</strong> ${from} ${email ? ('<' + email + '>') : ''} &nbsp; <small style="color:#666">${contact.created_at || ''}</small>`;
+    }
+
+    document.getElementById('closeBtn').addEventListener('click', ()=> window.close());
+
+    document.getElementById('dismissBtn').addEventListener('click', ()=>{
+      try { localStorage.removeItem('pending_outbox_notify'); statusEl.style.color='green'; statusEl.textContent='Alert dismissed.'; } catch(e){ statusEl.style.color='red'; statusEl.textContent='Failed to dismiss.'; }
+    });
+
+    document.getElementById('sendReply').addEventListener('click', async ()=>{
+      statusEl.textContent='';
+      const reply = document.getElementById('replyText').value.trim();
+      if (!reply) { statusEl.style.color='red'; statusEl.textContent='Reply cannot be empty.'; return; }
+
+      const to = (contact && contact.meta && contact.meta.from) || contact.email || '';
+      const subject = 'Re: ' + (contact.subject || 'Contact Message');
+
+      const payload = { to, subject, message: reply };
+      try {
+        if (window.bsm_api && window.bsm_api.sendEmail) {
+          await window.bsm_api.sendEmail(payload);
+          statusEl.style.color='green'; statusEl.textContent='Reply sent.';
+        } else {
+          // queue reply in pending_emails
+          const arr = JSON.parse(localStorage.getItem('pending_emails') || '[]');
+          arr.push({ id: Date.now(), to, subject, message: reply, meta:{ replyToId: id }, created_at: new Date().toISOString() });
+          localStorage.setItem('pending_emails', JSON.stringify(arr));
+          statusEl.style.color='orange'; statusEl.textContent='Reply queued locally.';
+        }
+
+        // Optionally remove the original contact from pending_emails and notify
+        try {
+          let arr = JSON.parse(localStorage.getItem('pending_emails') || '[]');
+          arr = arr.filter(p => String(p.id) !== String(id));
+          localStorage.setItem('pending_emails', JSON.stringify(arr));
+        } catch(e){}
+        localStorage.removeItem('pending_outbox_notify');
+      } catch (e) {
+        console.error('Reply send failed', e);
+        statusEl.style.color='red'; statusEl.textContent='Failed to send reply.';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Staff Dashboard - Online Blood Sugar Monitor</title>
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/demo_users.js"></script>
   <style>
     .logout-btn {
       background: #cc0000;
@@ -43,6 +44,11 @@
     .summary-card h3 {
       margin-bottom: 8px;
       color: #004080;
+    }
+    .summary-card a.btn {
+      color: inherit;
+      text-decoration: none;
+      font-family: inherit;
     }
 
     .patient-search {
@@ -113,7 +119,7 @@
         <!-- Staff-focused nav -->
         <li><a href="staff_dashboard.html" class="active">Dashboard</a></li>
         <li><a href="patient_records.html">Patient Records</a></li>
-        <li><a href="contact.html">Contact</a></li>
+        
         <li style="margin-left:auto;">
           <button id="logoutBtn" class="logout-btn">Logout</button>
         </li>
@@ -136,13 +142,25 @@
         <div class="summary-card">
           <h3>Email Specialists</h3>
           <p>Quickly contact specialists about flagged patients or urgent updates.</p>
+          <div style="margin-top:10px"><a class="btn secondary" href="staff_email_specialists.html">Email Specialists</a></div>
         </div>
         <div class="summary-card">
           <h3>Email Patients</h3>
           <p>Send reminders, instructions, or follow-up messages to patients.</p>
+          <div style="margin-top:10px"><a class="btn secondary" href="staff_email_patients.html">Email Patients</a></div>
         </div>
+       
       </div>
     </section>
+
+      <section class="dashboard-section">
+        <h2>Pending Outbox</h2>
+          <a href="staff_contact_list.html" style="color:#004080;font-weight:600;">View Messages from Contact page</a>.
+        
+          <div id="pendingOutboxAlert" style="margin-top:8px"></div>
+          <p id="pendingEmailsInfo">No queued emails.</p>
+        
+      </section>
 
     <!-- Patient table -->
     <section class="dashboard-section">
@@ -259,6 +277,42 @@
       }
 
       // ================================
+      // Helper: Merge local users + patients into a canonical patients array
+      // ================================
+      function loadLocalPatientsMerged(){
+        try {
+          const out = [];
+          const seen = new Set();
+          // users may contain patient-role entries
+          let users = JSON.parse(localStorage.getItem('users') || '[]');
+          if (!Array.isArray(users)) users = [];
+          users.forEach(u => {
+            if ((u.role||'').toLowerCase() === 'patient'){
+              const key = (u.email || u.user_id || '').toString().toLowerCase();
+              if (!seen.has(key)){
+                seen.add(key);
+                out.push({ patient_number: u.user_id || u.id || '', name: ((u.first_name||'') + ' ' + (u.last_name||'')).trim(), last_checked: u.last_checked || '' , email: u.email || '' });
+              }
+            }
+          });
+          // patients stored separately
+          let raw = localStorage.getItem('patients') || '[]';
+          let patientsRaw = JSON.parse(raw);
+          if (patientsRaw && !Array.isArray(patientsRaw) && typeof patientsRaw === 'object') patientsRaw = Object.values(patientsRaw || {});
+          if (Array.isArray(patientsRaw)){
+            patientsRaw.forEach(p => {
+              const key = (p.email || p.patientId || p.id || p.number || '').toString().toLowerCase();
+              if (!seen.has(key)){
+                seen.add(key);
+                out.push({ patient_number: p.number || p.patientId || p.id || '', name: p.name || p.fullName || p.patient_name || '', last_checked: p.last_checked || p.lastChecked || p.last_update || '', email: p.email || '' });
+              }
+            });
+          }
+          return out;
+        } catch(e){ return []; }
+      }
+
+      // ================================
       // LOAD PATIENTS FROM DB
       // ================================
       async function loadPatients() {
@@ -298,11 +352,26 @@
           statusMsg.textContent = `Loaded ${patients.length} patient(s).`;
         } catch (err) {
           console.error('[staff_dashboard] loadPatients error:', err);
+          // Try cached patients and users merged as fallback
+          try {
+            const merged = loadLocalPatientsMerged();
+            if (Array.isArray(merged) && merged.length > 0) {
+              patients = merged;
+              patientsLoaded = true;
+              renderTable(patients);
+              summaryTotalPatients.textContent = patients.length;
+              statusMsg.textContent = `Showing ${patients.length} cached patient(s).`;
+              return;
+            }
+          } catch (e) {
+            console.warn('[staff_dashboard] failed to read cached patients', e);
+          }
+
           statusMsg.textContent =
             'Unable to load patients from server. Please try again later.';
           tableBody.innerHTML = `
-            <tr><td colspan="3">Error loading patients from server.</td></tr>
-          `;
+              <tr><td colspan="3">Error loading patients from server.</td></tr>
+            `;
         }
       }
 
@@ -361,6 +430,154 @@
       // INIT
       // ================================
       loadPatients();
+
+      // Pending emails indicator
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>\"']/g, function(c){
+          return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
+        });
+      }
+
+      function refreshPendingEmails() {
+        try {
+          const pending = JSON.parse(localStorage.getItem('pending_emails') || '[]');
+          const contacts = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+          const n = Array.isArray(pending) ? pending.length : 0;
+          const el = document.getElementById('pendingEmailsInfo');
+          if (el) {
+            if (n === 0) el.textContent = 'No queued emails.';
+            else el.textContent = `You have ${n} queued email(s) waiting to be sent.`;
+          }
+
+          // show a visible alert if a pending_outbox_notify exists
+          const notifyRaw = localStorage.getItem('pending_outbox_notify');
+          const alertContainer = document.getElementById('pendingOutboxAlert');
+          if (alertContainer) {
+            alertContainer.innerHTML = '';
+            if (notifyRaw) {
+              try {
+                const nt = JSON.parse(notifyRaw);
+                const summary = escapeHtml(nt.summary || 'New contact message');
+                const html = `<div style="background:#fff3cd;padding:10px;border-radius:6px;border:1px solid #ffeeba;">
+                    <strong>New contact message:</strong> ${summary}
+                    <button id="clearPendingNotify" style="margin-left:12px;padding:6px 8px;border-radius:6px;border:1px solid #ccc;cursor:pointer">Dismiss</button>
+                  </div>`;
+                alertContainer.innerHTML = html;
+                const btn = document.getElementById('clearPendingNotify');
+                if (btn) btn.addEventListener('click', () => { localStorage.removeItem('pending_outbox_notify'); refreshPendingEmails(); });
+              } catch (e) { console.warn('Invalid pending_outbox_notify', e); }
+            }
+          }
+
+          // Render inline list of messages (merge pending_emails + contact_messages)
+          const listContainer = document.getElementById('pendingList');
+          if (listContainer) {
+            const map = new Map();
+            // include pending items (even if they lack an id)
+            if (Array.isArray(pending)) pending.forEach((p, idx) => {
+              if (!p) return;
+              const key = p.id ? String(p.id) : `__pending_${idx}`;
+              if (!map.has(key)) map.set(key, Object.assign({__source:'pending'}, p));
+            });
+            // include contact messages (prefer existing entries but include those without id too)
+            if (Array.isArray(contacts)) contacts.forEach((c, idx) => {
+              if (!c) return;
+              const key = c.id ? String(c.id) : `__contact_${idx}`;
+              if (!map.has(key)) map.set(key, Object.assign({__source:'contact'}, c));
+            });
+            const items = Array.from(map.values()).sort((a,b)=> {
+              const ta = Date.parse(a.created_at || '') || 0;
+              const tb = Date.parse(b.created_at || '') || 0;
+              return tb - ta;
+            });
+
+            if (!items || items.length === 0) {
+              listContainer.innerHTML = '<div style="padding:10px;color:#666">No contact messages or queued items.</div>';
+            } else {
+              // build compact list
+              const rows = items.map(m => {
+                const when = m.created_at || '';
+                const from = (m.meta && (m.meta.name || m.meta.from)) || m.name || (m.email || '');
+                const subj = (m.subject && m.subject.length>80) ? (m.subject.substring(0,77)+'...') : (m.subject || (m.message && m.message.substring(0,80)) || '(no subject)');
+                return `<div class="summary-card" style="margin-bottom:8px;padding:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <div><strong>${escapeHtml(subj)}</strong><div style="color:#666;font-size:0.9rem">${escapeHtml(from)} · ${escapeHtml(when)}</div></div>
+                      <div style="display:flex;gap:8px;align-items:center">
+                        <button class="btn-view" data-id="${escapeHtml(String(m.id))}">View</button>
+                        <button class="btn-reply" data-id="${escapeHtml(String(m.id))}">Reply</button>
+                        <button class="btn-del" data-id="${escapeHtml(String(m.id))}">Delete</button>
+                      </div>
+                    </div>
+                    <div class="expanded" id="exp-${escapeHtml(String(m.id))}" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #eee;color:#222;white-space:pre-wrap"></div>
+                    <div class="reply-area" id="rep-${escapeHtml(String(m.id))}" style="display:none;margin-top:8px">
+                      <textarea id="reply-input-${escapeHtml(String(m.id))}" rows="4" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px"></textarea>
+                      <div style="margin-top:6px"><button class="btn-send-reply" data-id="${escapeHtml(String(m.id))}">Send Reply</button></div>
+                    </div>
+                  </div>`;
+              }).join('');
+              listContainer.innerHTML = rows;
+
+              // wire buttons
+              listContainer.querySelectorAll('.btn-view').forEach(b=> b.addEventListener('click', function(){
+                const id = this.getAttribute('data-id'); const exp = document.getElementById('exp-'+id); if (!exp) return;
+                // find message body
+                const pendingArr = JSON.parse(localStorage.getItem('pending_emails')||'[]');
+                const contactsArr = JSON.parse(localStorage.getItem('contact_messages')||'[]');
+                const m = (pendingArr.find(p=>String(p.id)===String(id)) || contactsArr.find(c=>String(c.id)===String(id)));
+                if (m) exp.textContent = m.message || m.message_body || '(no message body)';
+                exp.style.display = (exp.style.display==='none') ? 'block' : 'none';
+              }));
+
+              listContainer.querySelectorAll('.btn-reply').forEach(b=> b.addEventListener('click', function(){
+                const id = this.getAttribute('data-id'); const rep = document.getElementById('rep-'+id); if (!rep) return; rep.style.display = (rep.style.display==='none') ? 'block' : 'none';
+              }));
+
+              listContainer.querySelectorAll('.btn-del').forEach(b=> b.addEventListener('click', function(){
+                const id = this.getAttribute('data-id'); if (!confirm('Delete message '+id+'?')) return;
+                try {
+                  let pendingArr = JSON.parse(localStorage.getItem('pending_emails')||'[]'); pendingArr = pendingArr.filter(p=>String(p.id)!==String(id)); localStorage.setItem('pending_emails', JSON.stringify(pendingArr));
+                  let contactsArr = JSON.parse(localStorage.getItem('contact_messages')||'[]'); contactsArr = contactsArr.filter(c=>String(c.id)!==String(id)); localStorage.setItem('contact_messages', JSON.stringify(contactsArr));
+                  const notify = JSON.parse(localStorage.getItem('pending_outbox_notify')||'null'); if (notify && String(notify.id)===String(id)) localStorage.removeItem('pending_outbox_notify');
+                  refreshPendingEmails();
+                } catch(e){ alert('Failed to delete: '+e); }
+              }));
+
+              listContainer.querySelectorAll('.btn-send-reply').forEach(b=> b.addEventListener('click', async function(){
+                const id = this.getAttribute('data-id'); const ta = document.getElementById('reply-input-'+id); if (!ta) return; const reply = ta.value.trim();
+                if (!reply) { alert('Reply cannot be empty'); return; }
+                const pendingArr = JSON.parse(localStorage.getItem('pending_emails')||'[]');
+                const contactsArr = JSON.parse(localStorage.getItem('contact_messages')||'[]');
+                const m = (pendingArr.find(p=>String(p.id)===String(id)) || contactsArr.find(c=>String(c.id)===String(id)));
+                const to = (m && m.meta && m.meta.from) || m.email || '';
+                const subject = 'Re: ' + (m.subject || 'Contact Message');
+                const payload = { to, subject, message: reply };
+                try {
+                  if (window.bsm_api && window.bsm_api.sendEmail) { await window.bsm_api.sendEmail(payload); alert('Reply sent.'); }
+                  else { const arr = JSON.parse(localStorage.getItem('pending_emails')||'[]'); arr.push({ id: Date.now(), to, subject, message: reply, meta:{ replyToId: id }, created_at: new Date().toISOString() }); localStorage.setItem('pending_emails', JSON.stringify(arr)); alert('Reply queued locally.'); }
+                  // remove original
+                  let newPending = JSON.parse(localStorage.getItem('pending_emails')||'[]'); newPending = newPending.filter(p=>String(p.id)!==String(id)); localStorage.setItem('pending_emails', JSON.stringify(newPending));
+                  localStorage.removeItem('pending_outbox_notify');
+                  refreshPendingEmails();
+                } catch (e) { console.error(e); alert('Failed to send reply'); }
+              }));
+            }
+          }
+        } catch (e) {
+          console.warn('Could not read pending_emails', e);
+        }
+      }
+
+      refreshPendingEmails();
+      // Refresh every 20 seconds while the dashboard is open
+      setInterval(refreshPendingEmails, 20000);
+
+      // live-update when localStorage changes in another tab (contact page)
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'pending_emails' || e.key === 'pending_outbox_notify') refreshPendingEmails();
+      });
+      
+      // Pending-outbox is static now (No queued emails.)
+      // Removed contact messages polling per user request.
     })();
   </script>
 </body>

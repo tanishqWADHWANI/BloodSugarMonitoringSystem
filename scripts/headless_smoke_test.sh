@@ -4,12 +4,28 @@
 
 set -euo pipefail
 
-BASE_URL=${BASE_URL:-http://127.0.0.1:5000}
+DEFAULT_HTTP='http://127.0.0.1:5000'
+DEFAULT_HTTPS='https://127.0.0.1:5000'
+# If BASE_URL is not provided, try HTTPS first (accept self-signed with -k), then fall back to HTTP.
+if [ -z "${BASE_URL:-}" ]; then
+  if curl -s -k -o /dev/null -w "%{http_code}" "$DEFAULT_HTTPS/health" | grep -q '^200$'; then
+    BASE_URL=$DEFAULT_HTTPS
+  else
+    BASE_URL=$DEFAULT_HTTP
+  fi
+fi
+
+echo "Using BASE_URL=$BASE_URL"
 
 echo "Running headless smoke tests against $BASE_URL"
 
 echo "\n1) Health check"
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/health") || true
+# For HTTPS with self-signed certs, allow insecure (-k)
+if echo "$BASE_URL" | grep -q '^https:'; then
+  HTTP_CODE=$(curl -s -k -o /dev/null -w "%{http_code}" "$BASE_URL/health") || true
+else
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/health") || true
+fi
 echo "  HTTP $HTTP_CODE -> $BASE_URL/health"
 if [ "$HTTP_CODE" != "200" ]; then
   echo "Health check failed (expected 200)."

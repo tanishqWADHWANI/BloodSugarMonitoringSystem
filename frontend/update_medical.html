@@ -9,7 +9,8 @@
   h1 { color: #004080; margin-bottom: 20px; }
   form { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
   form label { display: block; margin: 15px 0 5px; font-weight: bold; }
-  form input, form textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+  form input, form textarea, form select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; background: #fbfdff; box-sizing: border-box; }
+  form select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
   form button { margin-top: 20px; padding: 12px 20px; background: #004080; color: white; border: none; border-radius: 8px; cursor: pointer; }
   form button:hover { background: #0066cc; }
 </style>
@@ -39,7 +40,12 @@
     <input type="text" id="age" name="age">
 
     <label for="gender">Gender</label>
-    <input type="text" id="gender" name="gender">
+    <select id="gender" name="gender">
+      <option value="">Select gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
 
     <label for="contact">Contact</label>
     <input type="text" id="contact" name="contact">
@@ -83,12 +89,111 @@
       medicalHistory: document.getElementById('medicalHistory').value
     };
 
-    // Update patient in allPatients array
-    const index = allPatients.findIndex(p => p.id === updatedPatient.id);
-    if (index >= 0) allPatients[index] = updatedPatient;
+    // Update patient in allPatients array (used by the update page)
+    try {
+      const index = allPatients.findIndex(p => String(p.id) === String(updatedPatient.id));
+      if (index >= 0) allPatients[index] = updatedPatient;
+      localStorage.setItem('allPatients', JSON.stringify(allPatients));
+      localStorage.setItem('selectedPatient', JSON.stringify(updatedPatient));
+    } catch (e) { console.error('allPatients update error', e); }
 
-    localStorage.setItem('allPatients', JSON.stringify(allPatients));
-    localStorage.setItem('selectedPatient', JSON.stringify(updatedPatient));
+    // Also persist changes into the canonical stores: localStorage.patients and localStorage.users
+    try {
+      // --- Update localStorage.patients ---
+      const rawPatients = localStorage.getItem('patients');
+      if (rawPatients) {
+        let patientsObj = JSON.parse(rawPatients);
+        // If it's an object map, update the matching entry by key if possible
+        if (patientsObj && !Array.isArray(patientsObj) && typeof patientsObj === 'object') {
+          // Try to find a key that matches id / patientId / number
+          let matchedKey = null;
+          for (const k of Object.keys(patientsObj)) {
+            const candidate = patientsObj[k] || {};
+            if (String(candidate.patientId || candidate.id || candidate.number || k) === String(updatedPatient.id)) {
+              matchedKey = k; break;
+            }
+          }
+          if (matchedKey) {
+            const existing = patientsObj[matchedKey] || {};
+            patientsObj[matchedKey] = Object.assign({}, existing, {
+              id: updatedPatient.id,
+              patientId: updatedPatient.id,
+              number: updatedPatient.id,
+              name: updatedPatient.name,
+              fullName: updatedPatient.name,
+              age: updatedPatient.age,
+              gender: updatedPatient.gender,
+              contact: updatedPatient.contact,
+              phone: updatedPatient.contact,
+              medical_history: updatedPatient.medicalHistory,
+              medicalHistory: updatedPatient.medicalHistory
+            });
+          } else {
+            // No key matched - append new entry using id as the key
+            patientsObj[updatedPatient.id || Date.now()] = {
+              id: updatedPatient.id,
+              patientId: updatedPatient.id,
+              number: updatedPatient.id,
+              name: updatedPatient.name,
+              age: updatedPatient.age,
+              gender: updatedPatient.gender,
+              contact: updatedPatient.contact,
+              phone: updatedPatient.contact,
+              medical_history: updatedPatient.medicalHistory,
+              medicalHistory: updatedPatient.medicalHistory
+            };
+          }
+        } else {
+          // Treat as array
+          let patientsArr = Array.isArray(patientsObj) ? patientsObj : [];
+          const idx = patientsArr.findIndex(p => String(p.patientId || p.id || p.number || p.userId) === String(updatedPatient.id));
+          const mapped = {
+            id: updatedPatient.id,
+            patientId: updatedPatient.id,
+            number: updatedPatient.id,
+            name: updatedPatient.name,
+            age: updatedPatient.age,
+            gender: updatedPatient.gender,
+            contact: updatedPatient.contact,
+            phone: updatedPatient.contact,
+            medical_history: updatedPatient.medicalHistory,
+            medicalHistory: updatedPatient.medicalHistory
+          };
+          if (idx >= 0) {
+            patientsArr[idx] = Object.assign({}, patientsArr[idx], mapped);
+          } else {
+            patientsArr.push(mapped);
+          }
+          patientsObj = patientsArr;
+        }
+        localStorage.setItem('patients', JSON.stringify(patientsObj));
+      }
+    } catch (e) { console.error('patients persist error', e); }
+
+    try {
+      // --- Update localStorage.users ---
+      const rawUsers = localStorage.getItem('users');
+      if (rawUsers) {
+        let users = JSON.parse(rawUsers) || [];
+        if (!Array.isArray(users)) users = [];
+        const uidx = users.findIndex(u => String(u.user_id || u.id || u.patientId || u.email || u.userId) === String(updatedPatient.id));
+        if (uidx >= 0) {
+          const existing = users[uidx] || {};
+          users[uidx] = Object.assign({}, existing, {
+            id: existing.id || existing.user_id || updatedPatient.id,
+            user_id: existing.user_id || existing.id || updatedPatient.id,
+            first_name: existing.first_name || updatedPatient.name.split(' ')[0] || '',
+            last_name: existing.last_name || updatedPatient.name.split(' ').slice(1).join(' ') || '',
+            age: updatedPatient.age,
+            gender: updatedPatient.gender,
+            phone: updatedPatient.contact,
+            medical_history: updatedPatient.medicalHistory,
+            medicalHistory: updatedPatient.medicalHistory
+          });
+          localStorage.setItem('users', JSON.stringify(users));
+        }
+      }
+    } catch (e) { console.error('users persist error', e); }
 
     alert('Patient information updated successfully!');
     window.location.href = 'patient_records.html';

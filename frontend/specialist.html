@@ -7,6 +7,8 @@
   <title>Specialist Portal</title>
 
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/api.js"></script>
+  <script src="js/demo_users.js"></script>
 
   <style>
     .container {
@@ -183,12 +185,6 @@
     </nav>
   </header>
 
-  <!-- SERVER MODE BANNER (hidden by default) -->
-  <div id="serverModeBanner" style="display:none;padding:10px;text-align:center;font-weight:700;
-       background:#fff3cd;color:#856404;border:1px solid #ffeeba;">
-    Running in DEMO mode (backend DEMO_AUTH=1) — some features are simulated.
-  </div>
-
   <!-- MAIN -->
   <main class="container">
     <!-- SPECIALIST LOGIN -->
@@ -285,9 +281,10 @@
   </footer>
 <script>
 // Config
-// Default API base: same hostname + port 5000. We allow overriding via
-// `window.BSM_API_FALLBACK` or `localStorage.BSM_API_BASE` (useful for Codespaces).
-const API_BASE = `${window.location.protocol}//${window.location.hostname}:5000/api`;
+// Default API base: HTTP-only on port 5000. We allow overriding via
+// `window.BSM_API_FALLBACK` or `localStorage.BSM_API_BASE` (useful for forwarded URLs).
+// This project is configured to use HTTP for local development and testing.
+const DEFAULT_API_BASE = `http://${window.location.hostname}:5000/api`;
 // Load persisted override (if user pasted a forwarded URL)
 try {
   const stored = localStorage.getItem('BSM_API_BASE');
@@ -297,7 +294,15 @@ try {
 }
 
 function apiBase() {
-  return window.BSM_API_FALLBACK || API_BASE;
+  // Return explicit override if present, otherwise use HTTP-only default.
+  if (window.BSM_API_FALLBACK) return window.BSM_API_FALLBACK;
+  try {
+    const override = localStorage.getItem('BSM_API_BASE');
+    if (override && override.length) return override;
+  } catch (e) {
+    // ignore
+  }
+  return DEFAULT_API_BASE;
 }
 
 // Specialist login handler — intercept form POST and call backend API
@@ -305,99 +310,73 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('specialistLoginForm');
   const msg = document.getElementById('specLoginMsg');
 
-  if (form) {
+    if (form) {
     form.addEventListener('submit', async function (ev) {
       ev.preventDefault();
-      msg.style.color = 'red';
-      msg.textContent = '';
+      msg.style.color = 'black';
+      msg.textContent = 'Signing in...';
 
-      const username = document.getElementById('specLoginId').value.trim();
-      const password = document.getElementById('specLoginPassword').value;
+      const username = (document.getElementById('specLoginId').value || '').trim();
+      const password = (document.getElementById('specLoginPassword').value || '').trim();
 
       if (!username || !password) {
+        msg.style.color = 'red';
         msg.textContent = 'Username (or working_id/email) and password are required';
         return;
       }
 
-      const payload = {
-        // server accepts `username` or `email` and also `working_id`
-        username: username,
-        password: password
-      };
-
       try {
-        // Quick diagnostics: check backend health first to give a clearer error message
-        try {
-          const healthRes = await fetch(`${apiBase().replace('/api','')}/health`, { method: 'GET' });
-          if (!healthRes.ok) {
-            msg.textContent = `API health check failed (status ${healthRes.status}) — check backend logs`;
-            return;
-          }
-        } catch (healthErr) {
-          console.warn('Backend health check failed', healthErr);
-          msg.textContent = 'Cannot reach backend API. Are you running the backend? Check console/network for CORS or connectivity issues.';
-          return;
+        // Use hybrid specialist login helper (tries server, falls back to local demo)
+        const resp = await window.bsm_api.specialistLogin(username, password);
+
+        // Normalize token and user storage
+        const token = resp && (resp.token || resp.access_token || (resp.user && resp.user.token));
+        if (token) {
+          try { localStorage.setItem('bsm_token', token); } catch (e) {}
         }
 
-        // Use shared API wrapper if available (sets auth header automatically)
-        // Otherwise use a fallback API base if diagnostics identified one.
-        let data;
-        let apiBaseToUse = apiBase();
-
-        if (window.bsm_api && typeof window.bsm_api.specialistLogin === 'function') {
-          try {
-            data = await window.bsm_api.specialistLogin(username, password, { apiBase: apiBaseToUse });
-          } catch (e) {
-            msg.textContent = e.message || 'Login failed';
-            return;
+        if (resp && resp.user) {
+          const u = resp.user;
+          if (u.username) try { localStorage.setItem('specialistUsername', u.username); } catch(e) {}
+          // Prefer provided fullName, fallback to first/last name if present
+          if (u.fullName) {
+            try { localStorage.setItem('specialistFullName', u.fullName); } catch(e) {}
+          } else if (u.first_name || u.last_name) {
+            const fn = ((u.first_name||'') + ' ' + (u.last_name||'')).trim();
+            try { localStorage.setItem('specialistFullName', fn); } catch(e) {}
           }
+          if (u.id !== undefined) try { localStorage.setItem('specialistId', String(u.id)); } catch(e) {}
         } else {
-          // Fallback to direct fetch if api wrapper not loaded
-          const res = await fetch(`${apiBaseToUse}/specialist/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-
-          if (!res.ok) {
-            let body;
-            try { body = await res.json(); } catch(e) { body = { message: res.statusText }; }
-            msg.textContent = body.message || body.error || `Login failed (status ${res.status})`;
-            return;
-          }
-
-          data = await res.json();
-        }
-        msg.style.color = 'green';
-        msg.textContent = 'Login successful — redirecting...';
-
-        // Store token and specialist info in localStorage for demo session handling
-        if (data.token) {
+          // Ensure minimal demo keys when server response is not detailed
+          const key = (username.split('@')[0] || username).toLowerCase();
+          try { localStorage.setItem('specialistUsername', key); } catch(e) {}
+          // Try to resolve a friendly full name from cached specialists (demo seeder)
           try {
-            localStorage.setItem('bsm_token', data.token);
-            localStorage.setItem('bsm_specialist', JSON.stringify(data.specialist || {}));
+            let specs = JSON.parse(localStorage.getItem('specialists') || '[]');
+            if (specs && !Array.isArray(specs) && typeof specs === 'object') specs = Object.values(specs || {});
+            if (Array.isArray(specs)) {
+              const found = specs.find(s => (s.username && s.username.toLowerCase() === key) || (s.email && s.email.toLowerCase().startsWith(key)) || (s.full_name && s.full_name.toLowerCase().includes(key)) );
+              if (found && (found.full_name || found.name)) {
+                try { localStorage.setItem('specialistFullName', found.full_name || found.name); } catch(e) {}
+              } else {
+                try { localStorage.setItem('specialistFullName', key.charAt(0).toUpperCase() + key.slice(1)); } catch(e) {}
+              }
+            } else {
+              try { localStorage.setItem('specialistFullName', key.charAt(0).toUpperCase() + key.slice(1)); } catch(e) {}
+            }
           } catch (e) {
-            console.warn('Could not persist token to localStorage', e);
+            try { localStorage.setItem('specialistFullName', key.charAt(0).toUpperCase() + key.slice(1)); } catch(e) {}
           }
+          try { localStorage.setItem('specialistId', '0'); } catch(e) {}
         }
 
-        // On success, redirect to specialist dashboard (if exists) or reload
-        const spec = data.specialist || {};
-        setTimeout(() => {
-          if (spec.user_id) {
-            // include token in query param for demo environments (optional)
-            const url = new URL('specialist_dashboard.html', window.location.origin);
-            url.searchParams.set('user_id', spec.user_id);
-            if (data.token) url.searchParams.set('token', data.token);
-            window.location.href = url.toString();
-          } else {
-            window.location.reload();
-          }
-        }, 700);
-
+        msg.style.color = 'green';
+        msg.textContent = 'Signed in. Redirecting...';
+        setTimeout(() => { window.location.href = 'specialist_dashboard.html'; }, 300);
       } catch (err) {
-        console.error('Specialist login error', err);
-        msg.textContent = 'Login failed — network or server error: ' + (err.message || err);
+        console.error('Specialist login failed', err);
+        msg.style.color = 'red';
+        msg.textContent = 'Login failed: ' + (err && err.message ? err.message : err);
       }
     });
   }
@@ -433,116 +412,23 @@ function tryAutoLogin() {
 // Attempt auto-login after DOMContent loaded
 document.addEventListener('DOMContentLoaded', tryAutoLogin);
 
-// Simple diagnostics UI to show backend health and headers
+// Simplified diagnostics: show reachable / unreachable and a demo fallback message
 async function runApiDiagnostics() {
   const diag = document.getElementById('apiDiagnostics');
   diag.textContent = 'Checking API...';
+  const healthUrl = `${apiBase().replace('/api','')}/health`;
   try {
-    // Primary health endpoint (same host as page, port 5000)
-    const healthUrl = `${apiBase().replace('/api','')}/health`;
-    let healthRes;
-    try {
-      healthRes = await fetch(healthUrl, { method: 'GET' });
-    } catch (firstErr) {
-      // If first attempt fails, we'll try a few fallbacks and provide
-      // a helpful diagnostic message for common issues (CORS, mixed
-      // content (HTTPS->HTTP), or unreachable host).
-      const pageProto = window.location.protocol;
-      const suggestions = [];
-
-      // Mixed content: page served over HTTPS but backend URL is HTTP
-      if (pageProto === 'https:' && healthUrl.startsWith('http:')) {
-        diag.innerHTML = `<strong style="color:orange">Health check failed:</strong> The page is served over <strong>HTTPS</strong> while the backend is <strong>HTTP</strong>. Browsers block mixed content.\n` +
-          `<div style="margin-top:6px">Try opening the page using <code>http://</code> (not https), or configure an HTTPS proxy for the backend.</div>`;
-        return;
-      }
-
-      // Try explicit localhost/127.0.0.1 fallbacks (useful when hostname resolution differs)
-      const fallbacks = [
-        'http://127.0.0.1:5000/health',
-        'http://localhost:5000/health'
-      ];
-
-      let fallbackOk = false;
-      let fallbackHtml = '';
-      let fallbackUrl = null;
-      for (const f of fallbacks) {
-        try {
-          const r = await fetch(f, { method: 'GET' });
-          if (r.ok) {
-            const b = await r.text();
-            fallbackHtml += `<div><strong>Fallback ${f}:</strong> ${r.status} ${r.statusText} <pre>${b}</pre></div>`;
-            fallbackOk = true;
-            fallbackUrl = f.replace(/\/health\/?$/, '');
-            break;
-          } else {
-            fallbackHtml += `<div><strong>Fallback ${f}:</strong> ${r.status} ${r.statusText}</div>`;
-          }
-        } catch (e) {
-          fallbackHtml += `<div><strong>Fallback ${f}:</strong> failed to fetch (${e.message})</div>`;
-        }
-      }
-
-      let message = `<strong style="color:red">Health check failed: Failed to fetch</strong>`;
-      message += `<div style="margin-top:8px">Common causes: backend not running, network/port not reachable, or browser blocking mixed content (HTTPS page → HTTP backend).</div>`;
-      message += `<div style="margin-top:8px">Fallback checks:</div>${fallbackHtml}`;
-      // If a fallback succeeded, expose it globally so other API calls
-      // can use the reachable host (useful when page hostname differs
-      // from localhost in remote/dev containers).
-      if (fallbackOk && fallbackUrl) {
-        window.BSM_API_FALLBACK = `${fallbackUrl}/api`;
-        try { localStorage.setItem('BSM_API_BASE', window.BSM_API_FALLBACK); } catch(e){}
-        message += `<div style="margin-top:8px;color:green">Using fallback API base: <code>${window.BSM_API_FALLBACK}</code></div>`;
-      } else {
-        // No automatic fallback succeeded — show a small prompt so user can paste the
-        // forwarded backend URL (useful when using Codespaces port forwarding).
-        message += `<div style="margin-top:12px;padding:10px;border:1px dashed #ccc;border-radius:6px;background:#fff">` +
-          `<div style="margin-bottom:8px">If you're using a remote preview (Codespaces / GitHub.dev), the preview page cannot reach your local HTTP backend by default. Forward port <code>5000</code> in Codespaces, then paste the forwarded base URL below (example: <code>https://1234-5500.app.github.dev</code> or <code>http://127.0.0.1:5000</code>):</div>` +
-          `<input id="bsmApiOverride" placeholder="https://<forwarded-host>:5500 or http://127.0.0.1:5000" style="width:70%;padding:6px;margin-right:6px" />` +
-          `<button id="bsmApiSave">Use this API</button>` +
-          `</div>`;
-      }
-
-      diag.innerHTML = message;
-      return;
+    const res = await fetch(healthUrl, { method: 'GET' });
+    if (res.ok) {
+      diag.innerHTML = `<span style="color:green">Backend reachable (${res.status}).</span>`;
+      const banner = document.getElementById('serverModeBanner'); if (banner) banner.style.display = 'none';
+    } else {
+      diag.innerHTML = `<span style="color:orange">Backend responded ${res.status}. Using demo fallback.</span>`;
+      const banner = document.getElementById('serverModeBanner'); if (banner) banner.style.display = 'block';
     }
-
-    const headers = {};
-    for (const [k, v] of healthRes.headers) headers[k] = v;
-    const body = await healthRes.text();
-    let html = `<strong>Health:</strong> ${healthRes.status} ${healthRes.statusText}<br>`;
-    html += `<strong>Headers:</strong> <pre>${JSON.stringify(headers, null, 2)}</pre>`;
-    html += `<strong>Body:</strong> <pre>${body}</pre>`;
-
-    // Fetch server runtime mode (demo / DB availability) if available
-    try {
-      const modeRes = await fetch(`${apiBase()}/server/mode`, { method: 'GET' });
-      if (modeRes.ok) {
-        const mode = await modeRes.json();
-        html += `<div style="margin-top:8px;"><strong>Server Mode:</strong> `;
-        html += `<span style="font-weight:600;">` + (mode.demo_mode ? 'DEMO (DEMO_AUTH=1)' : 'NORMAL (DB preferred)') + `</span>`;
-        html += ` &middot; <strong>DB available:</strong> <span id="dbAvailableIndicator" style="font-weight:600;color:${mode.db_available ? 'green' : 'red'}">${mode.db_available}</span></div>`;
-
-        // Update visible banner for demo mode
-        const banner = document.getElementById('serverModeBanner');
-        if (banner) {
-          if (mode.demo_mode) {
-            banner.style.display = 'block';
-          } else {
-            banner.style.display = 'none';
-          }
-        }
-
-      } else {
-        html += `<div style="margin-top:8px;color:orange;"><strong>Server Mode:</strong> unavailable (status ${modeRes.status})</div>`;
-      }
-    } catch (e) {
-      html += `<div style="margin-top:8px;color:red;"><strong>Server Mode:</strong> request failed (${e.message || e})</div>`;
-    }
-
-    diag.innerHTML = html;
   } catch (e) {
-    diag.innerHTML = `<strong>Health check failed:</strong> ${e.message || e}`;
+   // diag.innerHTML = `<span style="color:red">Backend unreachable — using demo fallback.</span>`;
+    const banner = document.getElementById('serverModeBanner'); if (banner) banner.style.display = 'block';
   }
 }
 
@@ -577,12 +463,91 @@ document.addEventListener('click', function (ev) {
     // Re-run diagnostics so UI updates and the new base is used
     runApiDiagnostics();
   }
+  // Button: Reload page over HTTP when mixed-content detected
+  if (ev.target && ev.target.id === 'bsmTryHttp') {
+    try {
+      const url = new URL(window.location.href);
+      if (url.protocol === 'https:') {
+        url.protocol = 'http:';
+        // open in same tab to preserve context
+        window.location.href = url.toString();
+      }
+    } catch (e) {
+      console.warn('Could not reload over HTTP', e);
+    }
+  }
+
+  // Button: focus the manual API override input so user can paste forwarded URL
+  if (ev.target && ev.target.id === 'bsmFocusOverride') {
+    const input = document.getElementById('bsmApiOverride');
+    if (input) {
+      input.focus();
+    } else {
+      // create input area if not present
+      const diag = document.getElementById('apiDiagnostics');
+      diag.insertAdjacentHTML('beforeend', `<div style="margin-top:12px;padding:10px;border:1px dashed #ccc;border-radius:6px;background:#fff"><input id="bsmApiOverride" placeholder="https://<forwarded-host> or http://127.0.0.1:5000" style="width:70%;padding:6px;margin-right:6px" /><button id="bsmApiSave">Use this API</button></div>`);
+      setTimeout(()=>document.getElementById('bsmApiOverride').focus(),50);
+    }
+  }
+
+  // Button: copy suggested forwarded URL to clipboard
+  if (ev.target && ev.target.id === 'bsmCopySuggested') {
+    const suggested = window.location.origin.replace(/^https:/, 'https:');
+    // Guess a forwarded preview host pattern: user may need to adjust
+    const text = suggested;
+    try {
+      navigator.clipboard.writeText(text).then(()=>{
+        const help = document.getElementById('bsmMixedHelp');
+        if (help) help.textContent = 'Suggested URL copied to clipboard. Paste into the override input and press "Use this API".';
+      });
+    } catch(e){
+      const help = document.getElementById('bsmMixedHelp');
+      if (help) help.textContent = 'Copy to clipboard failed; please manually copy: ' + text;
+    }
+  }
+
+  // Button: open local HTTP served frontend (attempts 127.0.0.1:5500)
+  if (ev.target && ev.target.id === 'bsmOpenLocal') {
+    const localUrl = 'http://127.0.0.1:5500/specialist.html';
+    // Quick reachability check: try fetch the document root, then open if ok
+    fetch('http://127.0.0.1:5500/', { method: 'HEAD' }).then(r => {
+      if (r.ok || r.status === 200 || r.status === 304) {
+        window.open(localUrl, '_blank');
+      } else {
+        const help = document.getElementById('bsmMixedHelp');
+        if (help) help.textContent = `Local server responded ${r.status}. Open ${localUrl} in new tab anyway.`;
+        window.open(localUrl, '_blank');
+      }
+    }).catch(e => {
+      const help = document.getElementById('bsmMixedHelp');
+      if (help) help.textContent = `Local server not reachable at http://127.0.0.1:5500. Start one with: python3 -m http.server 5500 (run from the repo's frontend/ directory).`;
+      // still attempt to open the URL — browser may show helpful error
+      window.open(localUrl, '_blank');
+    });
+  }
+
+  // Scheme selector buttons: Auto / Force HTTPS / Force HTTP
+  if (ev.target && (ev.target.id === 'bsmSchemeAuto' || ev.target.id === 'bsmSchemeHttps' || ev.target.id === 'bsmSchemeHttp')) {
+    try {
+      let val = 'auto';
+      if (ev.target.id === 'bsmSchemeHttps') val = 'https';
+      if (ev.target.id === 'bsmSchemeHttp') val = 'http';
+      localStorage.setItem('BSM_API_SCHEME', val);
+      // Give quick feedback in the diagnostics box
+      const help = document.getElementById('bsmMixedHelp');
+      if (help) help.textContent = `Scheme preference saved: ${val}. Re-running diagnostics...`;
+      // Re-run diagnostics to pick up the new preference
+      setTimeout(()=>{ try { runApiDiagnostics(); } catch(e){} }, 200);
+    } catch (e) {
+      console.warn('Could not set BSM_API_SCHEME', e);
+    }
+  }
 });
 
 // Fetch and render readings for a user (userId = 1)
 async function loadUserReadings(userId = 1, days = 30) {
   try {
-    const res = await fetch(`${API_BASE}/readings/${userId}?days=${days}`);
+    const res = await fetch(`${apiBase()}/readings/${userId}?days=${days}`);
     if (!res.ok) {
       const err = await res.json().catch(()=>({message:res.statusText}));
       throw new Error(err.error || err.message || 'Failed to fetch readings');

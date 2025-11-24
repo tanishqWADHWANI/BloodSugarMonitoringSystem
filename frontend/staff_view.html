@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>View Patient Info</title>
 <link rel="stylesheet" href="css/style.css">
+<script src="js/demo_users.js"></script>
 <style>
   
   h1 { color: #004080; margin-bottom: 20px; }
@@ -24,7 +25,7 @@
     <ul>
       <li><a href="staff_dashboard.html">Dashboard</a></li>
       <li><a href="patient_records.html">Patient Records</a></li>
-      <li><a href="staff.html">Logout</a></li>
+      <li style="margin-left:auto;"><button id="logoutBtn" class="btn">Logout</button></li>
     </ul>
   </nav>
 </header>
@@ -37,31 +38,35 @@
     <table>
       <tr>
         <th>Patient Number</th>
-        <td>001</td>
+        <td id="pNumber">001</td>
       </tr>
       <tr>
         <th>Full Name</th>
-        <td>John Doe</td>
+        <td id="pName">John Doe</td>
       </tr>
       <tr>
         <th>Age</th>
-        <td>45</td>
+        <td id="pAge">45</td>
       </tr>
       <tr>
         <th>Gender</th>
-        <td>Male</td>
+        <td id="pGender">Male</td>
       </tr>
       <tr>
         <th>Contact</th>
-        <td>+1 234 567 890</td>
+        <td id="pContact">+1 234 567 890</td>
+      </tr>
+      <tr>
+        <th>Assigned Specialist</th>
+        <td id="pSpecialist">Dr. Christina Lee</td>
       </tr>
       <tr>
         <th>Medical History</th>
-        <td>Type 2 Diabetes, Hypertension</td>
+        <td id="pHistory">Type 2 Diabetes, Hypertension</td>
       </tr>
       <tr>
         <th>Last Test Results</th>
-        <td>Blood Sugar: 130 mg/dL, BP: 140/90 mmHg</td>
+        <td id="pLastResults">Blood Sugar: 130 mg/dL, BP: 140/90 mmHg</td>
       </tr>
     </table>
 
@@ -103,6 +108,7 @@
     const pContactEl    = document.getElementById('pContact');
     const pHistoryEl    = document.getElementById('pHistory');
     const pLastResultsEl= document.getElementById('pLastResults');
+    const pSpecialistEl = document.getElementById('pSpecialist');
     const logoutBtn     = document.getElementById('logoutBtn');
 
     if (!patientNumber) {
@@ -153,6 +159,19 @@
         pContactEl.textContent     = contact;
         pHistoryEl.textContent     = medicalHistory || 'Not recorded';
         pLastResultsEl.textContent = lastResults || 'No recent results recorded.';
+
+        // Specialist handling info
+        let specialistName = (p.assigned_specialist && (p.assigned_specialist.full_name || p.assigned_specialist.name)) || p.specialist_name || p.specialist || null;
+        // If specialist id is present, try to resolve from localStorage.specialists
+        try {
+          if (!specialistName && p.assigned_specialist && p.assigned_specialist.id) {
+            const specs = JSON.parse(localStorage.getItem('specialists') || '[]');
+            const found = Array.isArray(specs) && specs.find(s => String(s.id) === String(p.assigned_specialist.id) || String(s.user_id) === String(p.assigned_specialist.id));
+            if (found) specialistName = found.full_name || found.name || found.username;
+          }
+        } catch (e) { /* ignore */ }
+
+        if (pSpecialistEl) pSpecialistEl.textContent = specialistName || 'Not assigned';
 
         statusMsg.textContent = '';
       } catch (err) {

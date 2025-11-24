@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Patient Details - Online Blood Sugar Monitor</title>
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/demo_users.js"></script>
   <style>
     .logout-btn {
       background:#cc0000;
@@ -132,6 +133,9 @@
       <div class="info-grid" id="personal-info">
         <!-- filled by JS -->
       </div>
+      <div style="margin-top:12px">
+        <strong>Assigned Specialist:</strong> <span id="assignedSpecialist">Dr. Christina Lee</span>
+      </div>
     </section>
 
     <!-- HEALTH DATA -->
@@ -185,10 +189,37 @@
   const patientUserId = localStorage.getItem('viewingPatientUserId'); // users.user_id
   const patientId = localStorage.getItem('viewingPatientId');        // patients.patient_id
 
-  if (!patientNumber || !patientName || !patientUserId || !patientId) {
+  // If some IDs are missing (e.g., selection came from cached data), try to resolve them
+  let resolvedUserId = patientUserId;
+  let resolvedPatientId = patientId;
+  if ((!resolvedUserId || !resolvedPatientId) && patientNumber) {
+    try {
+      // ensure demo patient exists for preview
+      (function(){ try{ const key='patients'; const raw=localStorage.getItem(key); const arr=raw?JSON.parse(raw):null; const exists=Array.isArray(arr)&&arr.some(p=>p.number==='001'||p.id==='001'||p.patientId==='001'); if(!exists){ const demo={ number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', id:'001', patientId:'001' }; const out=Array.isArray(arr)?[demo,...arr]:[demo]; localStorage.setItem(key, JSON.stringify(out)); } }catch(e){} })();
+      const cached = JSON.parse(localStorage.getItem('patients') || 'null');
+      if (Array.isArray(cached)) {
+        const found = cached.find(p => String(p.number) === String(patientNumber) || String(p.patientId) === String(patientNumber));
+        if (found) {
+          resolvedUserId = resolvedUserId || found.userId || found.user_id || null;
+          resolvedPatientId = resolvedPatientId || found.patientId || found.patient_id || null;
+          // Persist for future pages
+          if (resolvedUserId) localStorage.setItem('viewingPatientUserId', String(resolvedUserId));
+          if (resolvedPatientId) localStorage.setItem('viewingPatientId', String(resolvedPatientId));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not resolve patient IDs from cache', e);
+    }
+  }
+
+  if (!patientNumber || !patientName || !resolvedUserId || !resolvedPatientId) {
     alert('No patient selected. Redirecting to dashboard...');
     window.location.href = 'specialist_dashboard.html';
   }
+
+  // Use resolved ids for subsequent calls
+  const patientUserIdFinal = resolvedUserId;
+  const patientIdFinal = resolvedPatientId;
 
   const patientNumberSpan = document.getElementById('patientNumber');
   const patientNameSpan = document.getElementById('patientName');
@@ -198,7 +229,7 @@
   // ============================
   // LOAD READINGS
   // ============================
-  const readingsBody = document.querySelector('#readings-table tbody');
+  const readingsBody = document.querySelector('#health-data-table tbody');
 
   function renderReadings(readings) {
     if (!readingsBody) return;
@@ -235,7 +266,7 @@
 
     try {
       const res = await fetch(
-        `${API_BASE}/api/readings/${patientUserId}?days=30`
+        `${API_BASE}/api/readings/${patientUserIdFinal}?days=30`
       );
       if (!res.ok) {
         throw new Error(`Server responded ${res.status}`);
@@ -282,8 +313,8 @@
     if (!commentList) return;
 
     try {
-      const res = await fetch(
-        `${API_BASE}/api/patient/${patientId}/feedback`
+        const res = await fetch(
+        `${API_BASE}/api/patient/${patientIdFinal}/feedback`
       );
       if (!res.ok) {
         throw new Error(`Server responded ${res.status}`);
@@ -295,6 +326,31 @@
       commentList.innerHTML = '<li>Error loading comments from server.</li>';
     }
   }
+
+  // Load/resolve assigned specialist to display
+  (function loadAssignedSpecialist(){
+    try{
+      // try patient-level assignment from cached patients
+      const cached = JSON.parse(localStorage.getItem('patients') || 'null');
+      let specialistName = null;
+      if (Array.isArray(cached)){
+        const found = cached.find(p => String(p.number) === String(patientNumber) || String(p.patientId) === String(patientNumber));
+        if (found) {
+          specialistName = (found.assigned_specialist && (found.assigned_specialist.full_name || found.assigned_specialist.name)) || found.specialist_name || found.specialist || null;
+          // if specialist is an id, try to resolve
+          const specId = (found.assigned_specialist && found.assigned_specialist.id) || found.specialist_id || found.specialistId || null;
+          if (!specialistName && specId) {
+            const specs = JSON.parse(localStorage.getItem('specialists') || '[]');
+            const sp = Array.isArray(specs) && specs.find(s => String(s.id) === String(specId) || String(s.user_id) === String(specId) || String(s.username) === String(specId));
+            if (sp) specialistName = sp.full_name || sp.name || sp.username;
+          }
+        }
+      }
+      // fallback: try a patient-level API? skip for now
+      const el = document.getElementById('assignedSpecialist');
+      if (el) el.textContent = specialistName || 'Not assigned';
+    }catch(e){ console.warn('Could not resolve assigned specialist', e); }
+  })();
 
   // ============================
   // SAVE NEW COMMENT
@@ -317,7 +373,7 @@
           body: JSON.stringify({
             specialistId: parseInt(specialistId, 10),
             // Backend expects data.patientId to be user_id, and it maps to patient
-            patientId: parseInt(patientUserId, 10),
+            patientId: parseInt(patientUserIdFinal, 10),
             feedbackText: text,
             readingId: null
           })
@@ -351,11 +407,15 @@
   if (logoutBtn) {
     logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      // Clear specialist session keys
       localStorage.removeItem('specialistUsername');
       localStorage.removeItem('specialistFullName');
       localStorage.removeItem('specialistSpecialty');
       localStorage.removeItem('specialistId');
-      window.location.href = 'specialist.html';
+      try { localStorage.removeItem('bsm_token'); } catch (e) {}
+      // Match patient logout UX: inform the user and redirect to home
+      alert('You have been logged out.');
+      window.location.href = 'index.html';
     });
   }
 </script>

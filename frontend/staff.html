@@ -7,6 +7,8 @@
   <title>Staff Login</title>
   <link rel="stylesheet" href="css/style.css" />
   <!-- Removed js/api.js to avoid old loginUser() conflicts -->
+  <script src="js/api.js"></script>
+  <script src="js/demo_users.js"></script>
 </head>
 
 <body>
@@ -100,83 +102,77 @@ const API_BASE = "https://5000-penjen30-bloodsugarmonitoringsystem-xxxxx.app.git
 // ^^^^^^^^^^^^^^ REPLACE THIS WITH YOUR ACTUAL 5000 URL FROM PORTS TAB
 
 // -----------------------------------------------------------
-// Staff Login Handler
+// Staff Login Handler (local, patient-style fallback)
+// Uses the same simple localStorage-based login approach as `patient.html`.
 // -----------------------------------------------------------
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("staffLoginForm");
-  const emailInput = document.getElementById("staffEmail");
-  const passInput = document.getElementById("staffPassword");
-  const msgBox = document.getElementById("loginMsg");
-  const demoBtn = document.getElementById("demoStaffLogin");
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('staffLoginForm');
+  const emailInput = document.getElementById('staffEmail');
+  const passInput = document.getElementById('staffPassword');
+  const msgBox = document.getElementById('loginMsg');
+  const demoBtn = document.getElementById('demoStaffLogin');
 
   if (!form) return;
 
-  // Demo autofill
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
   if (demoBtn) {
-    demoBtn.addEventListener("click", () => {
-      emailInput.value = "staff2@test.com";
-      passInput.value = "staff123";
-      if (msgBox) msgBox.textContent = "";
+    demoBtn.addEventListener('click', () => {
+      emailInput.value = 'staff2@test.com';
+      passInput.value = 'staff123';
+      if (msgBox) msgBox.textContent = '';
     });
   }
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (msgBox) msgBox.textContent = "";
+    if (msgBox) msgBox.textContent = '';
+
+    const email = (emailInput.value || '').trim();
+    const pass = (passInput.value || '').trim();
+    if (!email || !pass) {
+      if (msgBox) msgBox.textContent = 'Enter email and password.';
+      return;
+    }
 
     try {
-      const emailVal = emailInput.value.trim();
-      const passVal = passInput.value.trim();
+      // Try hybrid login (server first, fallback to demo)
+      const resp = await window.bsm_api.loginUser(email, pass);
 
-      if (!emailVal || !passVal) {
-        throw new Error("Enter email and password.");
+      // Persist token if provided
+      const token = resp && (resp.token || resp.access_token);
+      if (token) {
+        try { localStorage.setItem('bsm_token', token); } catch(e) {}
       }
 
-      console.log("Logging in via:", `${API_BASE}/api/login`);
-
-      const res = await fetch(`${API_BASE}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: emailVal,
-          password: passVal,
-        }),
-      });
-
-      const contentType = res.headers.get("content-type") || "";
-
-      if (!contentType.includes("application/json")) {
-        const text = await res.text();
-        console.error("Non-JSON response:", res.status, text.slice(0, 200));
-        throw new Error(`Server returned HTML (status ${res.status}). Check that API_BASE uses port 5000 and Flask is running.`);
-      }
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed. Check your credentials.");
-      }
-
-      const user = data.user;
-      if (!user) {
-        throw new Error("Server did not return a valid user object.");
-      }
-
-      if (user.role !== "staff" && user.role !== "admin") {
-        throw new Error("This account does not have staff access.");
-      }
-
-      localStorage.setItem("authUser", JSON.stringify(user));
-
-      window.location.href =
-        "staff_dashboard.html?user_id=" + encodeURIComponent(user.user_id);
-    } catch (err) {
-      console.error(err);
-      if (msgBox) {
-        msgBox.textContent = err.message || "Login failed.";
+      // If backend response indicates non-demo, map to staff session
+      if (resp && resp.user && (resp.user.role === 'staff' || resp.user.role === 'Staff' || resp.user.is_staff)) {
+        const u = resp.user;
+        const key = (u.email || u.username || email).split('@')[0];
+        try { localStorage.setItem('loggedInStaff', key); } catch(e) {}
+        try { localStorage.setItem('staffFullName', (u.firstName || u.first_name || key.charAt(0).toUpperCase()+key.slice(1))); } catch(e) {}
+        try { localStorage.setItem('staffToken', token || ('local-demo-' + key)); } catch(e) {}
+      } else if (resp && resp._localDemo) {
+        // Hybrid fallback already stored patient keys; override for staff-specific keys
+        const key = (email.split('@')[0] || 'staff').toLowerCase();
+        try { localStorage.setItem('loggedInStaff', key); } catch(e) {}
+        try { localStorage.setItem('staffFullName', cap(key)); } catch(e) {}
+        try { localStorage.setItem('staffToken', 'local-demo-' + key); } catch(e) {}
       } else {
-        alert(err.message || "Login failed.");
+        // Unclear response: fall back to local demo staff session
+        const key = (email.split('@')[0] || 'staff').toLowerCase();
+        try { localStorage.setItem('loggedInStaff', key); } catch(e) {}
+        try { localStorage.setItem('staffFullName', cap(key)); } catch(e) {}
+        try { localStorage.setItem('staffToken', 'local-demo-' + key); } catch(e) {}
       }
+
+      if (msgBox) msgBox.textContent = 'Signing in…';
+      setTimeout(() => {
+        window.location.href = 'staff_dashboard.html';
+      }, 200);
+    } catch (err) {
+      console.error('Staff login failed', err);
+      if (msgBox) msgBox.textContent = 'Login failed: ' + (err && err.message ? err.message : err);
     }
   });
 });

@@ -7,6 +7,7 @@
 
   <!-- Use your unified global stylesheet -->
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/demo_users.js"></script>
 </head>
 
 <body>
@@ -115,30 +116,65 @@
           return;
         }
 
-        // Load existing patients
-        const patients = JSON.parse(localStorage.getItem('patients') || '{}');
+        // Load existing patients (support both array and map shapes)
+        try{ const key='patients'; const raw=localStorage.getItem(key); const arr=raw?JSON.parse(raw):null; const exists=Array.isArray(arr)&&arr.some(p=>p.number==='001'||p.id==='001'||p.patientId==='001'); if(!exists){ const demo={ number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', id:'001', patientId:'001', email:'johndoe@demo' }; const out=Array.isArray(arr)?[demo,...arr]:[demo]; localStorage.setItem(key, JSON.stringify(out)); } }catch(e){}
 
-        if (patients[email]) {
-          msg.textContent = 'This email is already registered. Please log in instead.';
-          return;
+        const rawPatients = (function(){ try { return JSON.parse(localStorage.getItem('patients') || 'null'); } catch(e) { return null; } })();
+
+        // If stored as an array, treat as list; otherwise treat as map/object
+        if (Array.isArray(rawPatients)) {
+          // check duplicate by email in array
+          const exists = rawPatients.some(p => String((p.email||'')).toLowerCase() === String(email).toLowerCase());
+          if (exists) {
+            msg.textContent = 'This email is already registered. Please log in instead.';
+            return;
+          }
+
+          // append to array (mark assignment pending)
+          rawPatients.push({
+            number: ('00' + (rawPatients.length + 1)).slice(-3),
+            name: fullName,
+            email: email,
+            age: age,
+            gender: gender,
+            phone: contact,
+            password: password,
+            assigned_specialist: null,
+            assignment_status: 'pending',
+            id: Date.now(),
+            patientId: Date.now()
+          });
+          try { localStorage.setItem('patients', JSON.stringify(rawPatients)); } catch(e) { console.warn('Could not save patients array', e); }
+        } else {
+          // treat as map/object
+          const patientsMap = rawPatients && typeof rawPatients === 'object' ? rawPatients : {};
+          if (patientsMap[email]) {
+            msg.textContent = 'This email is already registered. Please log in instead.';
+            return;
+          }
+          patientsMap[email] = {
+            fullName,
+            email,
+            age,
+            gender,
+            contact,
+            password,
+            assigned_specialist: null,
+            assignment_status: 'pending'
+          };
+          try { localStorage.setItem('patients', JSON.stringify(patientsMap)); } catch(e){ console.warn('Could not save patients map', e); }
         }
-
-        // Save new patient record
-        patients[email] = {
-          fullName,
-          email,
-          age,
-          gender,
-          contact,
-          password
-        };
-        localStorage.setItem('patients', JSON.stringify(patients));
+        // Notify admin dashboard that a new patient was created (clinic should review assignment)
+        try {
+          const notify = { id: Date.now(), email: email, name: fullName, created_at: new Date().toISOString(), note: 'New patient registered — assignment pending' };
+          localStorage.setItem('admin_patient_notify', JSON.stringify(notify));
+        } catch (e) { console.warn('Could not set admin notification', e); }
 
         // Auto-login the new user
         localStorage.setItem('loggedInPatient', email.split('@')[0]);
 
         msg.style.color = 'green';
-        msg.textContent = 'Account created successfully! Redirecting to your dashboard...';
+        msg.textContent = 'Account created successfully! The clinic will review your information and assign a specialist shortly. Redirecting to your dashboard...';
 
         // Redirect to patient dashboard
         setTimeout(() => {

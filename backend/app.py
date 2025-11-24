@@ -17,7 +17,7 @@ The app relies on:
 - scheduler_service.SchedulerService
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import os
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -42,14 +42,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create Flask application
-app = Flask(__name__)
+# Serve the frontend folder as static files so frontend and backend can be
+# same-origin in development (recommended). The static_folder path is set
+# relative to this file's parent directory.
+frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+app = Flask(__name__, static_folder=frontend_dir, static_url_path='')
 
-# Configure CORS so your front-end (port 5500) can call this API.
-# Include non-/api endpoints like `/health` so browser health checks don't fail.
-CORS(
-    app,
-    resources={r"/*": {"origins": "*"}},
-)
+# Configure CORS so your front-end can call this API.
+# Allow configuration via environment variable `CORS_ORIGINS`.
+# Example:
+#   export CORS_ORIGINS="https://my-preview.domain,https://localhost:5500"
+# By default (development) we allow all origins to avoid preview friction.
+cors_origins = os.environ.get("CORS_ORIGINS", "*")
+if cors_origins.strip() == "":
+    cors_origins = "*"
+
+if cors_origins == "*":
+    CORS(app, resources={r"/*": {"origins": "*"}})
+else:
+    origins_list = [o.strip() for o in cors_origins.split(",") if o.strip()]
+    CORS(app, resources={r"/*": {"origins": origins_list}})
+
+logger.info(f"CORS configured. Origins={cors_origins}")
 
 # ========================================
 # 2. Service Initialization (DB, ML, etc.)
@@ -121,6 +135,28 @@ def server_mode():
         "demo_mode": demo_env,
         "db_available": db_available,
     }), 200
+
+
+# Serve frontend static files (development convenience)
+@app.route('/', defaults={'path': 'index.html'})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    """
+    Serve frontend static files from the top-level `frontend/` directory.
+    If the requested file does not exist, fall back to `index.html`.
+    This enables opening `http://127.0.0.1:5000/specialist.html` and other
+    frontend files directly without a separate static server.
+    """
+    try:
+        full_path = os.path.join(frontend_dir, path)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            return send_from_directory(frontend_dir, path)
+    except Exception:
+        # swallow file system errors and fallback to index
+        pass
+
+    # Default fallback
+    return send_from_directory(frontend_dir, 'index.html')
 
 
 @app.route("/api/db/health", methods=["GET"])
@@ -1766,6 +1802,75 @@ def get_specialist_alerts(specialist_id):
 
 
 # ========================================
+# 14. Notification endpoints (email sending)
+# ========================================
+
+
+@app.route('/api/notify/email', methods=['POST'])
+def api_send_email():
+    """
+    Send a single email. Request JSON:
+      - to: recipient email (string)
+      - subject: subject (string)
+      - message: body (string)
+      - html: optional boolean (default False)
+
+    Uses backend.notification_service; returns { success: bool }.
+    """
+    data = request.get_json() or {}
+    to = data.get('to')
+    subject = data.get('subject')
+    message = data.get('message')
+    html = bool(data.get('html', False))
+
+    if not to or not subject or not message:
+        return jsonify({"error": "to, subject and message are required"}), 400
+
+    try:
+        ok = False
+        try:
+            ok = notification_service.send_email(to, subject, message, html=html)
+        except Exception as e:
+            logger.error(f"Notification service error: {e}", exc_info=True)
+            ok = False
+
+        if ok:
+            return jsonify({"success": True, "message": "Email sent"}), 200
+        else:
+            # Do not expose SMTP details; return generic response
+            return jsonify({"success": False, "message": "Email not sent (SMTP may be unconfigured)"}), 502
+
+    except Exception as e:
+        logger.error(f"/api/notify/email failed: {e}", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route('/api/notify/batch', methods=['POST'])
+def api_send_email_batch():
+    """
+    Send a batch of emails. Request JSON: { emails: [ {to, subject, message, html?}, ... ] }
+    Returns counts of successes/failures.
+    """
+    data = request.get_json() or {}
+    emails = data.get('emails') or []
+    if not isinstance(emails, list) or len(emails) == 0:
+        return jsonify({"error": "emails array required"}), 400
+
+    results = {"sent": 0, "failed": 0}
+    for e in emails:
+        try:
+            ok = notification_service.send_email(e.get('to'), e.get('subject'), e.get('message'), html=bool(e.get('html', False)))
+            if ok:
+                results['sent'] += 1
+            else:
+                results['failed'] += 1
+        except Exception:
+            results['failed'] += 1
+
+    return jsonify({"success": True, "results": results}), 200
+
+
+# ========================================
 # 13. Reports (User & Admin)
 # ========================================
 
@@ -2090,4 +2195,17 @@ if __name__ == "__main__":
     logger.info("=" * 60)
 
     # Run Flask development server (debug disabled to avoid reloader in container)
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    # If TLS cert/key are present or provided via env vars, run with SSL to support HTTPS.
+    ssl_cert = os.environ.get('SSL_CERT', os.path.join(os.path.dirname(__file__), 'certs', 'server.crt'))
+    ssl_key = os.environ.get('SSL_KEY', os.path.join(os.path.dirname(__file__), 'certs', 'server.key'))
+
+    use_ssl = False
+    if os.path.isfile(ssl_cert) and os.path.isfile(ssl_key):
+        use_ssl = True
+
+    if use_ssl:
+        logger.info(f"Starting HTTPS server on 0.0.0.0:5000 using cert={ssl_cert}")
+        app.run(debug=False, host="0.0.0.0", port=5000, ssl_context=(ssl_cert, ssl_key))
+    else:
+        logger.info("Starting HTTP server on 0.0.0.0:5000 (no SSL certificates found).")
+        app.run(debug=False, host="0.0.0.0", port=5000)

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Staff — Email Specialists</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/api.js"></script>
+  <script src="js/demo_users.js"></script>
+  <style>
+    .email-container { max-width:900px; margin:28px auto; padding:18px; }
+    .card { background:#fff; padding:18px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    label{display:block;margin-top:12px;font-weight:600}
+    select,input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn-primary{background:#004080;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid #ccc;padding:10px 14px;border-radius:6px;cursor:pointer}
+    .specialist-list{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+    .spec-pill{background:#f1f7ff;padding:8px 10px;border-radius:18px;border:1px solid #e0eefc}
+  </style>
+</head>
+<body>
+  <main class="email-container">
+    <div class="card">
+      <h1>Email Specialists</h1>
+      <p style="color:#444">Send messages to one of the specialists. If the backend is unreachable the message will be queued locally.</p>
+
+      <form id="emailForm">
+        <label for="toSelect">To</label>
+        <select id="toSelect" required></select>
+
+        <label for="subject">Subject</label>
+        <input id="subject" type="text" placeholder="Subject" required />
+
+        <label for="message">Message</label>
+        <textarea id="message" rows="8" placeholder="Write your message to the specialist..." required></textarea>
+
+        <div class="actions">
+          <button class="btn primary" id="sendBtn" type="submit">Send</button>
+          <button class="btn-ghost" id="cancelBtn" type="button">Cancel</button>
+        </div>
+      </form>
+
+      <div id="statusMsg" style="margin-top:12px;color:#333"></div>
+
+      <hr style="margin:18px 0">
+      <h3>Available Specialists</h3>
+      <div class="specialist-list" id="specialistList"></div>
+
+      <p style="margin-top:18px"><a href="staff_dashboard.html">Back to Dashboard</a></p>
+    </div>
+  </main>
+
+  <script>
+    // Build specialist list (from cache or demo)
+    (function(){
+      const demo = [
+        { username: 'jsmith', full_name: 'Dr. John Smith', email: 'jsmith@demo' },
+        { username: 'ajones', full_name: 'Dr. Alex Jones', email: 'ajones@demo' },
+        { username: 'clee', full_name: 'Dr. Christina Lee', email: 'clee@demo' }
+      ];
+
+      let specs = demo;
+      try { const s = JSON.parse(localStorage.getItem('specialists') || 'null'); if (Array.isArray(s) && s.length) specs = s; } catch(e){}
+
+      const select = document.getElementById('toSelect');
+      const list = document.getElementById('specialistList');
+      specs.forEach(s => {
+        const opt = document.createElement('option'); opt.value = s.email || s.username; opt.textContent = s.full_name || s.username; select.appendChild(opt);
+        const pill = document.createElement('div'); pill.className='spec-pill'; pill.textContent = (s.full_name || s.username) + (s.email ? (' — ' + s.email) : ''); list.appendChild(pill);
+      });
+    })();
+
+    document.getElementById('emailForm').addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      const to = document.getElementById('toSelect').value;
+      const subject = document.getElementById('subject').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const status = document.getElementById('statusMsg'); status.textContent='';
+
+      const payload = { to, subject, message, source: 'staff', subtype: 'specialist' };
+      try {
+        await (window.bsm_api && window.bsm_api.sendEmail ? window.bsm_api.sendEmail(payload) : Promise.reject(new Error('no-api')));
+        status.style.color='green'; status.textContent='Email sent successfully.';
+      } catch (err) {
+        // queue locally
+        try {
+          const raw = localStorage.getItem('pending_emails') || '[]'; const arr = JSON.parse(raw); arr.push(payload); localStorage.setItem('pending_emails', JSON.stringify(arr));
+          status.style.color='orange'; status.textContent='Server unreachable — email queued locally.';
+        } catch (e) { status.style.color='red'; status.textContent='Failed to send or queue email.'; }
+      }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', ()=> window.location.href='staff_dashboard.html');
+  </script>
+  </body>
+</html>

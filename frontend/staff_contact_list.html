@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contact Messages — Staff</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .container{max-width:1000px;margin:22px auto;padding:12px}
+    table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}
+    th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
+    th{background:#004080;color:#fff}
+    .actions button{margin-right:6px}
+    .empty{padding:18px;background:#f9f9f9;border-radius:8px;text-align:center}
+    .pill{display:inline-block;background:#eef6ff;padding:6px 8px;border-radius:14px;border:1px solid #d7eaff}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Contact Messages</h1>
+    <p>Messages submitted via the public contact form and any queued outbox items.</p>
+
+    <div style="margin:12px 0">
+      <button id="refreshBtn">Refresh</button>
+      <button id="dismissAll" style="margin-left:8px">Dismiss Notify</button>
+      <button id="flushAll" style="margin-left:8px">Remove All Queued</button>
+    </div>
+
+    <div id="listContainer"></div>
+
+    <p style="margin-top:18px"><a href="staff_dashboard.html">Back to Dashboard</a></p>
+  </main>
+
+  <script>
+    function loadMessages() {
+      // gather pending_emails and contact_messages, dedupe by id
+      const pending = JSON.parse(localStorage.getItem('pending_emails') || '[]');
+      const contacts = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+      const map = new Map();
+      pending.forEach(p => { if (p && p.id) map.set(String(p.id), Object.assign({__source:'pending'}, p)); });
+      contacts.forEach(c => { if (c && c.id) { const key=String(c.id); if (!map.has(key)) map.set(key, Object.assign({__source:'contact'}, c)); }});
+      return Array.from(map.values()).sort((a,b)=> (b.created_at||0) > (a.created_at||0) ? 1 : -1);
+    }
+
+    function renderList() {
+      const msgs = loadMessages();
+      const container = document.getElementById('listContainer');
+      if (!msgs || msgs.length === 0) { container.innerHTML = '<div class="empty">No contact messages or queued items.</div>'; return; }
+
+      let html = '<table><thead><tr><th>When</th><th>From</th><th>Subject</th><th>Source</th><th>Actions</th></tr></thead><tbody>';
+      msgs.forEach(m => {
+        const when = m.created_at || '';
+        const from = (m.meta && (m.meta.name || m.meta.from)) || m.name || (m.email || '');
+        const subj = m.subject || (m.message && m.message.substring(0,50)) || '(no subject)';
+        const source = m.__source || (m.meta?'pending':'contact');
+        html += `<tr data-id="${encodeURIComponent(String(m.id))}"><td>${when}</td><td>${from}</td><td>${subj}</td><td><span class="pill">${source}</span></td><td class="actions">
+          <a href="staff_contact_view.html?id=${encodeURIComponent(String(m.id))}" target="_blank">Open</a>
+          <button class="deleteBtn" data-id="${encodeURIComponent(String(m.id))}">Delete</button>
+        </td></tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+      // wire delete buttons
+      document.querySelectorAll('.deleteBtn').forEach(btn => {
+        btn.addEventListener('click', function(){
+          const id = decodeURIComponent(this.getAttribute('data-id'));
+          if (!confirm('Delete message '+id+'?')) return;
+          try {
+            let pending = JSON.parse(localStorage.getItem('pending_emails') || '[]');
+            pending = pending.filter(p=> String(p.id)!==String(id));
+            localStorage.setItem('pending_emails', JSON.stringify(pending));
+            let contacts = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+            contacts = contacts.filter(c=> String(c.id)!==String(id));
+            localStorage.setItem('contact_messages', JSON.stringify(contacts));
+            // clear notify if it matches
+            const notify = JSON.parse(localStorage.getItem('pending_outbox_notify') || 'null');
+            if (notify && String(notify.id)===String(id)) localStorage.removeItem('pending_outbox_notify');
+            renderList();
+          } catch(e){ alert('Failed to delete: '+e); }
+        });
+      });
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', renderList);
+    document.getElementById('dismissAll').addEventListener('click', ()=>{ localStorage.removeItem('pending_outbox_notify'); alert('Notifications dismissed'); renderList(); });
+    document.getElementById('flushAll').addEventListener('click', ()=>{
+      if (!confirm('Remove all queued pending_emails? This will not attempt to send them.')) return;
+      try { localStorage.setItem('pending_emails', JSON.stringify([])); localStorage.removeItem('pending_outbox_notify'); alert('All queued items removed'); renderList(); } catch(e){ alert('Failed: '+e); }
+    });
+
+    // initial render
+    renderList();
+
+    // update when storage changes (another tab submits)
+    window.addEventListener('storage', function(e){ if (e.key === 'pending_emails' || e.key === 'contact_messages' || e.key === 'pending_outbox_notify') renderList(); });
+  </script>
+</body>
+</html>
