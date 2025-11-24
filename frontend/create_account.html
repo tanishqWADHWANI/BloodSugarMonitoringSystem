@@ -33,31 +33,44 @@
       </p>
 
       <!-- Registration Form -->
-      <form id="registerForm" method="post" action="">
-        <label for="fullName">Full Name</label>
-        <input type="text" id="fullName" name="fullName" placeholder="e.g., Alice Johnson" required>
+      <form id="registerForm" method="post" action="" enctype="multipart/form-data">
+        <label for="firstName">First Name *</label>
+        <input type="text" id="firstName" name="firstName" placeholder="e.g., Alice" required>
 
-        <label for="email">Email</label>
+        <label for="lastName">Last Name *</label>
+        <input type="text" id="lastName" name="lastName" placeholder="e.g., Johnson" required>
+
+        <label for="healthCareNumber">Health Care Number *</label>
+        <input type="text" id="healthCareNumber" name="healthCareNumber" placeholder="e.g., HCN123456" required>
+
+        <label for="email">Email *</label>
         <input type="email" id="email" name="email" placeholder="e.g., alice@example.com" required>
 
+        <label for="dateOfBirth">Date of Birth *</label>
+        <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+
         <label for="age">Age</label>
-        <input type="number" id="age" name="age" placeholder="e.g., 45" required min="0">
+        <input type="number" id="age" name="age" placeholder="Calculated from date of birth" readonly style="background: #f5f5f5;">
 
         <label for="gender">Gender</label>
-        <select id="gender" name="gender" required>
+        <select id="gender" name="gender">
           <option value="">-- Select Gender --</option>
           <option value="Female">Female</option>
           <option value="Male">Male</option>
           <option value="Other">Other</option>
         </select>
 
-        <label for="contact">Contact Number</label>
+        <label for="contact">Contact Phone Number *</label>
         <input type="tel" id="contact" name="contact" placeholder="e.g., +1 555 123 4567" required>
 
-        <label for="password">Create Password</label>
-        <input type="password" id="password" name="password" placeholder="Enter a strong password" required>
+        <label for="profileImage">Profile Image</label>
+        <input type="file" id="profileImage" name="profileImage" accept="image/*">
+        <small style="color: #666; display: block; margin-top: -10px; margin-bottom: 15px;">Optional: Upload your profile picture (JPG, PNG)</small>
 
-        <label for="confirmPassword">Confirm Password</label>
+        <label for="password">Create Password *</label>
+        <input type="password" id="password" name="password" placeholder="Enter a strong password (min 6 characters)" required>
+
+        <label for="confirmPassword">Confirm Password *</label>
         <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required>
 
         <input type="submit" value="Create Account">
@@ -80,29 +93,47 @@
 
   <!-- ======================================================
        REGISTRATION SCRIPT
-       Handles validation, localStorage saving, and redirect
+       Handles validation, API call to backend
        ====================================================== -->
   <script>
+    const API_BASE = 'http://127.0.0.1:5000';
+    
     (function () {
       const form = document.getElementById('registerForm');
       const msg = document.getElementById('registerMsg');
+      const dateOfBirthInput = document.getElementById('dateOfBirth');
+      const ageInput = document.getElementById('age');
 
-      form.addEventListener('submit', function (e) {
+      // Auto-calculate age from date of birth
+      dateOfBirthInput.addEventListener('change', function() {
+        const dob = new Date(this.value);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+          age--;
+        }
+        ageInput.value = age >= 0 ? age : '';
+      });
+
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
         msg.style.color = 'red';
         msg.textContent = '';
 
-        const fullName = document.getElementById('fullName').value.trim();
-        const email = document.getElementById('email').value.trim().toLowerCase();
-        const age = document.getElementById('age').value.trim();
-        const gender = document.getElementById('gender').value;
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const healthCareNumber = document.getElementById('healthCareNumber').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const dateOfBirth = document.getElementById('dateOfBirth').value;
         const contact = document.getElementById('contact').value.trim();
         const password = document.getElementById('password').value.trim();
         const confirmPassword = document.getElementById('confirmPassword').value.trim();
+        const profileImage = document.getElementById('profileImage').files[0];
 
         // Validation
-        if (!fullName || !email || !age || !gender || !contact || !password || !confirmPassword) {
-          msg.textContent = 'Please fill out all fields.';
+        if (!firstName || !lastName || !healthCareNumber || !email || !dateOfBirth || !contact || !password || !confirmPassword) {
+          msg.textContent = 'Please fill out all required fields (*).';
           return;
         }
 
@@ -116,70 +147,51 @@
           return;
         }
 
-        // Load existing patients (support both array and map shapes)
-        try{ const key='patients'; const raw=localStorage.getItem(key); const arr=raw?JSON.parse(raw):null; const exists=Array.isArray(arr)&&arr.some(p=>p.number==='001'||p.id==='001'||p.patientId==='001'); if(!exists){ const demo={ number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', id:'001', patientId:'001', email:'johndoe@demo' }; const out=Array.isArray(arr)?[demo,...arr]:[demo]; localStorage.setItem(key, JSON.stringify(out)); } }catch(e){}
+        // Prepare data
+        const payload = {
+          email: email,
+          password: password,
+          firstName: firstName,
+          lastName: lastName,
+          role: 'patient',
+          dateOfBirth: dateOfBirth,
+          phone: contact,
+          healthCareNumber: healthCareNumber
+        };
 
-        const rawPatients = (function(){ try { return JSON.parse(localStorage.getItem('patients') || 'null'); } catch(e) { return null; } })();
-
-        // If stored as an array, treat as list; otherwise treat as map/object
-        if (Array.isArray(rawPatients)) {
-          // check duplicate by email in array
-          const exists = rawPatients.some(p => String((p.email||'')).toLowerCase() === String(email).toLowerCase());
-          if (exists) {
-            msg.textContent = 'This email is already registered. Please log in instead.';
-            return;
-          }
-
-          // append to array (mark assignment pending)
-          rawPatients.push({
-            number: ('00' + (rawPatients.length + 1)).slice(-3),
-            name: fullName,
-            email: email,
-            age: age,
-            gender: gender,
-            phone: contact,
-            password: password,
-            assigned_specialist: null,
-            assignment_status: 'pending',
-            id: Date.now(),
-            patientId: Date.now()
-          });
-          try { localStorage.setItem('patients', JSON.stringify(rawPatients)); } catch(e) { console.warn('Could not save patients array', e); }
-        } else {
-          // treat as map/object
-          const patientsMap = rawPatients && typeof rawPatients === 'object' ? rawPatients : {};
-          if (patientsMap[email]) {
-            msg.textContent = 'This email is already registered. Please log in instead.';
-            return;
-          }
-          patientsMap[email] = {
-            fullName,
-            email,
-            age,
-            gender,
-            contact,
-            password,
-            assigned_specialist: null,
-            assignment_status: 'pending'
-          };
-          try { localStorage.setItem('patients', JSON.stringify(patientsMap)); } catch(e){ console.warn('Could not save patients map', e); }
+        // If profile image is provided, convert to base64 or upload separately
+        // For now, we'll send image URL as null and implement file upload later
+        if (profileImage) {
+          // TODO: Implement file upload to server
+          console.log('Profile image selected:', profileImage.name);
         }
-        // Notify admin dashboard that a new patient was created (clinic should review assignment)
+
         try {
-          const notify = { id: Date.now(), email: email, name: fullName, created_at: new Date().toISOString(), note: 'New patient registered — assignment pending' };
-          localStorage.setItem('admin_patient_notify', JSON.stringify(notify));
-        } catch (e) { console.warn('Could not set admin notification', e); }
+          const response = await fetch(`${API_BASE}/api/users/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
 
-        // Auto-login the new user
-        localStorage.setItem('loggedInPatient', email.split('@')[0]);
+          const data = await response.json();
 
-        msg.style.color = 'green';
-        msg.textContent = 'Account created successfully! The clinic will review your information and assign a specialist shortly. Redirecting to your dashboard...';
+          if (!response.ok) {
+            throw new Error(data.error || `HTTP error ${response.status}`);
+          }
 
-        // Redirect to patient dashboard
-        setTimeout(() => {
-          window.location.href = 'patient_dashboard.html';
-        }, 1200);
+          msg.style.color = 'green';
+          msg.textContent = 'Account created successfully! Redirecting to login...';
+          
+          setTimeout(() => {
+            window.location.href = 'patient.html';
+          }, 2000);
+
+        } catch (error) {
+          console.error('Registration error:', error);
+          msg.textContent = 'Registration failed: ' + error.message;
+        }
       });
     })();
   </script>

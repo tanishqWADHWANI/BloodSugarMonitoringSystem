@@ -538,8 +538,11 @@
 
     <!-- Patient Information Card -->
     <section class="card" id="patientInfoCard">
-      <h2>👤 Patient Information</h2>
-      <div class="patient-info-grid">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2>👤 Patient Information</h2>
+        <button onclick="toggleEditProfile()" id="editProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
+      </div>
+      <div class="patient-info-grid" id="patientInfoDisplay">
         <div class="info-item">
           <span class="info-label">📧 Email:</span>
           <span class="info-value" id="patientEmail">Loading...</span>
@@ -556,6 +559,59 @@
           <span class="info-label">🆔 Patient ID:</span>
           <span class="info-value" id="patientIdDisplay">Loading...</span>
         </div>
+      </div>
+
+      <!-- Edit Profile Form (Hidden by default) -->
+      <div id="editProfileForm" style="display: none; margin-top: 20px;">
+        <h3 style="color: #004080; margin-bottom: 15px;">Edit Your Profile</h3>
+        <form id="profileUpdateForm" class="form-grid">
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editFirstName">First Name *</label>
+              <input type="text" id="editFirstName" required />
+            </div>
+            <div class="form-field">
+              <label for="editLastName">Last Name *</label>
+              <input type="text" id="editLastName" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editEmail">Email *</label>
+              <input type="email" id="editEmail" required />
+            </div>
+            <div class="form-field">
+              <label for="editPhone">Phone</label>
+              <input type="tel" id="editPhone" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editDateOfBirth">Date of Birth *</label>
+              <input type="date" id="editDateOfBirth" required />
+            </div>
+            <div class="form-field">
+              <label for="editHealthCareNumber">Health Care Number *</label>
+              <input type="text" id="editHealthCareNumber" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editPassword">New Password (leave blank to keep current)</label>
+              <input type="password" id="editPassword" placeholder="Enter new password" />
+            </div>
+            <div class="form-field">
+              <label for="editProfileImage">Profile Image</label>
+              <input type="file" id="editProfileImage" accept="image/*" />
+              <small style="color: #666;">Upload a new profile picture (optional)</small>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">💾 Save Changes</button>
+            <button type="button" onclick="cancelEditProfile()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">❌ Cancel</button>
+          </div>
+        </form>
+        <div id="profileUpdateMsg" style="margin-top: 15px; padding: 10px; border-radius: 4px;"></div>
       </div>
     </section>
 
@@ -1039,6 +1095,107 @@
     }
 
     // Load patient information
+    // Profile Edit Functions
+    let currentUserData = null;
+
+    function toggleEditProfile() {
+      const form = document.getElementById('editProfileForm');
+      const display = document.getElementById('patientInfoDisplay');
+      const btn = document.getElementById('editProfileBtn');
+      
+      if (form.style.display === 'none') {
+        // Populate form with current data
+        if (currentUserData) {
+          document.getElementById('editFirstName').value = currentUserData.first_name || '';
+          document.getElementById('editLastName').value = currentUserData.last_name || '';
+          document.getElementById('editEmail').value = currentUserData.email || '';
+          document.getElementById('editPhone').value = currentUserData.phone || '';
+          document.getElementById('editDateOfBirth').value = currentUserData.date_of_birth || '';
+          document.getElementById('editHealthCareNumber').value = currentUserData.health_care_number || '';
+        }
+        form.style.display = 'block';
+        display.style.display = 'none';
+        btn.textContent = '👁️ View Profile';
+      } else {
+        form.style.display = 'none';
+        display.style.display = 'grid';
+        btn.textContent = '✏️ Edit Profile';
+      }
+    }
+
+    function cancelEditProfile() {
+      document.getElementById('editProfileForm').style.display = 'none';
+      document.getElementById('patientInfoDisplay').style.display = 'grid';
+      document.getElementById('editProfileBtn').textContent = '✏️ Edit Profile';
+      document.getElementById('profileUpdateMsg').textContent = '';
+    }
+
+    // Handle profile update form submission
+    document.getElementById('profileUpdateForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const msgEl = document.getElementById('profileUpdateMsg');
+      msgEl.style.color = 'blue';
+      msgEl.style.background = '#e7f3ff';
+      msgEl.style.padding = '10px';
+      msgEl.textContent = 'Updating profile...';
+      
+      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+      
+      const payload = {
+        firstName: document.getElementById('editFirstName').value.trim(),
+        lastName: document.getElementById('editLastName').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        dateOfBirth: document.getElementById('editDateOfBirth').value,
+        healthCareNumber: document.getElementById('editHealthCareNumber').value.trim()
+      };
+      
+      // Only include password if entered
+      const password = document.getElementById('editPassword').value.trim();
+      if (password) {
+        if (password.length < 6) {
+          msgEl.style.color = 'red';
+          msgEl.style.background = '#ffe7e7';
+          msgEl.textContent = 'Password must be at least 6 characters long.';
+          return;
+        }
+        payload.password = password;
+      }
+      
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          msgEl.style.color = 'green';
+          msgEl.style.background = '#e7ffe7';
+          msgEl.textContent = '✅ Profile updated successfully!';
+          
+          // Reload patient info
+          await loadPatientInfo();
+          
+          // Close form after 2 seconds
+          setTimeout(() => {
+            cancelEditProfile();
+          }, 2000);
+        } else {
+          throw new Error(data.error || 'Update failed');
+        }
+      } catch (error) {
+        msgEl.style.color = 'red';
+        msgEl.style.background = '#ffe7e7';
+        msgEl.textContent = '❌ Error: ' + error.message;
+      }
+    });
+
     async function loadPatientInfo() {
       const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
       console.log('Loading patient info for userId:', userId);
@@ -1057,6 +1214,7 @@
         if (response.ok) {
           const user = await response.json();
           console.log('Patient info received:', user);
+          currentUserData = user; // Store for edit form
           document.getElementById('patientEmail').textContent = user.email || 'Not provided';
           document.getElementById('patientPhone').textContent = user.phone || 'Not provided';
           document.getElementById('patientBirthday').textContent = user.date_of_birth || 'Not provided';

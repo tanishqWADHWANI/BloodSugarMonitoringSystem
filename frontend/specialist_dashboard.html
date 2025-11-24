@@ -60,7 +60,77 @@
 
   <main class="container">
     <h1>Welcome, <span id="specialistNameDisplay">Specialist</span></h1>
-    <p>View your patients’ latest updates and access their detailed health records.</p>
+    <p>View your patients' latest updates and access their detailed health records.</p>
+
+    <!-- Specialist Profile Section -->
+    <div class="dashboard-section" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="margin: 0;">👤 My Profile</h2>
+        <button onclick="toggleEditProfile()" id="editProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
+      </div>
+
+      <!-- Profile Display -->
+      <div id="profileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div><strong>📧 Email:</strong> <span id="profileEmail">Loading...</span></div>
+        <div><strong>📱 Phone:</strong> <span id="profilePhone">Loading...</span></div>
+        <div><strong>🎂 Birthday:</strong> <span id="profileBirthday">Loading...</span></div>
+        <div><strong>🆔 Working ID:</strong> <span id="profileWorkingId">Loading...</span></div>
+      </div>
+
+      <!-- Edit Profile Form -->
+      <div id="editProfileForm" style="display: none; margin-top: 20px;">
+        <h3 style="color: #004080; margin-bottom: 15px;">Edit Your Profile</h3>
+        <form id="profileUpdateForm" style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">First Name *</label>
+              <input type="text" id="editFirstName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Last Name *</label>
+              <input type="text" id="editLastName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Email *</label>
+              <input type="email" id="editEmail" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Phone</label>
+              <input type="tel" id="editPhone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Date of Birth</label>
+              <input type="date" id="editDateOfBirth" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Working ID</label>
+              <input type="text" id="editWorkingId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">New Password</label>
+              <input type="password" id="editPassword" placeholder="Leave blank to keep current" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+              <small style="color: #666;">Leave blank if you don't want to change password</small>
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Profile Image</label>
+              <input type="file" id="editProfileImage" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+              <small style="color: #666;">Upload a new profile picture (optional)</small>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">💾 Save Changes</button>
+            <button type="button" onclick="cancelEditProfile()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">❌ Cancel</button>
+          </div>
+        </form>
+        <div id="profileUpdateMsg" style="margin-top: 15px; padding: 10px; border-radius: 4px;"></div>
+      </div>
+    </div>
 
     <div class="dashboard-section">
       <h2>Patient List</h2>
@@ -92,6 +162,136 @@
 
   <script>
   const API_BASE = 'http://127.0.0.1:5000';
+
+  // Profile Edit Functions
+  let currentUserData = null;
+
+  function toggleEditProfile() {
+    const form = document.getElementById('editProfileForm');
+    const display = document.getElementById('profileDisplay');
+    const btn = document.getElementById('editProfileBtn');
+    
+    if (form.style.display === 'none') {
+      // Populate form with current data
+      if (currentUserData) {
+        document.getElementById('editFirstName').value = currentUserData.first_name || '';
+        document.getElementById('editLastName').value = currentUserData.last_name || '';
+        document.getElementById('editEmail').value = currentUserData.email || '';
+        document.getElementById('editPhone').value = currentUserData.phone || '';
+        document.getElementById('editDateOfBirth').value = currentUserData.date_of_birth || '';
+        document.getElementById('editWorkingId').value = currentUserData.working_id || '';
+      }
+      form.style.display = 'block';
+      display.style.display = 'none';
+      btn.textContent = '👁️ View Profile';
+    } else {
+      form.style.display = 'none';
+      display.style.display = 'grid';
+      btn.textContent = '✏️ Edit Profile';
+    }
+  }
+
+  function cancelEditProfile() {
+    document.getElementById('editProfileForm').style.display = 'none';
+    document.getElementById('profileDisplay').style.display = 'grid';
+    document.getElementById('editProfileBtn').textContent = '✏️ Edit Profile';
+    document.getElementById('profileUpdateMsg').textContent = '';
+  }
+
+  // Handle profile update form submission
+  document.getElementById('profileUpdateForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const msgEl = document.getElementById('profileUpdateMsg');
+    msgEl.style.color = 'blue';
+    msgEl.style.background = '#e7f3ff';
+    msgEl.style.padding = '10px';
+    msgEl.textContent = 'Updating profile...';
+    
+    const userId = specialistUserId || localStorage.getItem('userId');
+    
+    const payload = {
+      firstName: document.getElementById('editFirstName').value.trim(),
+      lastName: document.getElementById('editLastName').value.trim(),
+      email: document.getElementById('editEmail').value.trim(),
+      phone: document.getElementById('editPhone').value.trim(),
+      dateOfBirth: document.getElementById('editDateOfBirth').value
+    };
+    
+    // Only include password if entered
+    const password = document.getElementById('editPassword').value.trim();
+    if (password) {
+      if (password.length < 6) {
+        msgEl.style.color = 'red';
+        msgEl.style.background = '#ffe7e7';
+        msgEl.textContent = 'Password must be at least 6 characters long.';
+        return;
+      }
+      payload.password = password;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        msgEl.style.color = 'green';
+        msgEl.style.background = '#e7ffe7';
+        msgEl.textContent = '✅ Profile updated successfully!';
+        
+        // Reload profile info
+        await loadSpecialistProfile();
+        
+        // Close form after 2 seconds
+        setTimeout(() => {
+          cancelEditProfile();
+        }, 2000);
+      } else {
+        throw new Error(data.error || 'Update failed');
+      }
+    } catch (error) {
+      msgEl.style.color = 'red';
+      msgEl.style.background = '#ffe7e7';
+      msgEl.textContent = '❌ Error: ' + error.message;
+    }
+  });
+
+  // Load specialist profile info
+  async function loadSpecialistProfile() {
+    const userId = specialistUserId || localStorage.getItem('userId');
+    if (!userId) {
+      console.error('No userId found for specialist');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/api/users/${userId}`);
+      if (response.ok) {
+        const user = await response.json();
+        currentUserData = user;
+        
+        document.getElementById('profileEmail').textContent = user.email || 'Not provided';
+        document.getElementById('profilePhone').textContent = user.phone || 'Not provided';
+        document.getElementById('profileBirthday').textContent = user.date_of_birth || 'Not provided';
+        document.getElementById('profileWorkingId').textContent = user.working_id || 'Not provided';
+        
+        // Update greeting
+        const specialistNameDisplay = document.getElementById('specialistNameDisplay');
+        if (specialistNameDisplay && user.first_name) {
+          specialistNameDisplay.textContent = `Dr. ${user.first_name} ${user.last_name || ''}`.trim();
+        }
+      }
+    } catch (error) {
+      console.error('Error loading specialist profile:', error);
+    }
+  }
 
   // AUTH / BASIC INFO
   const loggedInSpecialist = localStorage.getItem('specialistUsername');
@@ -272,6 +472,7 @@
 
   // Load on page start
   loadPatientsFromServer();
+  loadSpecialistProfile();
 
   // Search and Reset
   document.getElementById('search-btn').addEventListener('click', () => {
