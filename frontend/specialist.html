@@ -217,6 +217,8 @@
             localStorage.setItem('specialistFullName', `${user.first_name || ''} ${user.last_name || ''}`.trim() || username);
             localStorage.setItem('specialistSpecialty', user.specialty || 'Specialist');
             localStorage.setItem('specialistId', String(user.user_id || user.id));
+            localStorage.setItem('specialistUserId', String(user.user_id || user.id));
+            localStorage.setItem('userId', String(user.user_id || user.id));
             
             // Store token if available
             if (response.token || response.access_token) {
@@ -238,6 +240,8 @@
           localStorage.setItem('specialistFullName', found.fullName);
           localStorage.setItem('specialistSpecialty', found.specialty);
           localStorage.setItem('specialistId', String(found.id));
+          localStorage.setItem('specialistUserId', String(found.id));
+          localStorage.setItem('userId', String(found.id));
 
           // Also cache the specialists list for dashboard reference
           localStorage.setItem('specialists', JSON.stringify(demoSpecialists.map(s => ({

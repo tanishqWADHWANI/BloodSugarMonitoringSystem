@@ -73,6 +73,8 @@
         demoBtn.addEventListener('click', () => {
           localStorage.setItem('loggedInStaff', 'staff@clinic');
           localStorage.setItem('staffName', 'Staff2');
+          localStorage.setItem('staffUserId', '13');
+          localStorage.setItem('userId', '13');
           window.location.href = 'staff_dashboard.html';
         });
       }
@@ -99,6 +101,8 @@
             localStorage.setItem('loggedInStaff', emailVal);
             localStorage.setItem('staffName', user.first_name || user.firstName || 'Staff');
             localStorage.setItem('staffId', String(user.user_id || user.id || ''));
+            localStorage.setItem('staffUserId', String(user.user_id || user.id || ''));
+            localStorage.setItem('userId', String(user.user_id || user.id || ''));
             
             // Store token if available
             if (response.token || response.access_token) {

@@ -114,6 +114,8 @@
               lastName: u.lastName || u.last_name || ''
             };
             try { localStorage.setItem('loggedInAdmin', JSON.stringify(adminObj)); } catch(e) {}
+            try { localStorage.setItem('adminUserId', String(u.user_id || u.id || 0)); } catch(e) {}
+            try { localStorage.setItem('userId', String(u.user_id || u.id || 0)); } catch(e) {}
             
             msgEl.textContent = 'Signing in…';
             msgEl.style.color = 'green';
@@ -136,6 +138,8 @@
           lastName: 'Admin'
         };
         localStorage.setItem('loggedInAdmin', JSON.stringify(demo));
+        localStorage.setItem('adminUserId', '999');
+        localStorage.setItem('userId', '999');
         window.location.href = 'admin_dashboard.html';
       });
     }); // 4. CLOSE: End of DOMContentLoaded listener
