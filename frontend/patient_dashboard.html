@@ -559,15 +559,6 @@
       </div>
     </section>
 
-    <!-- AI Alerts Card -->
-    <section class="card" id="aiAlertsCard">
-      <h2>🚨 AI Health Alerts</h2>
-      <p class="description">Automated alerts based on your health readings and patterns.</p>
-      <div id="alertsContainer" class="alerts-container">
-        <p class="loading-text">Loading alerts...</p>
-      </div>
-    </section>
-
     <!-- AI Personalized Insights Card -->
     <section class="card" id="aiInsightsCard">
       <h2>🤖 AI Personalized Insights & Recommendations</h2>
@@ -868,8 +859,13 @@
           
           if (data.specialist) {
             const spec = data.specialist;
+            const firstName = spec.first_name || '';
+            const lastName = spec.last_name || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+            // Don't add Dr. prefix if name already starts with Dr.
+            const displayName = fullName.startsWith('Dr.') ? fullName : `Dr. ${fullName}`;
             document.getElementById('specialistLine').textContent = 
-              `Your specialist: Dr. ${spec.first_name} ${spec.last_name} (${spec.email}). They monitor your health trends and provide care guidance.`;
+              `Your specialist: ${displayName} (${spec.email}). They monitor your health trends and provide care guidance.`;
           } else {
             document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
           }
@@ -1045,12 +1041,22 @@
     // Load patient information
     async function loadPatientInfo() {
       const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
-      if (!userId) return;
+      console.log('Loading patient info for userId:', userId);
       
+      if (!userId) {
+        console.error('No userId found in localStorage');
+        return;
+      }
+
       try {
-        const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`);
+        const url = `http://127.0.0.1:5000/api/users/${userId}`;
+        console.log('Fetching patient info from:', url);
+        const response = await fetch(url);
+        console.log('Patient info response status:', response.status);
+        
         if (response.ok) {
           const user = await response.json();
+          console.log('Patient info received:', user);
           document.getElementById('patientEmail').textContent = user.email || 'Not provided';
           document.getElementById('patientPhone').textContent = user.phone || 'Not provided';
           document.getElementById('patientBirthday').textContent = user.date_of_birth || 'Not provided';
@@ -1063,36 +1069,6 @@
         document.getElementById('patientPhone').textContent = 'Unable to load';
         document.getElementById('patientBirthday').textContent = 'Unable to load';
         document.getElementById('patientIdDisplay').textContent = userId || 'Unknown';
-      }
-    }
-
-    // Load AI alerts
-    async function loadAlerts() {
-      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
-      if (!userId) return;
-      
-      const container = document.getElementById('alertsContainer');
-      try {
-        const response = await fetch(`http://127.0.0.1:5000/api/alerts/${userId}?days=30`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.alerts && data.alerts.length > 0) {
-            container.innerHTML = data.alerts.map(alert => `
-              <div class="alert-item ${alert.severity || 'info'}">
-                <div class="alert-title">${alert.title || 'Health Alert'}</div>
-                <div class="alert-message">${alert.message || alert.alert_message}</div>
-                <div class="alert-time">${alert.created_at ? new Date(alert.created_at).toLocaleString() : ''}</div>
-              </div>
-            `).join('');
-          } else {
-            container.innerHTML = '<p class="info-text">✅ No alerts at this time. Your readings are within normal range!</p>';
-          }
-        } else {
-          container.innerHTML = '<p class="info-text">Unable to load alerts. Please try again later.</p>';
-        }
-      } catch (error) {
-        console.error('Error loading alerts:', error);
-        container.innerHTML = '<p class="info-text">Unable to connect to server. Please check your connection.</p>';
       }
     }
 
@@ -1137,7 +1113,6 @@
       await initializeDemoData();
       await Promise.all([
         loadPatientInfo(),
-        loadAlerts(),
         loadPersonalizedInsights(),
         loadDietRecommendations(),
         loadSpecialistMessages()
