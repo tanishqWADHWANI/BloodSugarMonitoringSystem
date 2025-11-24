@@ -568,15 +568,6 @@
       </div>
     </section>
 
-    <!-- AI Insights Card -->
-    <section class="card" id="aiInsightsCard">
-      <h2>💡 AI Health Insights</h2>
-      <p class="description">Intelligent analysis of your health trends and personalized recommendations.</p>
-      <div id="insightsContainer" class="insights-container">
-        <p class="loading-text">Generating insights...</p>
-      </div>
-    </section>
-
     <!-- Diet Recommendations & Trends Card -->
     <section class="card" id="dietTrendsCard">
       <h2>🍎 Diet Recommendations & Prevention Tips</h2>
@@ -742,17 +733,6 @@
           <button type="button" onclick="document.getElementById('healthForm').reset()">🔄 Clear Form</button>
         </div>
       </form>
-    </section>
-
-    <!-- Quick Link to Health History -->
-    <section class="card">
-      <h2>📋 View Your Health History</h2>
-      <p class="description">
-        Want to review your complete health records, charts, and trends? Visit the Health History page for detailed analysis and visualizations.
-      </p>
-      <div style="text-align: center; padding: 20px;">
-        <a href="patient_history.html" style="display: inline-block; background: #004080; color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; transition: all 0.3s;" onmouseover="this.style.background='#003366'" onmouseout="this.style.background='#004080'">📊 Go to Health History</a>
-      </div>
     </section>
   </main>
 
@@ -1085,44 +1065,6 @@
       }
     }
 
-    // Load AI insights
-    async function loadInsights() {
-      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
-      if (!userId) return;
-      
-      const container = document.getElementById('insightsContainer');
-      try {
-        const response = await fetch(`http://127.0.0.1:5000/api/insights/${userId}?days=30`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.insights) {
-            const insights = Array.isArray(data.insights) ? data.insights : [data.insights];
-            if (insights.length > 0) {
-              container.innerHTML = insights.map(insight => {
-                const title = insight.title || insight.type || 'Health Insight';
-                const text = insight.message || insight.insight || insight.recommendation || JSON.stringify(insight);
-                return `
-                  <div class="insight-item">
-                    <div class="insight-title">${title}</div>
-                    <div class="insight-text">${text}</div>
-                  </div>
-                `;
-              }).join('');
-            } else {
-              container.innerHTML = '<p class="info-text">💡 Collecting data to generate personalized insights. Check back after recording more health entries.</p>';
-            }
-          } else {
-            container.innerHTML = '<p class="info-text">💡 No insights available yet. Continue tracking your health data.</p>';
-          }
-        } else {
-          container.innerHTML = '<p class="info-text">Unable to generate insights. Please try again later.</p>';
-        }
-      } catch (error) {
-        console.error('Error loading insights:', error);
-        container.innerHTML = '<p class="info-text">Unable to connect to server. Please check your connection.</p>';
-      }
-    }
-
     // Load diet recommendations
     async function loadDietRecommendations() {
       const container = document.getElementById('dietRecommendations');
@@ -1165,7 +1107,6 @@
       await Promise.all([
         loadPatientInfo(),
         loadAlerts(),
-        loadInsights(),
         loadDietRecommendations()
       ]);
       loadSpecialistAssignment();
