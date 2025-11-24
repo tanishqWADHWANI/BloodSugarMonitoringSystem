@@ -489,45 +489,6 @@ def login():
         "name": f"{user['first_name']} {user['last_name']}"
     }), 200
 
-# Get user information
-@app.route('/api/user/<int:user_id>', methods=['GET'])
-def get_user_info(user_id):
-    """Get user information by ID"""
-    try:
-        user = db.get_user(user_id)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-        
-        # Remove password from response
-        if 'password_hash' in user:
-            del user['password_hash']
-        
-        # Get additional patient info if user is a patient
-        if user['role'] == 'patient':
-            cursor = db._get_cursor()
-            cursor.execute("SELECT health_care_number FROM patients WHERE user_id = %s", (user_id,))
-            patient_record = cursor.fetchone()
-            cursor.close()
-            if patient_record:
-                user['health_care_number'] = patient_record['health_care_number']
-        
-        return jsonify(user), 200
-    except Exception as e:
-        logger.error(f"Error getting user info: {e}")
-        return jsonify({"error": str(e)}), 500
-
-# Get patient messages (placeholder - needs messages table)
-@app.route('/api/patient/<int:user_id>/messages', methods=['GET'])
-def get_patient_messages(user_id):
-    """Get messages for a patient from their specialist"""
-    try:
-        # For now, return empty messages since we don't have a messages table
-        # In production, you'd query a messages table
-        return jsonify({"messages": []}), 200
-    except Exception as e:
-        logger.error(f"Error getting patient messages: {e}")
-        return jsonify({"error": str(e)}), 500
-
 @app.route('/api/specialist/<int:specialist_id>/readings/search', methods=['GET'])
 def specialist_search_readings(specialist_id):
     """Specialist search and filter patient readings"""
