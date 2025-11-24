@@ -1010,20 +1010,14 @@ def get_monthly_report():
             # Combine first_name and last_name into patient_name
             stat['patient_name'] = f"{stat.get('first_name', '')} {stat.get('last_name', '')}".strip()
             
-            if stat.get('avg_value'):
-                stat['avg_value'] = float(stat['avg_value'])
-            if stat.get('max_value'):
-                stat['max_value'] = float(stat['max_value'])
-            if stat.get('min_value'):
-                stat['min_value'] = float(stat['min_value'])
-            if stat.get('total_readings'):
-                stat['total_readings'] = int(stat['total_readings'])
-            if stat.get('normal_count'):
-                stat['normal_count'] = int(stat['normal_count'])
-            if stat.get('borderline_count'):
-                stat['borderline_count'] = int(stat['borderline_count'])
-            if stat.get('abnormal_count'):
-                stat['abnormal_count'] = int(stat['abnormal_count'])
+            # Convert Decimal/None to proper types (always convert, even if 0 or None)
+            stat['avg_value'] = float(stat.get('avg_value') or 0)
+            stat['max_value'] = float(stat.get('max_value') or 0)
+            stat['min_value'] = float(stat.get('min_value') or 0)
+            stat['total_readings'] = int(stat.get('total_readings') or 0)
+            stat['normal_count'] = int(stat.get('normal_count') or 0)
+            stat['borderline_count'] = int(stat.get('borderline_count') or 0)
+            stat['abnormal_count'] = int(stat.get('abnormal_count') or 0)
                 
         # Get top food triggers with patient names
         sql = f"""

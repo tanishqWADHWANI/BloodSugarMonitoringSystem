@@ -905,17 +905,17 @@
                             }
                             
                             const existing = patientMap.get(patientId);
-                            existing.total_readings += p.total_readings || 0;
-                            existing.normal_count += p.normal_count || 0;
-                            existing.borderline_count += p.borderline_count || 0;
-                            existing.abnormal_count += p.abnormal_count || 0;
+                            existing.total_readings += parseInt(p.total_readings) || 0;
+                            existing.normal_count += parseInt(p.normal_count) || 0;
+                            existing.borderline_count += parseInt(p.borderline_count) || 0;
+                            existing.abnormal_count += parseInt(p.abnormal_count) || 0;
                             
                             // Track average values for annual averaging
-                            if (p.avg_value > 0) existing.values.push(p.avg_value);
+                            if (p.avg_value > 0) existing.values.push(parseFloat(p.avg_value));
                             // Track highest max_value across all months
-                            if (p.max_value > 0 && p.max_value > existing.max_value) existing.max_value = p.max_value;
+                            if (p.max_value > 0 && p.max_value > existing.max_value) existing.max_value = parseFloat(p.max_value);
                             // Track lowest min_value across all months
-                            if (p.min_value > 0 && p.min_value < existing.min_value) existing.min_value = p.min_value;
+                            if (p.min_value > 0 && p.min_value < existing.min_value) existing.min_value = parseFloat(p.min_value);
                         });
 
                         // Aggregate food triggers
@@ -997,10 +997,10 @@
             const totalPatients = patientStats.length;
             const patientsWithReadings = patientStats.filter(p => p.total_readings > 0).length;
             
-            const totalReadings = patientStats.reduce((sum, p) => sum + (p.total_readings || 0), 0);
-            const totalNormal = patientStats.reduce((sum, p) => sum + (p.normal_count || 0), 0);
-            const totalBorderline = patientStats.reduce((sum, p) => sum + (p.borderline_count || 0), 0);
-            const totalAbnormal = patientStats.reduce((sum, p) => sum + (p.abnormal_count || 0), 0);
+            const totalReadings = patientStats.reduce((sum, p) => sum + (parseInt(p.total_readings) || 0), 0);
+            const totalNormal = patientStats.reduce((sum, p) => sum + (parseInt(p.normal_count) || 0), 0);
+            const totalBorderline = patientStats.reduce((sum, p) => sum + (parseInt(p.borderline_count) || 0), 0);
+            const totalAbnormal = patientStats.reduce((sum, p) => sum + (parseInt(p.abnormal_count) || 0), 0);
 
             const allValues = patientStats.flatMap(p => 
                 [p.avg_value, p.max_value, p.min_value].filter(v => v > 0)
