@@ -1,21 +1,40 @@
 // frontend/js/api.js
 
 // 1) Base URL of your Flask API
-const API_BASE_URL = 'http://127.0.0.1:5000';  // change if your backend host/port changes
+// Prefer a host derived from the browser location so CORS origin matches when
+// serving frontend and backend on the same machine (dev convenience).
+const API_BASE_URL = (function() {
+  try {
+    const host = window && window.location && window.location.hostname ? window.location.hostname : '127.0.0.1';
+    const proto = window && window.location && window.location.protocol ? window.location.protocol : 'http:';
+    return `${proto}//${host}:5000`;
+  } catch (e) {
+    return 'http://127.0.0.1:5000';
+  }
+})();
 
 // 2) Core helper: all HTTP calls pass through here
 async function apiRequest(path, { method = 'GET', headers = {}, body = null } = {}) {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  // Attach auth token automatically if available
+  const token = (typeof localStorage !== 'undefined') ? localStorage.getItem('bsm_token') : null;
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const opts = {
     method,
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body
-  });
+    headers: { 'Content-Type': 'application/json', ...authHeaders, ...headers },
+  };
+
+  if (body != null) {
+    opts.body = (typeof body === 'string') ? body : JSON.stringify(body);
+  }
+
+  const res = await fetch(`${API_BASE_URL}${path}`, opts);
 
   let data = null;
   try { data = await res.json(); } catch (_) { /* allow empty bodies */ }
 
   if (!res.ok) {
-    const msg = (data && data.error) || `Request failed with status ${res.status}`;
+    const msg = (data && (data.error || data.message)) || `Request failed with status ${res.status}`;
     throw new Error(msg);
   }
   return data;
@@ -29,7 +48,13 @@ const getUser = (id) => apiRequest(`/api/users/${encodeURIComponent(id)}`);
 // Assuming your backend uses /api/auth/login (check app.py for the exact route)
 const loginUser = (email, password) => apiRequest('/api/login', {
   method: 'POST',
-  body: JSON.stringify({ email, password })
+  body: { email, password }
+});
+
+// Specialist login wrapper (calls /api/specialist/login)
+const specialistLogin = (username, password, workingId=null) => apiRequest('/api/specialist/login', {
+  method: 'POST',
+  body: workingId ? { username, password, working_id: workingId } : { username, password }
 });
 
 
@@ -98,3 +123,5 @@ const getServerMode = () => apiRequest('/api/server/mode');
 // Exported for other modules (if using bundler) - keep global for now in browser
 window.bsm_api = window.bsm_api || {};
 window.bsm_api.getServerMode = getServerMode;
+window.bsm_api.specialistLogin = specialistLogin;
+window.bsm_api.loginUser = loginUser;

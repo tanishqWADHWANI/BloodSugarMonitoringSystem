@@ -183,6 +183,12 @@
     </nav>
   </header>
 
+  <!-- SERVER MODE BANNER (hidden by default) -->
+  <div id="serverModeBanner" style="display:none;padding:10px;text-align:center;font-weight:700;
+       background:#fff3cd;color:#856404;border:1px solid #ffeeba;">
+    Running in DEMO mode (backend DEMO_AUTH=1) — some features are simulated.
+  </div>
+
   <!-- MAIN -->
   <main class="container">
     <!-- SPECIALIST LOGIN -->
@@ -321,21 +327,32 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        const res = await fetch(`${API_BASE}/specialist/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        // Use shared API wrapper if available (sets auth header automatically)
+        let data;
+        if (window.bsm_api && typeof window.bsm_api.specialistLogin === 'function') {
+          try {
+            data = await window.bsm_api.specialistLogin(username, password);
+          } catch (e) {
+            msg.textContent = e.message || 'Login failed';
+            return;
+          }
+        } else {
+          // Fallback to direct fetch if api wrapper not loaded
+          const res = await fetch(`${API_BASE}/specialist/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
 
-        if (!res.ok) {
-          // Try to show a helpful message from server
-          let body;
-          try { body = await res.json(); } catch(e) { body = { message: res.statusText }; }
-          msg.textContent = body.message || body.error || `Login failed (status ${res.status})`;
-          return;
+          if (!res.ok) {
+            let body;
+            try { body = await res.json(); } catch(e) { body = { message: res.statusText }; }
+            msg.textContent = body.message || body.error || `Login failed (status ${res.status})`;
+            return;
+          }
+
+          data = await res.json();
         }
-
-        const data = await res.json();
         msg.style.color = 'green';
         msg.textContent = 'Login successful — redirecting...';
 
@@ -421,7 +438,18 @@ async function runApiDiagnostics() {
         const mode = await modeRes.json();
         html += `<div style="margin-top:8px;"><strong>Server Mode:</strong> `;
         html += `<span style="font-weight:600;">` + (mode.demo_mode ? 'DEMO (DEMO_AUTH=1)' : 'NORMAL (DB preferred)') + `</span>`;
-        html += ` &middot; <strong>DB available:</strong> <span style="font-weight:600;color:${mode.db_available ? 'green' : 'red'}">${mode.db_available}</span></div>`;
+        html += ` &middot; <strong>DB available:</strong> <span id="dbAvailableIndicator" style="font-weight:600;color:${mode.db_available ? 'green' : 'red'}">${mode.db_available}</span></div>`;
+
+        // Update visible banner for demo mode
+        const banner = document.getElementById('serverModeBanner');
+        if (banner) {
+          if (mode.demo_mode) {
+            banner.style.display = 'block';
+          } else {
+            banner.style.display = 'none';
+          }
+        }
+
       } else {
         html += `<div style="margin-top:8px;color:orange;"><strong>Server Mode:</strong> unavailable (status ${modeRes.status})</div>`;
       }
@@ -434,6 +462,16 @@ async function runApiDiagnostics() {
     diag.innerHTML = `<strong>Health check failed:</strong> ${e.message || e}`;
   }
 }
+
+// Poll server mode periodically so the UI updates when backend mode changes
+setInterval(() => {
+  try {
+    // reuse diagnostics call to refresh banner and DB indicator; don't await
+    runApiDiagnostics();
+  } catch (e) {
+    console.warn('Periodic diagnostics failed', e);
+  }
+}, 30000); // every 30s
 
 // Run diagnostics on load so users can see CORS/connection info immediately
 document.addEventListener('DOMContentLoaded', runApiDiagnostics);
