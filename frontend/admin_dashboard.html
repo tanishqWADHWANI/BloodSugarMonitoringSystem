@@ -898,7 +898,9 @@
                                     normal_count: 0,
                                     borderline_count: 0,
                                     abnormal_count: 0,
-                                    values: []
+                                    values: [],
+                                    max_value: 0,
+                                    min_value: Infinity
                                 });
                             }
                             
@@ -908,9 +910,12 @@
                             existing.borderline_count += p.borderline_count || 0;
                             existing.abnormal_count += p.abnormal_count || 0;
                             
-                            if (p.avg_value) existing.values.push(p.avg_value);
-                            if (p.max_value) existing.values.push(p.max_value);
-                            if (p.min_value) existing.values.push(p.min_value);
+                            // Track average values for annual averaging
+                            if (p.avg_value > 0) existing.values.push(p.avg_value);
+                            // Track highest max_value across all months
+                            if (p.max_value > 0 && p.max_value > existing.max_value) existing.max_value = p.max_value;
+                            // Track lowest min_value across all months
+                            if (p.min_value > 0 && p.min_value < existing.min_value) existing.min_value = p.min_value;
                         });
 
                         // Aggregate food triggers
@@ -932,9 +937,9 @@
                     const allValues = p.values.filter(v => v > 0);
                     return {
                         ...p,
-                        average_value: allValues.length > 0 ? Math.round(allValues.reduce((a, b) => a + b, 0) / allValues.length) : 0,
-                        highest_value: allValues.length > 0 ? Math.max(...allValues) : 0,
-                        lowest_value: allValues.length > 0 ? Math.min(...allValues) : 0
+                        avg_value: allValues.length > 0 ? (allValues.reduce((a, b) => a + b, 0) / allValues.length) : 0,
+                        max_value: p.max_value > 0 ? p.max_value : 0,
+                        min_value: p.min_value < Infinity ? p.min_value : 0
                     };
                 });
 
@@ -964,7 +969,7 @@
             const totalAbnormal = patientStats.reduce((sum, p) => sum + (p.abnormal_count || 0), 0);
 
             const allValues = patientStats.flatMap(p => 
-                [p.average_value, p.highest_value, p.lowest_value].filter(v => v > 0)
+                [p.avg_value, p.max_value, p.min_value].filter(v => v > 0)
             );
             const overallAvg = allValues.length > 0 
                 ? (allValues.reduce((a, b) => a + b, 0) / allValues.length).toFixed(2)
@@ -998,17 +1003,17 @@
             patientStats.forEach(p => {
                 if (p.total_readings > 0) {
                     // Highest value
-                    if (p.highest_value > highestOverall.value) {
-                        highestOverall = { value: p.highest_value, patient: p.patient_name || 'Unknown' };
+                    if (p.max_value > highestOverall.value) {
+                        highestOverall = { value: p.max_value, patient: p.patient_name || 'Unknown' };
                     }
                     
                     // Lowest value
-                    if (p.lowest_value > 0 && p.lowest_value < lowestOverall.value) {
-                        lowestOverall = { value: p.lowest_value, patient: p.patient_name || 'Unknown' };
+                    if (p.min_value > 0 && p.min_value < lowestOverall.value) {
+                        lowestOverall = { value: p.min_value, patient: p.patient_name || 'Unknown' };
                     }
                     
                     // Most stable (smallest range)
-                    const range = p.highest_value - p.lowest_value;
+                    const range = p.max_value - p.min_value;
                     if (range < mostStable.variance && p.total_readings >= 3) {
                         mostStable = { patient: p.patient_name || 'Unknown', variance: range };
                     }
@@ -1052,9 +1057,9 @@
                     <tr style="border-bottom: 1px solid #e9ecef;">
                         <td style="padding: 12px; font-size: 0.9rem; color: #212529;">${p.patient_name || 'Unknown'}</td>
                         <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: #212529;">${p.total_readings}</td>
-                        <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: #212529;">${(p.average_value || 0).toFixed(2)}</td>
-                        <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: #dc3545; font-weight: 600;">${(p.highest_value || 0).toFixed(2)}</td>
-                        <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: #28a745; font-weight: 600;">${(p.lowest_value || 0).toFixed(2)}</td>
+                        <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: #212529;">${(p.avg_value || 0).toFixed(2)}</td>
+                        <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: #dc3545; font-weight: 600;">${(p.max_value || 0).toFixed(2)}</td>
+                        <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: #28a745; font-weight: 600;">${(p.min_value || 0).toFixed(2)}</td>
                         <td style="padding: 12px; text-align: center; font-size: 0.9rem; color: ${statusColor}; font-weight: 600;">${abnormalPct}%</td>
                         <td style="padding: 12px; text-align: center; font-size: 0.9rem;">${trendIcon} ${trendText}</td>
                     </tr>
