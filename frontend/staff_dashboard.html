@@ -256,7 +256,8 @@
       <div><strong>📧 Email:</strong> <span id="profileEmail">Loading...</span></div>
       <div><strong>📱 Phone:</strong> <span id="profilePhone">Loading...</span></div>
       <div><strong>🎂 Birthday:</strong> <span id="profileBirthday">Loading...</span></div>
-      <div><strong>🆔 Working ID:</strong> <span id="profileWorkingId">Loading...</span></div>
+      <div><strong>🆔 License ID:</strong> <span id="profileLicenseId">Loading...</span></div>
+      <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">ℹ️ Province/State Professional License Number</div>
     </div>
 
     <!-- Edit Profile Form -->
@@ -289,8 +290,9 @@
             <input type="date" id="editDateOfBirth" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
           </div>
           <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Working ID</label>
-            <input type="text" id="editWorkingId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">License ID</label>
+            <input type="text" id="editLicenseId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            <small style="color: #666; font-size: 0.8rem;">Professional license number issued by province/state</small>
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -597,7 +599,7 @@
         document.getElementById('editEmail').value = currentUserData.email || '';
         document.getElementById('editPhone').value = currentUserData.phone || '';
         document.getElementById('editDateOfBirth').value = currentUserData.dateOfBirth || '';
-        document.getElementById('editWorkingId').value = currentUserData.workingId || '';
+        document.getElementById('editLicenseId').value = currentUserData.licenseId || '';
       }
     } else {
       // Show profile display
@@ -631,7 +633,7 @@
       email: document.getElementById('editEmail').value,
       phone: document.getElementById('editPhone').value,
       dateOfBirth: document.getElementById('editDateOfBirth').value,
-      workingId: document.getElementById('editWorkingId').value
+      licenseId: document.getElementById('editLicenseId').value
     };
 
     const password = document.getElementById('editPassword').value;
@@ -693,14 +695,14 @@
           email: userData.user.email,
           phone: userData.user.phone || 'Not provided',
           dateOfBirth: userData.user.date_of_birth || '',
-          workingId: userData.user.working_id || 'N/A'
+          licenseId: userData.user.license_id || 'N/A'
         };
 
         // Update profile display
         document.getElementById('profileEmail').textContent = currentUserData.email;
         document.getElementById('profilePhone').textContent = currentUserData.phone;
         document.getElementById('profileBirthday').textContent = currentUserData.dateOfBirth || 'Not set';
-        document.getElementById('profileWorkingId').textContent = currentUserData.workingId;
+        document.getElementById('profileLicenseId').textContent = currentUserData.licenseId;
         
         // Display profile image if available
         if (userData.user.profile_image) {

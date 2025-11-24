@@ -48,7 +48,8 @@
                 <div><strong>📧 Email:</strong> <span id="adminEmail">Loading...</span></div>
                 <div><strong>📱 Phone:</strong> <span id="adminPhone">Loading...</span></div>
                 <div><strong>🎂 Birthday:</strong> <span id="adminBirthday">Loading...</span></div>
-                <div><strong>🆔 Working ID:</strong> <span id="adminWorkingId">Not applicable</span></div>
+                <div><strong>🆔 License ID:</strong> <span id="adminLicenseId">Not applicable</span></div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">ℹ️ Province/State Professional License Number</div>
             </div>
 
             <!-- Edit Profile Form -->
@@ -81,8 +82,9 @@
                             <input type="date" id="adminEditDOB" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Working ID (optional)</label>
-                            <input type="text" id="adminEditWorkingId" placeholder="Admin working ID" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">License ID (optional)</label>
+                            <input type="text" id="adminEditLicenseId" placeholder="Province/State License #" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                            <small style="color: #666; font-size: 0.8rem;">Professional license number issued by province/state</small>
                         </div>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -139,9 +141,10 @@
                         <label for="healthCareNumber" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Health Care Number</label>
                         <input id="healthCareNumber" placeholder="Required for Patients" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
                     </div>
-                    <div class="form-field" id="workingIdContainer" style="display: none;">
-                        <label for="workingId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Working ID</label>
-                        <input id="workingId" placeholder="Required for Specialist/Staff/Admin" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                    <div class="form-field" id="licenseIdContainer" style="display: none;">
+                        <label for="licenseId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">License ID</label>
+                        <input id="licenseId" placeholder="Province/State Professional License" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                        <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Required for Specialist/Staff/Admin - Professional license number issued by province/state</small>
                     </div>
                     <div class="form-field">
                         <label for="role" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Role</label>
@@ -400,7 +403,7 @@
         // Element References
         let createForm, usersTableBody, assignForm, patientSelect, specialistSelect, assignTableBody;
         let elTotalUsers, elCP, elCS, elCSt, elCA, elAssigned, elUnassigned, elR7Total, elR7Abn, elR7Pct;
-        let roleSelect, workingIdContainer;
+        let roleSelect, licenseIdContainer;
 
         // ===== Utility Functions =====
         
@@ -775,12 +778,12 @@
                 }
                 payload.healthCareNumber = healthCareNumber;
             } else if (role === 'specialist' || role === 'staff') {
-                const workingId = document.getElementById('workingId').value.trim();
-                if (!workingId) {
-                    alert(`Working ID is required for role: ${role}`);
+                const licenseId = document.getElementById('licenseId').value.trim();
+                if (!licenseId) {
+                    alert(`License ID is required for role: ${role}`);
                     return;
                 }
-                payload.workingId = workingId;
+                payload.licenseId = licenseId;
             }
 
             // Handle profile image file upload (store as data URL for now)
@@ -1604,42 +1607,42 @@
             elR7Pct = document.getElementById('r7AbnormalPct');
 
             roleSelect = document.getElementById('role');
-            workingIdContainer = document.getElementById('workingIdContainer');
+            licenseIdContainer = document.getElementById('licenseIdContainer');
             const healthCareNumberContainer = document.getElementById('healthCareNumberContainer');
 
             // Role-specific field visibility
-            if (roleSelect && workingIdContainer && healthCareNumberContainer) {
+            if (roleSelect && licenseIdContainer && healthCareNumberContainer) {
                 roleSelect.addEventListener('change', (e) => {
                     const role = e.target.value;
                     const healthCareInput = document.getElementById('healthCareNumber');
-                    const workingIdInput = document.getElementById('workingId');
+                    const licenseIdInput = document.getElementById('licenseId');
                     
                     if (role === 'patient') {
-                        // Show health care number, hide working ID
+                        // Show health care number, hide license ID
                         healthCareNumberContainer.style.display = 'block';
                         healthCareInput.setAttribute('required', 'required');
                         healthCareInput.disabled = false;
-                        workingIdContainer.style.display = 'none';
-                        workingIdInput.removeAttribute('required');
-                        workingIdInput.disabled = true;
+                        licenseIdContainer.style.display = 'none';
+                        licenseIdInput.removeAttribute('required');
+                        licenseIdInput.disabled = true;
                     } else if (role === 'specialist' || role === 'staff' || role === 'admin') {
-                        // Hide health care number, show working ID for specialist, staff, and admin
+                        // Hide health care number, show license ID for specialist, staff, and admin
                         healthCareNumberContainer.style.display = 'block';
                         healthCareInput.removeAttribute('required');
                         healthCareInput.disabled = true;
                         healthCareInput.style.background = '#f5f5f5';
-                        workingIdContainer.style.display = 'block';
-                        workingIdInput.setAttribute('required', 'required');
-                        workingIdInput.disabled = false;
-                        workingIdInput.style.background = 'white';
+                        licenseIdContainer.style.display = 'block';
+                        licenseIdInput.setAttribute('required', 'required');
+                        licenseIdInput.disabled = false;
+                        licenseIdInput.style.background = 'white';
                     } else {
                         // Fallback - hide both
                         healthCareNumberContainer.style.display = 'none';
                         healthCareInput.removeAttribute('required');
                         healthCareInput.disabled = true;
-                        workingIdContainer.style.display = 'none';
-                        workingIdInput.removeAttribute('required');
-                        workingIdInput.disabled = true;
+                        licenseIdContainer.style.display = 'none';
+                        licenseIdInput.removeAttribute('required');
+                        licenseIdInput.disabled = true;
                     }
                 });
                 
@@ -1667,7 +1670,7 @@
                         document.getElementById('adminEditEmail').value = currentAdminData.email || '';
                         document.getElementById('adminEditPhone').value = currentAdminData.phone || '';
                         document.getElementById('adminEditDOB').value = currentAdminData.date_of_birth || '';
-                        document.getElementById('adminEditWorkingId').value = currentAdminData.working_id || '';
+                        document.getElementById('adminEditLicenseId').value = currentAdminData.license_id || '';
                     }
                 } else {
                     form.style.display = 'none';
@@ -1699,7 +1702,7 @@
                     email: document.getElementById('adminEditEmail').value.trim(),
                     phone: document.getElementById('adminEditPhone').value.trim(),
                     dateOfBirth: document.getElementById('adminEditDOB').value,
-                    workingId: document.getElementById('adminEditWorkingId').value.trim()
+                    licenseId: document.getElementById('adminEditLicenseId').value.trim()
                 };
 
                 const password = document.getElementById('adminEditPassword').value.trim();
@@ -1760,7 +1763,7 @@
                         document.getElementById('adminEmail').textContent = userData.email || 'Not provided';
                         document.getElementById('adminPhone').textContent = userData.phone || 'Not provided';
                         document.getElementById('adminBirthday').textContent = userData.date_of_birth || 'Not set';
-                        document.getElementById('adminWorkingId').textContent = userData.working_id || 'Not applicable';
+                        document.getElementById('adminLicenseId').textContent = userData.license_id || 'Not applicable';
                         
                         // Display profile image if available
                         const imgElement = document.getElementById('adminProfileImage');

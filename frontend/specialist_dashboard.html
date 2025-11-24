@@ -77,7 +77,8 @@
         <div><strong>📧 Email:</strong> <span id="profileEmail">Loading...</span></div>
         <div><strong>📱 Phone:</strong> <span id="profilePhone">Loading...</span></div>
         <div><strong>🎂 Birthday:</strong> <span id="profileBirthday">Loading...</span></div>
-        <div><strong>🆔 Working ID:</strong> <span id="profileWorkingId">Loading...</span></div>
+        <div><strong>🆔 License ID:</strong> <span id="profileLicenseId">Loading...</span></div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">ℹ️ Province/State Professional License Number</div>
       </div>
 
       <!-- Edit Profile Form -->
@@ -110,8 +111,9 @@
               <input type="date" id="editDateOfBirth" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
             </div>
             <div>
-              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Working ID</label>
-              <input type="text" id="editWorkingId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">License ID</label>
+              <input type="text" id="editLicenseId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+              <small style="color: #666; font-size: 0.8rem;">Professional license number issued by province/state</small>
             </div>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -182,7 +184,7 @@
         document.getElementById('editEmail').value = currentUserData.email || '';
         document.getElementById('editPhone').value = currentUserData.phone || '';
         document.getElementById('editDateOfBirth').value = currentUserData.date_of_birth || '';
-        document.getElementById('editWorkingId').value = currentUserData.working_id || '';
+        document.getElementById('editLicenseId').value = currentUserData.license_id || '';
       }
       form.style.display = 'block';
       display.style.display = 'none';
@@ -283,7 +285,7 @@
         document.getElementById('profileEmail').textContent = user.email || 'Not provided';
         document.getElementById('profilePhone').textContent = user.phone || 'Not provided';
         document.getElementById('profileBirthday').textContent = user.date_of_birth || 'Not provided';
-        document.getElementById('profileWorkingId').textContent = user.working_id || 'Not provided';
+        document.getElementById('profileLicenseId').textContent = user.license_id || 'Not provided';
         
         // Display profile image if available
         if (user.profile_image) {

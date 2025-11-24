@@ -141,7 +141,7 @@ def update_user(user_id):
             date_of_birth=data.get('dateOfBirth'),
             phone=data.get('phone'),
             health_care_number=data.get('healthCareNumber'),
-            working_id=data.get('workingId')
+            license_id=data.get('licenseId')  # Province/state professional license
         )
 
         if not updated:
@@ -198,7 +198,7 @@ def create_user_admin():
         role = data.get('role')
         phone = data.get('phone')
         date_of_birth = data.get('dateOfBirth')
-        working_id = data.get('workingId')  # For specialists/staff
+        license_id = data.get('licenseId')  # For specialists/staff - province/state license
         health_care_number = data.get('healthCareNumber')  # For patients
         profile_image = data.get('profileImage')  # Optional profile image
         
@@ -216,7 +216,7 @@ def create_user_admin():
             date_of_birth=date_of_birth,
             phone=phone,
             health_care_number=health_care_number,
-            working_id=working_id,
+            license_id=license_id,  # Province/state professional license number
             profile_image=profile_image
         )
         

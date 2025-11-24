@@ -251,8 +251,9 @@
             <input type="date" id="dateOfBirth" />
           </div>
           <div class="form-field">
-            <label for="workingId">🆔 Working ID</label>
-            <input type="text" id="workingId" placeholder="ST001" />
+            <label for="licenseId">🆔 License ID</label>
+            <input type="text" id="licenseId" placeholder="e.g. ST12345 (Province/State License)" />
+            <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Professional license number issued by your province/state board</small>
           </div>
         </div>
 
@@ -314,7 +315,7 @@
       document.getElementById('email').value = user.email || '';
       document.getElementById('phone').value = user.phone || '';
       document.getElementById('dateOfBirth').value = user.date_of_birth || '';
-      document.getElementById('workingId').value = user.working_id || '';
+      document.getElementById('licenseId').value = user.license_id || '';
       document.getElementById('userId').value = user.user_id || '';
 
       // Display current profile image
@@ -363,7 +364,7 @@
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         date_of_birth: document.getElementById('dateOfBirth').value,
-        workingId: document.getElementById('workingId').value.trim(),
+        licenseId: document.getElementById('licenseId').value.trim(),
         profileImage: currentProfileImage
       };
 

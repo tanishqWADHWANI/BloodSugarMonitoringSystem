@@ -37,7 +37,7 @@ class Database:
     
     # User Management
     def get_user(self, user_id):
-        """Get user by ID with role-specific data (health_care_number or working_id)"""
+        """Get user by ID with role-specific data (health_care_number or license_id)"""
         cursor = self._get_cursor()
         try:
             # Get base user data
@@ -53,16 +53,16 @@ class Database:
                         user['health_care_number'] = patient_data.get('health_care_number')
                 
                 elif user['role'] == 'specialist':
-                    cursor.execute("SELECT working_id FROM specialists WHERE user_id = %s", (user_id,))
+                    cursor.execute("SELECT license_id FROM specialists WHERE user_id = %s", (user_id,))
                     specialist_data = cursor.fetchone()
                     if specialist_data:
-                        user['working_id'] = specialist_data.get('working_id')
+                        user['license_id'] = specialist_data.get('license_id')
                 
                 elif user['role'] in ('staff', 'admin'):
-                    cursor.execute("SELECT working_id FROM staff WHERE user_id = %s", (user_id,))
+                    cursor.execute("SELECT license_id FROM staff WHERE user_id = %s", (user_id,))
                     staff_data = cursor.fetchone()
                     if staff_data:
-                        user['working_id'] = staff_data.get('working_id')
+                        user['license_id'] = staff_data.get('license_id')
             
             return user
         finally:
@@ -78,13 +78,13 @@ class Database:
             cursor.close()
     
     def create_user(self, email, password, first_name, last_name, role, 
-                   date_of_birth=None, phone=None, health_care_number=None, working_id=None, profile_image=None):
+                   date_of_birth=None, phone=None, health_care_number=None, license_id=None, profile_image=None):
         """
         Create a new user (password stored as-is for demo, hash in production)
         
         Parameters:
         - health_care_number: Required for patients
-        - working_id: Required for specialists and staff
+        - license_id: Required for specialists and staff (province/state professional license number)
         - profile_image: Optional profile image URL or data URL
         """
         cursor = self._get_cursor()
@@ -108,10 +108,10 @@ class Database:
                 self.connection.commit()
                 
             elif role == 'specialist':
-                if working_id:
+                if license_id:
                     cursor.execute(
-                        "INSERT INTO specialists (user_id, working_id) VALUES (%s, %s)",
-                        (user_id, working_id)
+                        "INSERT INTO specialists (user_id, license_id) VALUES (%s, %s)",
+                        (user_id, license_id)
                     )
                 else:
                     cursor.execute(
@@ -121,10 +121,10 @@ class Database:
                 self.connection.commit()
                 
             elif role == 'staff':
-                if working_id:
+                if license_id:
                     cursor.execute(
-                        "INSERT INTO staff (user_id, working_id) VALUES (%s, %s)",
-                        (user_id, working_id)
+                        "INSERT INTO staff (user_id, license_id) VALUES (%s, %s)",
+                        (user_id, license_id)
                     )
                 else:
                     cursor.execute(
@@ -134,10 +134,10 @@ class Database:
                 self.connection.commit()
                 
             elif role == 'admin':
-                if working_id:
+                if license_id:
                     cursor.execute(
-                        "INSERT INTO staff (user_id, working_id) VALUES (%s, %s)",
-                        (user_id, working_id)
+                        "INSERT INTO staff (user_id, license_id) VALUES (%s, %s)",
+                        (user_id, license_id)
                     )
                     self.connection.commit()
             
@@ -154,7 +154,7 @@ class Database:
                    first_name: str | None = None, last_name: str | None = None, 
                    role: str | None = None, date_of_birth: str | None = None, 
                    phone: str | None = None, health_care_number: str | None = None,
-                   working_id: str | None = None) -> bool:
+                   license_id: str | None = None) -> bool:
         """
         Update user. Only provided fields are updated.
         Password is stored in plain text (demo only).
@@ -216,8 +216,9 @@ class Database:
                     (health_care_number, user_id)
                 )
             
-            # Update working_id if provided (for specialists, staff, or admin)
-            if working_id is not None:
+            # Update license_id if provided (for specialists, staff, or admin)
+            # This is the province/state professional license number
+            if license_id is not None:
                 # Get current role
                 cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
                 result = cursor.fetchone()
@@ -225,13 +226,13 @@ class Database:
                 
                 if current_role == 'specialist':
                     cursor.execute(
-                        "UPDATE specialists SET working_id = %s WHERE user_id = %s",
-                        (working_id, user_id)
+                        "UPDATE specialists SET license_id = %s WHERE user_id = %s",
+                        (license_id, user_id)
                     )
                 elif current_role in ('staff', 'admin'):
                     cursor.execute(
-                        "UPDATE staff SET working_id = %s WHERE user_id = %s",
-                        (working_id, user_id)
+                        "UPDATE staff SET license_id = %s WHERE user_id = %s",
+                        (license_id, user_id)
                     )
 
             self.connection.commit()
