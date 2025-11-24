@@ -141,7 +141,7 @@
                     </div>
                     <div class="form-field" id="workingIdContainer" style="display: none;">
                         <label for="workingId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Working ID</label>
-                        <input id="workingId" placeholder="Required for Specialist/Staff" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                        <input id="workingId" placeholder="Required for Specialist/Staff/Admin" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
                     </div>
                     <div class="form-field">
                         <label for="role" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Role</label>
@@ -1622,8 +1622,8 @@
                         workingIdContainer.style.display = 'none';
                         workingIdInput.removeAttribute('required');
                         workingIdInput.disabled = true;
-                    } else if (role === 'specialist' || role === 'staff') {
-                        // Hide health care number, show working ID
+                    } else if (role === 'specialist' || role === 'staff' || role === 'admin') {
+                        // Hide health care number, show working ID for specialist, staff, and admin
                         healthCareNumberContainer.style.display = 'block';
                         healthCareInput.removeAttribute('required');
                         healthCareInput.disabled = true;
@@ -1633,7 +1633,7 @@
                         workingIdInput.disabled = false;
                         workingIdInput.style.background = 'white';
                     } else {
-                        // Admin - hide both
+                        // Fallback - hide both
                         healthCareNumberContainer.style.display = 'none';
                         healthCareInput.removeAttribute('required');
                         healthCareInput.disabled = true;
