@@ -205,12 +205,12 @@ CREATE TRIGGER `trg_classify_reading` BEFORE INSERT ON `bloodsugarreadings` FOR 
   DECLARE bmin DECIMAL(5,2); DECLARE bmax DECIMAL(5,2);
 
   SELECT min_value, max_value INTO nmin, nmax
-    FROM Thresholds
+    FROM thresholds
    WHERE user_id = NEW.user_id AND status = 'normal'
    ORDER BY created_at DESC LIMIT 1;
 
   SELECT min_value, max_value INTO bmin, bmax
-    FROM Thresholds
+    FROM thresholds
    WHERE user_id = NEW.user_id AND status = 'borderline'
    ORDER BY created_at DESC LIMIT 1;
 

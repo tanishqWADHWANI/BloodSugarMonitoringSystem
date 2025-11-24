@@ -328,17 +328,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Use shared API wrapper if available (sets auth header automatically)
+        // Otherwise use a fallback API base if diagnostics identified one.
         let data;
+        let apiBaseToUse = API_BASE;
+        if (window.BSM_API_FALLBACK) apiBaseToUse = window.BSM_API_FALLBACK;
+
         if (window.bsm_api && typeof window.bsm_api.specialistLogin === 'function') {
           try {
-            data = await window.bsm_api.specialistLogin(username, password);
+            data = await window.bsm_api.specialistLogin(username, password, { apiBase: apiBaseToUse });
           } catch (e) {
             msg.textContent = e.message || 'Login failed';
             return;
           }
         } else {
           // Fallback to direct fetch if api wrapper not loaded
-          const res = await fetch(`${API_BASE}/specialist/login`, {
+          const res = await fetch(`${apiBaseToUse}/specialist/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -423,7 +427,66 @@ async function runApiDiagnostics() {
   const diag = document.getElementById('apiDiagnostics');
   diag.textContent = 'Checking API...';
   try {
-    const healthRes = await fetch(`${API_BASE.replace('/api','')}/health`, { method: 'GET' });
+    // Primary health endpoint (same host as page, port 5000)
+    const healthUrl = `${API_BASE.replace('/api','')}/health`;
+    let healthRes;
+    try {
+      healthRes = await fetch(healthUrl, { method: 'GET' });
+    } catch (firstErr) {
+      // If first attempt fails, we'll try a few fallbacks and provide
+      // a helpful diagnostic message for common issues (CORS, mixed
+      // content (HTTPS->HTTP), or unreachable host).
+      const pageProto = window.location.protocol;
+      const suggestions = [];
+
+      // Mixed content: page served over HTTPS but backend URL is HTTP
+      if (pageProto === 'https:' && healthUrl.startsWith('http:')) {
+        diag.innerHTML = `<strong style="color:orange">Health check failed:</strong> The page is served over <strong>HTTPS</strong> while the backend is <strong>HTTP</strong>. Browsers block mixed content.\n` +
+          `<div style="margin-top:6px">Try opening the page using <code>http://</code> (not https), or configure an HTTPS proxy for the backend.</div>`;
+        return;
+      }
+
+      // Try explicit localhost/127.0.0.1 fallbacks (useful when hostname resolution differs)
+      const fallbacks = [
+        'http://127.0.0.1:5000/health',
+        'http://localhost:5000/health'
+      ];
+
+      let fallbackOk = false;
+      let fallbackHtml = '';
+      let fallbackUrl = null;
+      for (const f of fallbacks) {
+        try {
+          const r = await fetch(f, { method: 'GET' });
+          if (r.ok) {
+            const b = await r.text();
+            fallbackHtml += `<div><strong>Fallback ${f}:</strong> ${r.status} ${r.statusText} <pre>${b}</pre></div>`;
+            fallbackOk = true;
+            fallbackUrl = f.replace(/\/health\/?$/, '');
+            break;
+          } else {
+            fallbackHtml += `<div><strong>Fallback ${f}:</strong> ${r.status} ${r.statusText}</div>`;
+          }
+        } catch (e) {
+          fallbackHtml += `<div><strong>Fallback ${f}:</strong> failed to fetch (${e.message})</div>`;
+        }
+      }
+
+      let message = `<strong style="color:red">Health check failed: Failed to fetch</strong>`;
+      message += `<div style="margin-top:8px">Common causes: backend not running, network/port not reachable, or browser blocking mixed content (HTTPS page → HTTP backend).</div>`;
+      message += `<div style="margin-top:8px">Fallback checks:</div>${fallbackHtml}`;
+      // If a fallback succeeded, expose it globally so other API calls
+      // can use the reachable host (useful when page hostname differs
+      // from localhost in remote/dev containers).
+      if (fallbackOk && fallbackUrl) {
+        window.BSM_API_FALLBACK = `${fallbackUrl}/api`;
+        message += `<div style="margin-top:8px;color:green">Using fallback API base: <code>${window.BSM_API_FALLBACK}</code></div>`;
+      }
+
+      diag.innerHTML = message;
+      return;
+    }
+
     const headers = {};
     for (const [k, v] of healthRes.headers) headers[k] = v;
     const body = await healthRes.text();

@@ -44,17 +44,11 @@ logger = logging.getLogger(__name__)
 # Create Flask application
 app = Flask(__name__)
 
-# Configure CORS so your front-end (port 5500) can call this API
+# Configure CORS so your front-end (port 5500) can call this API.
+# Include non-/api endpoints like `/health` so browser health checks don't fail.
 CORS(
     app,
-    resources={
-        r"/api/*": {
-            "origins": [
-                "http://127.0.0.1:5500",
-                "http://localhost:5500",
-            ]
-        }
-    },
+    resources={r"/*": {"origins": "*"}},
 )
 
 # ========================================
@@ -958,49 +952,49 @@ def api_specialist_patients():
         conn = db.connection
         cursor = conn.cursor(dictionary=True)
 
+        # First: fetch basic patient + user info for this specialist.
         sql = """
             SELECT
                 p.patient_id,
                 p.health_care_number,
+                u.user_id,
                 u.first_name,
                 u.last_name,
                 u.email,
                 u.phone,
-                u.date_of_birth,
-                last_r.last_value,
-                last_r.last_status,
-                last_r.last_date_time
+                u.date_of_birth
             FROM specialists s
-            JOIN specialistpatient sp
-              ON s.specialist_id = sp.specialist_id
-            JOIN patients p
-              ON p.patient_id = sp.patient_id
-            JOIN users u
-              ON u.user_id = p.user_id
-            LEFT JOIN (
-                SELECT
-                    r.user_id,
-                    r.value     AS last_value,
-                    r.status    AS last_status,
-                    r.date_time AS last_date_time
-                FROM bloodsugarreadings r
-                JOIN (
-                    SELECT user_id, MAX(date_time) AS max_dt
-                    FROM bloodsugarreadings
-                    GROUP BY user_id
-                ) x
-                  ON x.user_id = r.user_id
-                 AND x.max_dt  = r.date_time
-            ) AS last_r
-              ON last_r.user_id = u.user_id
+            JOIN specialistpatient sp ON s.specialist_id = sp.specialist_id
+            JOIN patients p ON p.patient_id = sp.patient_id
+            JOIN users u ON u.user_id = p.user_id
             WHERE s.working_id = %s
-            ORDER BY
-                u.last_name,
-                u.first_name
+            ORDER BY u.last_name, u.first_name
         """
 
+        logger.debug("Fetching patients for specialist %s", working_id)
         cursor.execute(sql, (working_id,))
         rows = cursor.fetchall()
+
+        # For each patient, fetch their latest reading (if any) via a simple query.
+        for row in rows:
+            # default last fields
+            row['last_value'] = None
+            row['last_status'] = None
+            row['last_date_time'] = None
+
+            try:
+                cursor.execute(
+                    "SELECT value, status, date_time FROM bloodsugarreadings WHERE user_id = %s ORDER BY date_time DESC LIMIT 1",
+                    (row['user_id'],),
+                )
+                last = cursor.fetchone()
+                if last:
+                    row['last_value'] = last.get('value')
+                    row['last_status'] = last.get('status')
+                    row['last_date_time'] = last.get('date_time')
+            except Exception:
+                # ignore per-patient read errors, leave last_* as None
+                pass
 
         patients = []
         for row in rows:
