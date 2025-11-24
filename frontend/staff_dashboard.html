@@ -244,7 +244,10 @@
   <!-- Staff Profile Section -->
   <div class="summary-section" style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h2 style="margin: 0;">👤 My Profile</h2>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <img id="profileImageDisplay" src="" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid #007bff;" />
+        <h2 style="margin: 0;">👤 My Profile</h2>
+      </div>
       <button onclick="toggleEditProfile()" id="editProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
     </div>
 
@@ -698,6 +701,13 @@
         document.getElementById('profilePhone').textContent = currentUserData.phone;
         document.getElementById('profileBirthday').textContent = currentUserData.dateOfBirth || 'Not set';
         document.getElementById('profileWorkingId').textContent = currentUserData.workingId;
+        
+        // Display profile image if available
+        if (userData.user.profile_image) {
+          const imgElement = document.getElementById('profileImageDisplay');
+          imgElement.src = userData.user.profile_image;
+          imgElement.style.display = 'block';
+        }
       } else {
         console.error('Failed to load staff profile:', userData.error);
       }

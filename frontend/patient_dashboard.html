@@ -539,7 +539,10 @@
     <!-- Patient Information Card -->
     <section class="card" id="patientInfoCard">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h2>👤 Patient Information</h2>
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img id="profileImageDisplay" src="" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid #007bff;" />
+          <h2>👤 Patient Information</h2>
+        </div>
         <button onclick="toggleEditProfile()" id="editProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
       </div>
       <div class="patient-info-grid" id="patientInfoDisplay">
@@ -558,6 +561,10 @@
         <div class="info-item">
           <span class="info-label">🆔 Patient ID:</span>
           <span class="info-value" id="patientIdDisplay">Loading...</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">🏥 Health Care Number:</span>
+          <span class="info-value" id="patientHealthCareNumber">Loading...</span>
         </div>
       </div>
 
@@ -1219,7 +1226,15 @@
           document.getElementById('patientPhone').textContent = user.phone || 'Not provided';
           document.getElementById('patientBirthday').textContent = user.date_of_birth || 'Not provided';
           document.getElementById('patientIdDisplay').textContent = user.user_id || userId;
+          document.getElementById('patientHealthCareNumber').textContent = user.health_care_number || 'Not provided';
           document.getElementById('greeting').textContent = `📊 Welcome, ${user.first_name || 'Patient'}!`;
+          
+          // Display profile image if available
+          if (user.profile_image) {
+            const imgElement = document.getElementById('profileImageDisplay');
+            imgElement.src = user.profile_image;
+            imgElement.style.display = 'block';
+          }
         }
       } catch (error) {
         console.error('Error loading patient info:', error);

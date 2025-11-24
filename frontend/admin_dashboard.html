@@ -66,6 +66,10 @@
                 </div>
 
                 <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                    <div class="form-field" id="healthCareNumberContainer" style="display: block;">
+                        <label for="healthCareNumber" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Health Care Number</label>
+                        <input id="healthCareNumber" placeholder="Required for Patients" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                    </div>
                     <div class="form-field" id="workingIdContainer" style="display: none;">
                         <label for="workingId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Working ID</label>
                         <input id="workingId" placeholder="Required for Specialist/Staff" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
@@ -83,8 +87,8 @@
 
                 <div class="form-row" style="margin-bottom: 15px;">
                     <div class="form-field">
-                        <label for="imageUrl" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Profile Image URL (optional)</label>
-                        <input id="imageUrl" type="url" placeholder="https://example.com/photo.jpg" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                        <label for="profileImage" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Upload Profile Photo (optional)</label>
+                        <input id="profileImage" type="file" accept="image/*" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
                         <div class="muted" style="margin-top:6px; color: #666; font-size: 0.85rem;">Optional — shown on patient cards and reports.</div>
                     </div>
                 </div>
@@ -695,7 +699,14 @@
                 dateOfBirth: document.getElementById('dob').value,
             };
 
-            if (role === 'specialist' || role === 'staff') {
+            if (role === 'patient') {
+                const healthCareNumber = document.getElementById('healthCareNumber').value.trim();
+                if (!healthCareNumber) {
+                    alert('Health Care Number is required for patients');
+                    return;
+                }
+                payload.healthCareNumber = healthCareNumber;
+            } else if (role === 'specialist' || role === 'staff') {
                 const workingId = document.getElementById('workingId').value.trim();
                 if (!workingId) {
                     alert(`Working ID is required for role: ${role}`);
@@ -704,6 +715,22 @@
                 payload.workingId = workingId;
             }
 
+            // Handle profile image file upload (store as data URL for now)
+            const profileImageInput = document.getElementById('profileImage');
+            if (profileImageInput && profileImageInput.files && profileImageInput.files[0]) {
+                const file = profileImageInput.files[0];
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    payload.profileImage = event.target.result;
+                    await createUserRequest(payload);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                await createUserRequest(payload);
+            }
+        }
+
+        async function createUserRequest(payload) {
             try {
                 const response = await apiRequest('/api/admin/users', {
                     method: 'POST',
@@ -1510,19 +1537,32 @@
 
             roleSelect = document.getElementById('role');
             workingIdContainer = document.getElementById('workingIdContainer');
+            const healthCareNumberContainer = document.getElementById('healthCareNumberContainer');
 
-            // Working ID Visibility Logic
-            if (roleSelect && workingIdContainer) {
+            // Role-specific field visibility
+            if (roleSelect && workingIdContainer && healthCareNumberContainer) {
                 roleSelect.addEventListener('change', (e) => {
                     const role = e.target.value;
-                    if (role === 'specialist' || role === 'staff') {
+                    if (role === 'patient') {
+                        healthCareNumberContainer.style.display = 'block';
+                        document.getElementById('healthCareNumber').setAttribute('required', 'required');
+                        workingIdContainer.style.display = 'none';
+                        document.getElementById('workingId').removeAttribute('required');
+                    } else if (role === 'specialist' || role === 'staff') {
+                        healthCareNumberContainer.style.display = 'none';
+                        document.getElementById('healthCareNumber').removeAttribute('required');
                         workingIdContainer.style.display = 'block';
                         document.getElementById('workingId').setAttribute('required', 'required');
                     } else {
+                        healthCareNumberContainer.style.display = 'none';
+                        document.getElementById('healthCareNumber').removeAttribute('required');
                         workingIdContainer.style.display = 'none';
                         document.getElementById('workingId').removeAttribute('required');
                     }
                 });
+                
+                // Trigger on load for initial state
+                roleSelect.dispatchEvent(new Event('change'));
             }
 
             // Event Listeners

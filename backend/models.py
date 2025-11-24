@@ -37,11 +37,34 @@ class Database:
     
     # User Management
     def get_user(self, user_id):
-        """Get user by ID"""
+        """Get user by ID with role-specific data (health_care_number or working_id)"""
         cursor = self._get_cursor()
         try:
+            # Get base user data
             cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
-            return cursor.fetchone()
+            user = cursor.fetchone()
+            
+            if user and user.get('role'):
+                # Add role-specific data
+                if user['role'] == 'patient':
+                    cursor.execute("SELECT health_care_number FROM patients WHERE user_id = %s", (user_id,))
+                    patient_data = cursor.fetchone()
+                    if patient_data:
+                        user['health_care_number'] = patient_data.get('health_care_number')
+                
+                elif user['role'] == 'specialist':
+                    cursor.execute("SELECT working_id FROM specialists WHERE user_id = %s", (user_id,))
+                    specialist_data = cursor.fetchone()
+                    if specialist_data:
+                        user['working_id'] = specialist_data.get('working_id')
+                
+                elif user['role'] == 'staff':
+                    cursor.execute("SELECT working_id FROM staff WHERE user_id = %s", (user_id,))
+                    staff_data = cursor.fetchone()
+                    if staff_data:
+                        user['working_id'] = staff_data.get('working_id')
+            
+            return user
         finally:
             cursor.close()
     
