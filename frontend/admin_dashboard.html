@@ -919,13 +919,31 @@
                         });
 
                         // Aggregate food triggers
-                        Object.entries(monthData.food_triggers || {}).forEach(([food, count]) => {
-                            annualData.food_triggers[food] = (annualData.food_triggers[food] || 0) + count;
+                        Object.entries(monthData.food_triggers || {}).forEach(([food, data]) => {
+                            const count = typeof data === 'number' ? data : (data.count || 0);
+                            const patients = typeof data === 'object' ? (data.patients || '') : '';
+                            
+                            if (!annualData.food_triggers[food]) {
+                                annualData.food_triggers[food] = { count: 0, patients: new Set() };
+                            }
+                            annualData.food_triggers[food].count += count;
+                            if (patients) {
+                                patients.split(', ').forEach(p => annualData.food_triggers[food].patients.add(p.trim()));
+                            }
                         });
 
                         // Aggregate activity triggers
-                        Object.entries(monthData.activity_triggers || {}).forEach(([activity, count]) => {
-                            annualData.activity_triggers[activity] = (annualData.activity_triggers[activity] || 0) + count;
+                        Object.entries(monthData.activity_triggers || {}).forEach(([activity, data]) => {
+                            const count = typeof data === 'number' ? data : (data.count || 0);
+                            const patients = typeof data === 'object' ? (data.patients || '') : '';
+                            
+                            if (!annualData.activity_triggers[activity]) {
+                                annualData.activity_triggers[activity] = { count: 0, patients: new Set() };
+                            }
+                            annualData.activity_triggers[activity].count += count;
+                            if (patients) {
+                                patients.split(', ').forEach(p => annualData.activity_triggers[activity].patients.add(p.trim()));
+                            }
                         });
                     } catch (e) {
                         console.warn(`Failed to fetch data for ${monthStr}:`, e);
@@ -940,6 +958,22 @@
                         avg_value: allValues.length > 0 ? (allValues.reduce((a, b) => a + b, 0) / allValues.length) : 0,
                         max_value: p.max_value > 0 ? p.max_value : 0,
                         min_value: p.min_value < Infinity ? p.min_value : 0
+                    };
+                });
+
+                // Convert trigger Sets to comma-separated strings
+                Object.keys(annualData.food_triggers).forEach(food => {
+                    const trigger = annualData.food_triggers[food];
+                    annualData.food_triggers[food] = {
+                        count: trigger.count,
+                        patients: Array.from(trigger.patients).join(', ')
+                    };
+                });
+                Object.keys(annualData.activity_triggers).forEach(activity => {
+                    const trigger = annualData.activity_triggers[activity];
+                    annualData.activity_triggers[activity] = {
+                        count: trigger.count,
+                        patients: Array.from(trigger.patients).join(', ')
                     };
                 });
 
@@ -1113,6 +1147,12 @@
 
             // Display food triggers
             const foodTriggers = Object.entries(data.food_triggers || {})
+                .map(([food, data]) => {
+                    // Handle both old format (number) and new format (object with count and patients)
+                    const count = typeof data === 'number' ? data : (data.count || 0);
+                    const patients = typeof data === 'object' ? (data.patients || '') : '';
+                    return [food, count, patients];
+                })
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
 
@@ -1120,9 +1160,10 @@
             if (foodTriggers.length > 0) {
                 foodArea.innerHTML = `
                     <ol style="padding-left: 20px; margin: 0;">
-                        ${foodTriggers.map(([food, count]) => `
+                        ${foodTriggers.map(([food, count, patients]) => `
                             <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; color: #212529;">
                                 <strong>${food}</strong> - <span style="color: #dc3545; font-weight: 600;">${count}</span> abnormal reading${count > 1 ? 's' : ''}
+                                ${patients ? `<div style="font-size: 0.85rem; color: #666; margin-top: 4px;">👤 Patients: ${patients}</div>` : ''}
                             </li>
                         `).join('')}
                     </ol>
@@ -1133,6 +1174,12 @@
 
             // Display activity triggers
             const activityTriggers = Object.entries(data.activity_triggers || {})
+                .map(([activity, data]) => {
+                    // Handle both old format (number) and new format (object with count and patients)
+                    const count = typeof data === 'number' ? data : (data.count || 0);
+                    const patients = typeof data === 'object' ? (data.patients || '') : '';
+                    return [activity, count, patients];
+                })
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
 
@@ -1140,9 +1187,10 @@
             if (activityTriggers.length > 0) {
                 activityArea.innerHTML = `
                     <ol style="padding-left: 20px; margin: 0;">
-                        ${activityTriggers.map(([activity, count]) => `
+                        ${activityTriggers.map(([activity, count, patients]) => `
                             <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; color: #212529;">
                                 <strong>${activity}</strong> - <span style="color: #dc3545; font-weight: 600;">${count}</span> abnormal reading${count > 1 ? 's' : ''}
+                                ${patients ? `<div style="font-size: 0.85rem; color: #666; margin-top: 4px;">👤 Patients: ${patients}</div>` : ''}
                             </li>
                         `).join('')}
                     </ol>
@@ -1199,9 +1247,9 @@
                 
                 csv += `"${p.patient_name || 'Unknown'}",`;
                 csv += `${p.total_readings},`;
-                csv += `${(p.average_value || 0).toFixed(2)},`;
-                csv += `${(p.highest_value || 0).toFixed(2)},`;
-                csv += `${(p.lowest_value || 0).toFixed(2)},`;
+                csv += `${(p.avg_value || 0).toFixed(2)},`;
+                csv += `${(p.max_value || 0).toFixed(2)},`;
+                csv += `${(p.min_value || 0).toFixed(2)},`;
                 csv += `${p.normal_count || 0},`;
                 csv += `${p.borderline_count || 0},`;
                 csv += `${p.abnormal_count || 0},`;
@@ -1210,20 +1258,30 @@
 
             // Add food triggers section
             csv += '\n\nFood Triggers for Abnormal Readings\n';
-            csv += 'Food Item,Abnormal Count\n';
+            csv += 'Food Item,Abnormal Count,Patients\n';
             Object.entries(currentDetailedReport.food_triggers || {})
+                .map(([food, data]) => {
+                    const count = typeof data === 'number' ? data : (data.count || 0);
+                    const patients = typeof data === 'object' ? (data.patients || '') : '';
+                    return [food, count, patients];
+                })
                 .sort((a, b) => b[1] - a[1])
-                .forEach(([food, count]) => {
-                    csv += `"${food}",${count}\n`;
+                .forEach(([food, count, patients]) => {
+                    csv += `"${food}",${count},"${patients}"\n`;
                 });
 
             // Add activity triggers section
             csv += '\n\nActivity Triggers for Abnormal Readings\n';
-            csv += 'Activity,Abnormal Count\n';
+            csv += 'Activity,Abnormal Count,Patients\n';
             Object.entries(currentDetailedReport.activity_triggers || {})
+                .map(([activity, data]) => {
+                    const count = typeof data === 'number' ? data : (data.count || 0);
+                    const patients = typeof data === 'object' ? (data.patients || '') : '';
+                    return [activity, count, patients];
+                })
                 .sort((a, b) => b[1] - a[1])
-                .forEach(([activity, count]) => {
-                    csv += `"${activity}",${count}\n`;
+                .forEach(([activity, count, patients]) => {
+                    csv += `"${activity}",${count},"${patients}"\n`;
                 });
 
             // Download CSV
@@ -1340,9 +1398,9 @@
         <tr>
             <td>${p.patient_name || 'Unknown'}</td>
             <td>${p.total_readings}</td>
-            <td>${(p.average_value || 0).toFixed(2)} mg/dL</td>
-            <td class="critical">${(p.highest_value || 0).toFixed(2)} mg/dL</td>
-            <td class="good">${(p.lowest_value || 0).toFixed(2)} mg/dL</td>
+            <td>${(p.avg_value || 0).toFixed(2)} mg/dL</td>
+            <td class="critical">${(p.max_value || 0).toFixed(2)} mg/dL</td>
+            <td class="good">${(p.min_value || 0).toFixed(2)} mg/dL</td>
             <td>${abnormalPct}%</td>
         </tr>`;
             });
@@ -1355,16 +1413,23 @@
         <tr>
             <th>Food Item</th>
             <th>Abnormal Count</th>
+            <th>Patients</th>
         </tr>`;
 
             Object.entries(currentDetailedReport.food_triggers || {})
+                .map(([food, data]) => {
+                    const count = typeof data === 'number' ? data : (data.count || 0);
+                    const patients = typeof data === 'object' ? (data.patients || '') : '';
+                    return [food, count, patients];
+                })
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10)
-                .forEach(([food, count]) => {
+                .forEach(([food, count, patients]) => {
                     pdfContent += `
         <tr>
             <td>${food}</td>
             <td class="critical">${count}</td>
+            <td>${patients || '-'}</td>
         </tr>`;
                 });
 
@@ -1376,16 +1441,23 @@
         <tr>
             <th>Activity</th>
             <th>Abnormal Count</th>
+            <th>Patients</th>
         </tr>`;
 
             Object.entries(currentDetailedReport.activity_triggers || {})
+                .map(([activity, data]) => {
+                    const count = typeof data === 'number' ? data : (data.count || 0);
+                    const patients = typeof data === 'object' ? (data.patients || '') : '';
+                    return [activity, count, patients];
+                })
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10)
-                .forEach(([activity, count]) => {
+                .forEach(([activity, count, patients]) => {
                     pdfContent += `
         <tr>
             <td>${activity}</td>
             <td class="critical">${count}</td>
+            <td>${patients || '-'}</td>
         </tr>`;
                 });
 

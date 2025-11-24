@@ -1025,18 +1025,20 @@ def get_monthly_report():
             if stat.get('abnormal_count'):
                 stat['abnormal_count'] = int(stat['abnormal_count'])
                 
-        # Get top food triggers
+        # Get top food triggers with patient names
         sql = f"""
             SELECT 
-                food_intake,
+                r.food_intake,
                 COUNT(*) as trigger_count,
-                AVG(value) as avg_value
-            FROM bloodsugarreadings
+                AVG(r.value) as avg_value,
+                GROUP_CONCAT(DISTINCT CONCAT(u.first_name, ' ', u.last_name) SEPARATOR ', ') as patients
+            FROM bloodsugarreadings r
+            LEFT JOIN users u ON r.user_id = u.user_id
             WHERE {date_filter}
-                AND status IN ('abnormal', 'borderline')
-                AND food_intake IS NOT NULL
-                AND food_intake != ''
-            GROUP BY food_intake
+                AND r.status IN ('abnormal', 'borderline')
+                AND r.food_intake IS NOT NULL
+                AND r.food_intake != ''
+            GROUP BY r.food_intake
             ORDER BY trigger_count DESC
             LIMIT 10
         """
@@ -1047,18 +1049,20 @@ def get_monthly_report():
             if trigger.get('avg_value'):
                 trigger['avg_value'] = float(trigger['avg_value'])
         
-        # Get top activity triggers
+        # Get top activity triggers with patient names
         sql = f"""
             SELECT 
-                activity,
+                r.activity,
                 COUNT(*) as trigger_count,
-                AVG(value) as avg_value
-            FROM bloodsugarreadings
+                AVG(r.value) as avg_value,
+                GROUP_CONCAT(DISTINCT CONCAT(u.first_name, ' ', u.last_name) SEPARATOR ', ') as patients
+            FROM bloodsugarreadings r
+            LEFT JOIN users u ON r.user_id = u.user_id
             WHERE {date_filter}
-                AND status IN ('abnormal', 'borderline')
-                AND activity IS NOT NULL
-                AND activity != ''
-            GROUP BY activity
+                AND r.status IN ('abnormal', 'borderline')
+                AND r.activity IS NOT NULL
+                AND r.activity != ''
+            GROUP BY r.activity
             ORDER BY trigger_count DESC
             LIMIT 10
         """
@@ -1069,9 +1073,19 @@ def get_monthly_report():
             if trigger.get('avg_value'):
                 trigger['avg_value'] = float(trigger['avg_value'])
         
-        # Convert triggers to dictionary format for easier frontend processing
-        food_triggers_dict = {item['food_intake']: item['trigger_count'] for item in food_triggers}
-        activity_triggers_dict = {item['activity']: item['trigger_count'] for item in activity_triggers}
+        # Convert triggers to dictionary format with patient names
+        food_triggers_dict = {
+            item['food_intake']: {
+                'count': item['trigger_count'],
+                'patients': item.get('patients', '')
+            } for item in food_triggers
+        }
+        activity_triggers_dict = {
+            item['activity']: {
+                'count': item['trigger_count'],
+                'patients': item.get('patients', '')
+            } for item in activity_triggers
+        }
         
         cursor.close()
         
