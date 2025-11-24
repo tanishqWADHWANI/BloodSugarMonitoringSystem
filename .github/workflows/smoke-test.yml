@@ -1,0 +1,51 @@
+name: Headless smoke test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    env:
+      # Run in DEMO mode so backend does not require a DB for login
+      DEMO_AUTH: '1'
+      FLASK_ENV: development
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install requirements
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+
+      - name: Start backend (background)
+        working-directory: ./
+        run: |
+          nohup python3 backend/app.py > /tmp/backend.log 2>&1 &
+          sleep 2
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 10); do
+            if curl -sSf http://127.0.0.1:5000/health >/dev/null 2>&1; then echo OK && break; fi
+            sleep 1
+          done
+
+      - name: Run headless smoke test
+        run: ./scripts/headless_smoke_test.sh
+
+      - name: Upload backend log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: /tmp/backend.log

@@ -285,8 +285,20 @@
   </footer>
 <script>
 // Config
-// Use the same hostname the page was served from so CORS origin matches (dev convenience).
+// Default API base: same hostname + port 5000. We allow overriding via
+// `window.BSM_API_FALLBACK` or `localStorage.BSM_API_BASE` (useful for Codespaces).
 const API_BASE = `${window.location.protocol}//${window.location.hostname}:5000/api`;
+// Load persisted override (if user pasted a forwarded URL)
+try {
+  const stored = localStorage.getItem('BSM_API_BASE');
+  if (stored) window.BSM_API_FALLBACK = stored;
+} catch (e) {
+  console.warn('Could not read BSM_API_BASE from localStorage', e);
+}
+
+function apiBase() {
+  return window.BSM_API_FALLBACK || API_BASE;
+}
 
 // Specialist login handler — intercept form POST and call backend API
 document.addEventListener('DOMContentLoaded', function () {
@@ -316,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         // Quick diagnostics: check backend health first to give a clearer error message
         try {
-          const healthRes = await fetch(`${API_BASE.replace('/api','')}/health`, { method: 'GET' });
+          const healthRes = await fetch(`${apiBase().replace('/api','')}/health`, { method: 'GET' });
           if (!healthRes.ok) {
             msg.textContent = `API health check failed (status ${healthRes.status}) — check backend logs`;
             return;
@@ -330,8 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Use shared API wrapper if available (sets auth header automatically)
         // Otherwise use a fallback API base if diagnostics identified one.
         let data;
-        let apiBaseToUse = API_BASE;
-        if (window.BSM_API_FALLBACK) apiBaseToUse = window.BSM_API_FALLBACK;
+        let apiBaseToUse = apiBase();
 
         if (window.bsm_api && typeof window.bsm_api.specialistLogin === 'function') {
           try {
@@ -428,7 +439,7 @@ async function runApiDiagnostics() {
   diag.textContent = 'Checking API...';
   try {
     // Primary health endpoint (same host as page, port 5000)
-    const healthUrl = `${API_BASE.replace('/api','')}/health`;
+    const healthUrl = `${apiBase().replace('/api','')}/health`;
     let healthRes;
     try {
       healthRes = await fetch(healthUrl, { method: 'GET' });
@@ -480,7 +491,16 @@ async function runApiDiagnostics() {
       // from localhost in remote/dev containers).
       if (fallbackOk && fallbackUrl) {
         window.BSM_API_FALLBACK = `${fallbackUrl}/api`;
+        try { localStorage.setItem('BSM_API_BASE', window.BSM_API_FALLBACK); } catch(e){}
         message += `<div style="margin-top:8px;color:green">Using fallback API base: <code>${window.BSM_API_FALLBACK}</code></div>`;
+      } else {
+        // No automatic fallback succeeded — show a small prompt so user can paste the
+        // forwarded backend URL (useful when using Codespaces port forwarding).
+        message += `<div style="margin-top:12px;padding:10px;border:1px dashed #ccc;border-radius:6px;background:#fff">` +
+          `<div style="margin-bottom:8px">If you're using a remote preview (Codespaces / GitHub.dev), the preview page cannot reach your local HTTP backend by default. Forward port <code>5000</code> in Codespaces, then paste the forwarded base URL below (example: <code>https://1234-5500.app.github.dev</code> or <code>http://127.0.0.1:5000</code>):</div>` +
+          `<input id="bsmApiOverride" placeholder="https://<forwarded-host>:5500 or http://127.0.0.1:5000" style="width:70%;padding:6px;margin-right:6px" />` +
+          `<button id="bsmApiSave">Use this API</button>` +
+          `</div>`;
       }
 
       diag.innerHTML = message;
@@ -496,7 +516,7 @@ async function runApiDiagnostics() {
 
     // Fetch server runtime mode (demo / DB availability) if available
     try {
-      const modeRes = await fetch(`${API_BASE}/server/mode`, { method: 'GET' });
+      const modeRes = await fetch(`${apiBase()}/server/mode`, { method: 'GET' });
       if (modeRes.ok) {
         const mode = await modeRes.json();
         html += `<div style="margin-top:8px;"><strong>Server Mode:</strong> `;
@@ -538,6 +558,26 @@ setInterval(() => {
 
 // Run diagnostics on load so users can see CORS/connection info immediately
 document.addEventListener('DOMContentLoaded', runApiDiagnostics);
+
+// Handle manual API override save button (delegated because input may be created dynamically)
+document.addEventListener('click', function (ev) {
+  if (ev.target && ev.target.id === 'bsmApiSave') {
+    const input = document.getElementById('bsmApiOverride');
+    if (!input) return;
+    let val = input.value.trim();
+    if (!val) return;
+    // Normalize: if user pasted host without protocol, assume https for remote previews
+    if (!/^https?:\/\//i.test(val)) {
+      val = 'https://' + val;
+    }
+    // Ensure we store API base including /api
+    if (!/\/api\/?$/.test(val)) val = val.replace(/\/$/, '') + '/api';
+    window.BSM_API_FALLBACK = val;
+    try { localStorage.setItem('BSM_API_BASE', val); } catch (e) { console.warn(e); }
+    // Re-run diagnostics so UI updates and the new base is used
+    runApiDiagnostics();
+  }
+});
 
 // Fetch and render readings for a user (userId = 1)
 async function loadUserReadings(userId = 1, days = 30) {
