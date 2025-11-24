@@ -91,3 +91,10 @@ const getSpecialistAttention = (specId) => apiRequest(`/api/specialist/${encodeU
 const getReport = (userId) => apiRequest(`/api/reports/${encodeURIComponent(userId)}`);
 const getDiet = (condition) => apiRequest(`/api/diet/${encodeURIComponent(condition)}`);
 const getThresholds = (userId) => apiRequest(`/api/thresholds/${encodeURIComponent(userId)}`);
+
+// Server runtime mode (demo vs DB availability)
+const getServerMode = () => apiRequest('/api/server/mode');
+
+// Exported for other modules (if using bundler) - keep global for now in browser
+window.bsm_api = window.bsm_api || {};
+window.bsm_api.getServerMode = getServerMode;

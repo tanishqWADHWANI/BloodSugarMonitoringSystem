@@ -6,34 +6,85 @@
   <title>Specialist Dashboard - Online Blood Sugar Monitor</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
-   
     .logout-btn {
-      background: #cc0000; border: none; border-radius: 5px; padding: 8px 12px; cursor: pointer;
+      background: #cc0000;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: white;
     }
     .logout-btn:hover { background: #ff3333; }
 
-    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-    h1, h2, h3, h4, p { margin: 0 0 15px 0; }
-    .dashboard-section { margin-top: 30px; }
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    h1, h2, h3, h4, p {
+      margin: 0 0 15px 0;
+    }
+    .dashboard-section {
+      margin-top: 30px;
+    }
 
-    .patient-search { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
-    .patient-search input, .patient-search button {
-      padding: 8px; border-radius: 5px; border: 1px solid #ccc;
+    .patient-search {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .patient-search input,
+    .patient-search button {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
     .patient-search button {
-      background: #004080; color: white; border: none; cursor: pointer;
+      background: #004080;
+      color: white;
+      border: none;
+      cursor: pointer;
     }
-    .patient-search button:hover { background: #0066cc; }
+    .patient-search button:hover {
+      background: #0066cc;
+    }
 
     table {
-      width: 100%; border-collapse: collapse; background: white; border-radius: 10px;
-      overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-    th { background: #004080; color: white; }
-    tr:hover { background: #f1f1f1; cursor: pointer; }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #004080;
+      color: white;
+    }
+    tr:hover {
+      background: #f1f1f1;
+      cursor: pointer;
+    }
 
-    footer { background: #004080; color: white; text-align: center; padding: 10px; margin-top: 40px; }
+    #statusMsg {
+      margin-top: 10px;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    footer {
+      background: #004080;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
@@ -41,8 +92,8 @@
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="specialist.html" class="active">Specialist</a></li>
-		<li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="specialist.html">Specialist Login</a></li>
+        <li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
         <li><a href="contact.html">Contact</a></li>
         <li style="margin-left:auto;">
           <button id="logoutBtn" class="logout-btn">Logout</button>
@@ -76,6 +127,8 @@
         </thead>
         <tbody></tbody>
       </table>
+
+      <p id="statusMsg"></p>
     </div>
   </main>
 
@@ -84,81 +137,201 @@
   </footer>
 
   <script>
-  // ================================
-  // Secure Access
-  // ================================
-  const loggedInSpecialist = localStorage.getItem('specialistUsername');
-  if (!loggedInSpecialist) {
-    window.location.href = 'specialist.html';
-  }
-  const specialistName = localStorage.getItem('specialistFullName') || "Dr. John Smith";
-  document.getElementById("specialistNameDisplay").textContent = specialistName;
+    (function () {
+      // ================================
+      // CONFIG
+      // ================================
+      const API_BASE = 'http://127.0.0.1:5000/api';
 
-  // ================================
-  // Patient Data
-  // ================================
-  let patients = JSON.parse(localStorage.getItem('patients')) || [
-    { number: 'P001', name: 'Alice Johnson', lastChecked: '2025-10-14' },
-    { number: 'P002', name: 'Bob Smith', lastChecked: '2025-10-13' },
-    { number: 'P003', name: 'Charlie Lee', lastChecked: '2025-10-11' },
-    { number: 'P004', name: 'Diana King', lastChecked: '2025-10-10' },
-    { number: 'P005', name: 'Ethan Brown', lastChecked: '2025-10-12' }
-  ];
+      // ================================
+      // SECURE ACCESS
+      // ================================
+      const loggedInSpecialist = localStorage.getItem('specialistUsername');
+      if (!loggedInSpecialist) {
+        // Not logged in, go back to specialist login page
+        window.location.href = 'specialist.html';
+        return;
+      }
 
-  const tableBody = document.querySelector('#patient-table tbody');
+      const specialistName =
+        localStorage.getItem('specialistFullName') || 'Specialist';
+      document.getElementById('specialistNameDisplay').textContent = specialistName;
 
-  // Render Patient Table
-  function renderTable(data) {
-    tableBody.innerHTML = '';
-    data.forEach(p => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${p.number}</td>
-        <td>${p.name}</td>
-        <td>${p.lastChecked}</td>
-      `;
-      row.addEventListener('click', () => {
-        localStorage.setItem('viewingPatientNumber', p.number);
-        localStorage.setItem('viewingPatientName', p.name);
-        window.location.href = 'specialist_patient_view.html';
+      const token = localStorage.getItem('specialistToken') || null;
+
+      function buildAuthHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['Authorization'] = 'Bearer ' + token;
+        }
+        return headers;
+      }
+
+      // ================================
+      // DOM ELEMENTS
+      // ================================
+      const tableBody = document.querySelector('#patient-table tbody');
+      const statusMsg = document.getElementById('statusMsg');
+      const searchNameEl = document.getElementById('search-name');
+      const searchNumberEl = document.getElementById('search-number');
+      const startDateEl = document.getElementById('start-date');
+      const endDateEl = document.getElementById('end-date');
+      const searchBtn = document.getElementById('search-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      let patients = [];        // full list from backend
+      let patientsLoaded = false;
+
+      // ================================
+      // RENDER TABLE
+      // ================================
+      function renderTable(data) {
+        tableBody.innerHTML = '';
+        if (!data || data.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="3">No patients found.</td>
+            </tr>`;
+          return;
+        }
+
+        data.forEach(p => {
+          const row = document.createElement('tr');
+
+          const number = p.number || p.patient_number || p.id || '';
+          const name = p.name || p.full_name || p.patient_name || '';
+          const lastChecked = p.last_checked || p.lastChecked || p.last_update || '';
+
+          row.innerHTML = `
+            <td>${number}</td>
+            <td>${name}</td>
+            <td>${lastChecked || '-'}</td>
+          `;
+
+          row.addEventListener('click', () => {
+            localStorage.setItem('viewingPatientNumber', number);
+            localStorage.setItem('viewingPatientName', name);
+            window.location.href = 'specialist_patient_view.html';
+          });
+
+          tableBody.appendChild(row);
+        });
+      }
+
+      // ================================
+      // LOAD PATIENTS FROM BACKEND
+      // ================================
+      async function loadPatients() {
+        statusMsg.textContent = 'Loading patients from server...';
+
+        try {
+          const res = await fetch(`${API_BASE}/specialist/patients`, {
+            headers: buildAuthHeaders()
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to load patients');
+          }
+
+          const data = await res.json();
+          // Expect: { patients: [...] } or just [...]
+          patients = data.patients || data || [];
+          patientsLoaded = true;
+
+          if (!Array.isArray(patients)) {
+            patients = [];
+          }
+
+          renderTable(patients);
+          statusMsg.textContent = `Loaded ${patients.length} patient(s).`;
+        } catch (err) {
+          console.error(err);
+          // Optional fallback: use existing localStorage demo list if present
+          const lsPatients = JSON.parse(localStorage.getItem('patients') || '[]');
+          if (lsPatients.length) {
+            patients = lsPatients;
+            patientsLoaded = true;
+            renderTable(patients);
+            statusMsg.textContent =
+              'Could not reach server. Showing local demo patient list.';
+          } else {
+            tableBody.innerHTML = `
+              <tr>
+                <td colspan="3">Unable to load patients from server.</td>
+              </tr>`;
+            statusMsg.textContent =
+              'Could not load patients. Please try again later.';
+          }
+        }
+      }
+
+      // ================================
+      // FILTERING / SEARCH
+      // ================================
+      function applyFilters() {
+        if (!patientsLoaded) return;
+        const nameVal = (searchNameEl.value || '').toLowerCase();
+        const numberVal = (searchNumberEl.value || '').toLowerCase();
+        const startDate = startDateEl.value;
+        const endDate = endDateEl.value;
+
+        const filtered = patients.filter(p => {
+          const number = (p.number || p.patient_number || p.id || '').toString();
+          const name = (p.name || p.full_name || p.patient_name || '').toLowerCase();
+          const lastChecked = (p.last_checked || p.lastChecked || p.last_update || '') || '';
+
+          const matchName = !nameVal || name.includes(nameVal);
+          const matchNumber =
+            !numberVal || number.toLowerCase().includes(numberVal);
+
+          let matchDate = true;
+          if (startDate || endDate) {
+            // Compare as strings in YYYY-MM-DD format if backend sends that
+            if (startDate && lastChecked < startDate) matchDate = false;
+            if (endDate && lastChecked > endDate) matchDate = false;
+          }
+
+          return matchName && matchNumber && matchDate;
+        });
+
+        renderTable(filtered);
+        statusMsg.textContent =
+          filtered.length + ' patient(s) match your filters.';
+      }
+
+      searchBtn.addEventListener('click', applyFilters);
+
+      resetBtn.addEventListener('click', () => {
+        searchNameEl.value = '';
+        searchNumberEl.value = '';
+        startDateEl.value = '';
+        endDateEl.value = '';
+        renderTable(patients);
+        statusMsg.textContent = `Showing all ${patients.length} patient(s).`;
       });
-      tableBody.appendChild(row);
-    });
-  }
-  renderTable(patients);
 
-  // Search and Reset
-  document.getElementById('search-btn').addEventListener('click', () => {
-    const nameVal = document.getElementById('search-name').value.toLowerCase();
-    const numberVal = document.getElementById('search-number').value.toLowerCase();
-    const startDate = document.getElementById('start-date').value;
-    const endDate = document.getElementById('end-date').value;
+      // ================================
+      // LOGOUT
+      // ================================
+      logoutBtn.addEventListener('click', e => {
+        e.preventDefault();
+        localStorage.removeItem('specialistId');
+        localStorage.removeItem('specialistUsername');
+        localStorage.removeItem('specialistFullName');
+        localStorage.removeItem('specialistSpecialty');
+        localStorage.removeItem('specialistToken');
+        localStorage.removeItem('viewingPatientNumber');
+        localStorage.removeItem('viewingPatientName');
+        alert('You have been logged out.');
+        window.location.href = 'specialist.html';
+      });
 
-    const filtered = patients.filter(p => {
-      const matchName = p.name.toLowerCase().includes(nameVal);
-      const matchNumber = p.number.toLowerCase().includes(numberVal);
-      const matchDate = (!startDate || p.lastChecked >= startDate) && (!endDate || p.lastChecked <= endDate);
-      return matchName && matchNumber && matchDate;
-    });
-    renderTable(filtered);
-  });
-
-  document.getElementById('reset-btn').addEventListener('click', () => {
-    document.getElementById('search-name').value = '';
-    document.getElementById('search-number').value = '';
-    document.getElementById('start-date').value = '';
-    document.getElementById('end-date').value = '';
-    renderTable(patients);
-  });
-
-  // Logout
-  document.getElementById('logoutBtn').addEventListener('click', e => {
-    e.preventDefault();
-    localStorage.removeItem('specialistUsername');
-    localStorage.removeItem('specialistFullName');
-    alert("You have been logged out.");
-    window.location.href = 'specialist.html';
-  });
+      // ================================
+      // INIT
+      // ================================
+      loadPatients();
+    })();
   </script>
 </body>
 </html>

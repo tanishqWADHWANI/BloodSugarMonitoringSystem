@@ -13924,20 +13924,38 @@ CREATE TABLE `users` (
 --
 -- Dumping data for table `users`
 --
-
 INSERT INTO `users` (`user_id`, `role`, `first_name`, `last_name`, `email`, `phone`, `date_of_birth`, `password_hash`, `profile_image`, `created_at`, `updated_at`) VALUES
 (1, 'patient', 'Demo', 'User', 'newemail@test.com', '604-999-8888', '2000-01-01', 'demo1234', NULL, '2025-10-23 07:17:27', '2025-11-05 22:56:09'),
 (4, 'patient', 'John', 'Doe', 'test@example.com', NULL, NULL, 'pass123', NULL, '2025-10-27 05:41:28', '2025-10-27 05:41:28'),
-(10, 'specialist', 'Sarah', 'Smith', 'dr.smith@example.com', NULL, NULL, 'secret', NULL, '2025-11-06 04:54:31', '2025-11-06 04:54:31'),
+
+-- ================================
+-- DEMO SPECIALIST 1: jsmith / smith123
+-- ================================
+(10, 'specialist', 'John', 'Smith', 'jsmith@example.com', NULL, NULL, 'smith123', NULL, '2025-11-06 04:54:31', '2025-11-06 04:54:31'),
+
 (11, 'patient', 'Tanishq', 'Wadhwani', 'tanishq@gmail.com', '604-555-1234', '2004-10-11', 'password123', NULL, '2025-11-05 22:16:57', '2025-11-05 22:16:57'),
-(12, 'specialist', 'Dr. Sarah', 'Johnson', 'specialist2@test.com', '604-555-5678', NULL, 'spec123', NULL, '2025-11-05 22:24:52', '2025-11-05 22:24:52'),
+
+-- ================================
+-- DEMO SPECIALIST 2: ajones / jones123
+-- ================================
+(12, 'specialist', 'Alex', 'Jones', 'ajones@example.com', NULL, NULL, 'jones123', NULL, '2025-11-05 22:24:52', '2025-11-05 22:24:52'),
+
 (13, 'staff', 'Jane', 'Smith', 'staff2@test.com', '604-555-9012', NULL, 'staff123', NULL, '2025-11-05 22:25:34', '2025-11-05 22:25:34'),
-(14, 'specialist', 'Jia', 'Rana', 'demo.patient@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:23:42', '2025-11-06 02:23:42'),
+
+-- ================================
+-- DEMO SPECIALIST 3: clee / lee123
+-- ================================
+(14, 'specialist', 'Christina', 'Lee', 'clee@example.com', NULL, NULL, 'lee123', NULL, '2025-11-06 02:23:42', '2025-11-06 02:23:42'),
+
 (17, 'specialist', 'Jia', 'Rana', 'kavya.rana@example.com', NULL, NULL, 'demo1234', NULL, '2025-11-06 02:27:29', '2025-11-06 02:27:29'),
+
 (18, 'patient', 'John', 'Doe', 'patient1@test.com', '604-555-1234', '1990-05-15', 'pass123', NULL, '2025-11-06 04:07:02', '2025-11-06 04:07:02'),
 (20, 'patient', 'John', 'Doe', 'john.doe@example.com', NULL, NULL, 'pass123', NULL, '2025-11-06 04:54:48', '2025-11-06 04:54:48');
 
 -- --------------------------------------------------------
+UPDATE specialists SET working_id = 'jsmith' WHERE user_id = 10;
+UPDATE specialists SET working_id = 'ajones' WHERE user_id = 12;
+UPDATE specialists SET working_id = 'clee'   WHERE user_id = 14;
 
 --
 -- Stand-in structure for view `v_specialist_alerts`
