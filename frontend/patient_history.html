@@ -256,23 +256,25 @@
 
   // Render table (async to load from database)
   async function renderTable() {
-    let rows = loadEntries(); // Load from localStorage first
+    let rows = [];
     
-    // Try to load from database
+    // Load from database
     const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
     if (userId) {
       try {
         const response = await fetch(`http://127.0.0.1:5000/api/readings/${userId}?days=365`);
         if (response.ok) {
-          const dbReadings = await response.json();
-          if (dbReadings && dbReadings.length > 0) {
-            // Convert database format to table format
+          const data = await response.json();
+          const dbReadings = data.readings || [];
+          if (dbReadings.length > 0) {
+            // Convert database format to table format and keep reading_id
             rows = dbReadings.map(r => ({
+              reading_id: r.reading_id,  // Keep ID for delete operations
               date: r.date_time ? new Date(r.date_time).toISOString().split('T')[0] : '-',
               time: r.date_time ? new Date(r.date_time).toTimeString().slice(0,5) : '-',
               bloodSugar: r.value || '-',
               bloodPressure: r.bloodPressure || '-',
-              heartRate: r.heartRate || '-',
+              heartRate: r.heart_rate || '-',
               medications: r.medications || '-',
               foodTime: r.food_time || r.food_intake || '-',
               foodTaken: r.food_intake || '-',
@@ -324,26 +326,32 @@
         <td>${r.foodTaken || '-'}</td>
         <td>${r.activity || '-'}</td>
         <td>
-          <button type="button" class="edit-btn" data-index="${i}">Edit</button>
-          <button type="button" class="del-btn" data-index="${i}">Delete</button>
+          <button type="button" class="edit-btn" data-readingid="${r.reading_id}">Edit</button>
+          <button type="button" class="del-btn" data-readingid="${r.reading_id}">Delete</button>
         </td>
       </tr>
     `}).join('');
   }
 
   // Edit / Delete handlers
-  tbody.addEventListener('click', e => {
+  tbody.addEventListener('click', async e => {
     const btn = e.target.closest('button');
     if (!btn) return;
-    const idx = Number(btn.dataset.index);
-    const rows = loadEntries();
+    const readingId = btn.dataset.readingid;
 
     if (btn.classList.contains('del-btn')) {
       if (confirm('Delete this entry? This action cannot be undone.')) {
-        rows.splice(idx, 1);
-        saveEntries(rows);
-        renderTable();
-        alert('Entry deleted successfully.');
+        try {
+          // Delete from database using API
+          await deleteReading(readingId);
+          console.log('✓ Entry deleted from database');
+          alert('Entry deleted successfully.');
+          // Refresh the table
+          await renderTable();
+        } catch (error) {
+          console.error('Failed to delete entry:', error);
+          alert('Failed to delete entry. Please try again.');
+        }
       }
       return;
     }
