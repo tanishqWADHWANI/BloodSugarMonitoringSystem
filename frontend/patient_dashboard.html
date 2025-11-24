@@ -568,6 +568,15 @@
       </div>
     </section>
 
+    <!-- AI Personalized Insights Card -->
+    <section class="card" id="aiInsightsCard">
+      <h2>🤖 AI Personalized Insights & Recommendations</h2>
+      <p class="description">Smart analysis of your patterns with personalized suggestions based on your food, activities, and symptoms.</p>
+      <div id="personalizedInsightsContainer" class="insights-container">
+        <p class="loading-text">Analyzing your patterns...</p>
+      </div>
+    </section>
+
     <!-- Diet Recommendations & Trends Card -->
     <section class="card" id="dietTrendsCard">
       <h2>🍎 Diet Recommendations & Prevention Tips</h2>
@@ -1129,10 +1138,180 @@
       await Promise.all([
         loadPatientInfo(),
         loadAlerts(),
+        loadPersonalizedInsights(),
         loadDietRecommendations(),
         loadSpecialistMessages()
       ]);
       loadSpecialistAssignment();
+    }
+
+    // Load personalized AI insights
+    async function loadPersonalizedInsights() {
+      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+      if (!userId) return;
+      
+      const container = document.getElementById('personalizedInsightsContainer');
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/insights/${userId}?days=30`);
+        if (response.ok) {
+          const data = await response.json();
+          const insights = data.insights || {};
+          
+          if (insights.personalized_recommendations && insights.personalized_recommendations.length > 0) {
+            const recommendations = insights.personalized_recommendations;
+            const correlations = insights.correlations || {};
+            
+            let html = '';
+            
+            // Display recommendations by priority
+            const highPriority = recommendations.filter(r => r.priority === 'high');
+            const mediumPriority = recommendations.filter(r => r.priority === 'medium');
+            const lowPriority = recommendations.filter(r => r.priority === 'low');
+            
+            if (highPriority.length > 0) {
+              html += '<div style="margin-bottom: 20px;"><h3 style="color: #dc3545; font-size: 1.1rem; margin-bottom: 10px;">🚨 High Priority</h3>';
+              highPriority.forEach(rec => {
+                html += createRecommendationCard(rec, '#dc3545');
+              });
+              html += '</div>';
+            }
+            
+            if (mediumPriority.length > 0) {
+              html += '<div style="margin-bottom: 20px;"><h3 style="color: #ffc107; font-size: 1.1rem; margin-bottom: 10px;">⚠️ Medium Priority</h3>';
+              mediumPriority.forEach(rec => {
+                html += createRecommendationCard(rec, '#ffc107');
+              });
+              html += '</div>';
+            }
+            
+            if (lowPriority.length > 0) {
+              html += '<div style="margin-bottom: 20px;"><h3 style="color: #28a745; font-size: 1.1rem; margin-bottom: 10px;">✅ General Guidance</h3>';
+              lowPriority.forEach(rec => {
+                html += createRecommendationCard(rec, '#28a745');
+              });
+              html += '</div>';
+            }
+            
+            // Add correlation details if available
+            if (correlations.food_triggers && correlations.food_triggers.length > 0) {
+              html += createCorrelationSection('🍽️ Food Impact Analysis', correlations.food_triggers, 'food');
+            }
+            
+            if (correlations.activity_impacts && correlations.activity_impacts.length > 0) {
+              html += createCorrelationSection('🏃 Activity Impact Analysis', correlations.activity_impacts, 'activity');
+            }
+            
+            if (correlations.time_patterns && Object.keys(correlations.time_patterns).length > 0) {
+              html += createTimePatternsSection(correlations.time_patterns);
+            }
+            
+            container.innerHTML = html;
+          } else {
+            container.innerHTML = '<p class="info-text">📊 Keep logging your readings with food, activities, and symptoms to get personalized insights!</p>';
+          }
+        } else {
+          container.innerHTML = '<p class="info-text">Unable to load insights. Please try again later.</p>';
+        }
+      } catch (error) {
+        console.error('Error loading personalized insights:', error);
+        container.innerHTML = '<p class="info-text">Unable to connect to server. Please check your connection.</p>';
+      }
+    }
+    
+    function createRecommendationCard(rec, color) {
+      const detailsHtml = rec.details ? `
+        <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 0.9rem;">
+          ${JSON.stringify(rec.details, null, 2).replace(/[{}"]/g, '').replace(/,/g, '<br>').replace(/:/g, ': ')}
+        </div>
+      ` : '';
+      
+      return `
+        <div class="insight-item" style="padding: 15px; margin-bottom: 12px; background: white; border-left: 4px solid ${color}; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h4 style="color: ${color}; margin: 0 0 8px 0; font-size: 1rem;">${rec.title}</h4>
+          <p style="margin: 0; color: #333; line-height: 1.6;">${rec.message}</p>
+          ${detailsHtml}
+        </div>
+      `;
+    }
+    
+    function createCorrelationSection(title, items, type) {
+      let html = `
+        <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+          <h3 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px;">${title}</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;">
+      `;
+      
+      items.slice(0, 6).forEach(item => {
+        if (type === 'food') {
+          const strength = item.correlation_strength || 0;
+          const barColor = strength > 60 ? '#dc3545' : strength > 40 ? '#ffc107' : '#28a745';
+          html += `
+            <div style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+              <div style="font-weight: 600; color: #333; margin-bottom: 5px;">${item.food}</div>
+              <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">
+                ${item.abnormal_count}/${item.total_count} times abnormal
+              </div>
+              <div style="background: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="width: ${strength}%; height: 100%; background: ${barColor};"></div>
+              </div>
+              <div style="font-size: 0.75rem; color: #666; margin-top: 4px;">${strength}% correlation</div>
+            </div>
+          `;
+        } else if (type === 'activity') {
+          const impactColor = item.impact === 'beneficial' ? '#28a745' : '#dc3545';
+          const impactIcon = item.impact === 'beneficial' ? '✅' : '⚠️';
+          html += `
+            <div style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+              <div style="font-weight: 600; color: #333; margin-bottom: 5px;">${impactIcon} ${item.activity}</div>
+              <div style="font-size: 0.85rem; color: ${impactColor}; margin-bottom: 5px;">
+                ${item.impact === 'beneficial' ? 'Helps control' : 'May affect'} levels
+              </div>
+              <div style="font-size: 0.85rem; color: #666;">
+                Avg reading: ${item.avg_reading} mg/dL
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      html += '</div></div>';
+      return html;
+    }
+    
+    function createTimePatternsSection(patterns) {
+      let html = `
+        <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+          <h3 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px;">🕐 Time-of-Day Patterns</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+      `;
+      
+      const periodEmojis = {
+        'morning': '🌅',
+        'afternoon': '☀️',
+        'evening': '🌆',
+        'night': '🌙'
+      };
+      
+      Object.entries(patterns).forEach(([period, data]) => {
+        const rateColor = data.abnormal_rate > 40 ? '#dc3545' : data.abnormal_rate > 20 ? '#ffc107' : '#28a745';
+        html += `
+          <div style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+            <div style="font-weight: 600; color: #333; margin-bottom: 8px;">${periodEmojis[period] || '🕐'} ${period.charAt(0).toUpperCase() + period.slice(1)}</div>
+            <div style="font-size: 0.85rem; color: #666; margin-bottom: 4px;">
+              ${data.total_readings} readings
+            </div>
+            <div style="font-size: 0.85rem; color: ${rateColor}; font-weight: 600;">
+              ${data.abnormal_rate}% abnormal
+            </div>
+            <div style="font-size: 0.85rem; color: #666;">
+              Avg: ${data.avg_value} mg/dL
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div></div>';
+      return html;
     }
 
     // Load specialist messages/feedback
