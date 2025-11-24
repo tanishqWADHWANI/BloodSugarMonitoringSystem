@@ -32,6 +32,66 @@
             </p>
         </section>
 
+        <!-- Admin Profile Section -->
+        <section class="card" style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img id="adminProfileImage" src="" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid #004080;" />
+                    <h2 style="color: #004080; font-size: 1.5rem; margin: 0;">👤 My Profile</h2>
+                </div>
+                <button onclick="toggleAdminProfile()" id="editAdminProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
+            </div>
+
+            <!-- Profile Display -->
+            <div id="adminProfileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div><strong>📧 Email:</strong> <span id="adminEmail">Loading...</span></div>
+                <div><strong>📱 Phone:</strong> <span id="adminPhone">Loading...</span></div>
+                <div><strong>🎂 Birthday:</strong> <span id="adminBirthday">Loading...</span></div>
+            </div>
+
+            <!-- Edit Profile Form -->
+            <div id="adminEditForm" style="display: none; margin-top: 20px;">
+                <h3 style="color: #004080; margin-bottom: 15px;">Edit Your Profile</h3>
+                <form id="adminProfileForm" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">First Name *</label>
+                            <input type="text" id="adminEditFirstName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Last Name *</label>
+                            <input type="text" id="adminEditLastName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Email *</label>
+                            <input type="email" id="adminEditEmail" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Phone</label>
+                            <input type="tel" id="adminEditPhone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Date of Birth</label>
+                            <input type="date" id="adminEditDOB" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">New Password</label>
+                            <input type="password" id="adminEditPassword" placeholder="Leave blank to keep current" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">💾 Save Changes</button>
+                        <button type="button" onclick="cancelAdminProfile()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">❌ Cancel</button>
+                    </div>
+                </form>
+                <div id="adminProfileMsg" style="margin-top: 15px; padding: 10px; border-radius: 4px;"></div>
+            </div>
+        </section>
+
         <section class="card">
             <h2 style="color: #004080; font-size: 1.5rem; margin-bottom: 20px;">Create User</h2>
             <form id="createUserForm" class="form-grid" autocomplete="off">
@@ -95,7 +155,6 @@
 
                 <div class="form-actions" style="display: flex; gap: 12px; margin-top: 20px;">
                     <button type="submit" class="btn" style="background: #007bff; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Create</button>
-                    <button type="button" id="seedDemoBtn" class="secondary btn" style="background: #e9ecef; color: #495057; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Seed Demo Users</button>
                 </div>
             </form>
         </section>
@@ -1579,11 +1638,142 @@
                 roleSelect.dispatchEvent(new Event('change'));
             }
 
+            // ========== Admin Profile Functions ==========
+            let currentAdminData = null;
+
+            function toggleAdminProfile() {
+                const display = document.getElementById('adminProfileDisplay');
+                const form = document.getElementById('adminEditForm');
+                const btn = document.getElementById('editAdminProfileBtn');
+
+                if (form.style.display === 'none') {
+                    form.style.display = 'block';
+                    display.style.display = 'none';
+                    btn.textContent = '👁️ View Profile';
+
+                    // Pre-fill form
+                    if (currentAdminData) {
+                        document.getElementById('adminEditFirstName').value = currentAdminData.first_name || '';
+                        document.getElementById('adminEditLastName').value = currentAdminData.last_name || '';
+                        document.getElementById('adminEditEmail').value = currentAdminData.email || '';
+                        document.getElementById('adminEditPhone').value = currentAdminData.phone || '';
+                        document.getElementById('adminEditDOB').value = currentAdminData.date_of_birth || '';
+                    }
+                } else {
+                    form.style.display = 'none';
+                    display.style.display = 'grid';
+                    btn.textContent = '✏️ Edit Profile';
+                }
+            }
+
+            function cancelAdminProfile() {
+                document.getElementById('adminEditForm').style.display = 'none';
+                document.getElementById('adminProfileDisplay').style.display = 'grid';
+                document.getElementById('editAdminProfileBtn').textContent = '✏️ Edit Profile';
+                document.getElementById('adminProfileMsg').textContent = '';
+            }
+
+            async function handleAdminProfileUpdate(e) {
+                e.preventDefault();
+
+                const adminUserId = localStorage.getItem('adminUserId') || localStorage.getItem('userId');
+                if (!adminUserId) {
+                    document.getElementById('adminProfileMsg').innerHTML = '⚠️ Admin user ID not found';
+                    document.getElementById('adminProfileMsg').style.color = 'red';
+                    return;
+                }
+
+                const updateData = {
+                    firstName: document.getElementById('adminEditFirstName').value.trim(),
+                    lastName: document.getElementById('adminEditLastName').value.trim(),
+                    email: document.getElementById('adminEditEmail').value.trim(),
+                    phone: document.getElementById('adminEditPhone').value.trim(),
+                    dateOfBirth: document.getElementById('adminEditDOB').value
+                };
+
+                const password = document.getElementById('adminEditPassword').value.trim();
+                if (password) {
+                    if (password.length < 6) {
+                        document.getElementById('adminProfileMsg').innerHTML = '⚠️ Password must be at least 6 characters';
+                        document.getElementById('adminProfileMsg').style.color = 'red';
+                        return;
+                    }
+                    updateData.password = password;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/users/${adminUserId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updateData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('adminProfileMsg').innerHTML = '✅ Profile updated successfully!';
+                        document.getElementById('adminProfileMsg').style.color = 'green';
+                        
+                        setTimeout(() => {
+                            loadAdminProfile();
+                            cancelAdminProfile();
+                        }, 1500);
+                    } else {
+                        document.getElementById('adminProfileMsg').innerHTML = `⚠️ ${result.error || 'Failed to update profile'}`;
+                        document.getElementById('adminProfileMsg').style.color = 'red';
+                    }
+                } catch (error) {
+                    console.error('Error updating admin profile:', error);
+                    document.getElementById('adminProfileMsg').innerHTML = '⚠️ Network error. Please try again.';
+                    document.getElementById('adminProfileMsg').style.color = 'red';
+                }
+            }
+
+            async function loadAdminProfile() {
+                const adminUserId = localStorage.getItem('adminUserId') || localStorage.getItem('userId');
+                
+                if (!adminUserId) {
+                    console.warn('No admin user ID found');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/users/${adminUserId}`);
+                    const userData = await response.json();
+
+                    if (response.ok) {
+                        currentAdminData = userData;
+
+                        document.getElementById('adminEmail').textContent = userData.email || 'Not provided';
+                        document.getElementById('adminPhone').textContent = userData.phone || 'Not provided';
+                        document.getElementById('adminBirthday').textContent = userData.date_of_birth || 'Not set';
+                        
+                        // Display profile image if available
+                        const imgElement = document.getElementById('adminProfileImage');
+                        if (userData.profile_image && userData.profile_image.trim() !== '') {
+                            imgElement.src = userData.profile_image;
+                            imgElement.style.display = 'block';
+                            imgElement.onerror = function() {
+                                this.style.display = 'none';
+                            };
+                        }
+                    } else {
+                        console.error('Failed to load admin profile:', userData.error);
+                    }
+                } catch (error) {
+                    console.error('Error loading admin profile:', error);
+                }
+            }
+
             // Event Listeners
             if (createForm) createForm.addEventListener('submit', handleCreateUser);
             if (assignForm) assignForm.addEventListener('submit', handleAssignSubmit);
             if (assignTableBody) assignTableBody.addEventListener('click', handleRemoveAssignment);
             if (usersTableBody) usersTableBody.addEventListener('click', handleDeleteUser);
+
+            // Admin Profile Edit
+            const adminProfileForm = document.getElementById('adminProfileForm');
+            if (adminProfileForm) adminProfileForm.addEventListener('submit', handleAdminProfileUpdate);
 
             const recalcBtn = document.getElementById('recalcBtn');
             if (recalcBtn) recalcBtn.addEventListener('click', renderReport);
@@ -1634,6 +1824,9 @@
             }
 
             // Initial Load
+                // Load admin profile
+                loadAdminProfile();
+                
                 // Clear any stray autocomplete or demo values in the form fields
                 try {
                     const emailEl = document.getElementById('email');
@@ -1650,25 +1843,6 @@
                 renderUsers();
                 await renderAssignments();
                 await renderReport();
-
-                // Seed Demo button: re-run demo seeder and refresh UI
-                try {
-                    const seedBtn = document.getElementById('seedDemoBtn');
-                    if (seedBtn) seedBtn.addEventListener('click', async () => {
-                        try {
-                            // Re-run demo seeder if available
-                            if (window.demo_users_seed) {
-                                try { window.demo_users_seed(); } catch(e){}
-                            } else {
-                                // fallback: run the file by creating a script tag (safe in preview)
-                                const s = document.createElement('script');
-                                s.src = 'js/demo_users.js';
-                                document.head.appendChild(s);
-                            }
-                        } catch (e) { console.warn('Seed demo failed', e); }
-                        await fetchUsersFromAPI(); renderUsers(); renderAssignments(); renderReport();
-                    });
-                } catch (e) { /* ignore */ }
 
             // Show alert if a new patient was registered (from create_account)
             try {
