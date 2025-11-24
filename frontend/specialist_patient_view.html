@@ -366,30 +366,39 @@
     }
   }
 
-  // Load/resolve assigned specialist to display
-  (function loadAssignedSpecialist(){
-    try{
-      // try patient-level assignment from cached patients
-      const cached = JSON.parse(localStorage.getItem('patients') || 'null');
-      let specialistName = null;
-      if (Array.isArray(cached)){
-        const found = cached.find(p => String(p.number) === String(patientNumber) || String(p.patientId) === String(patientNumber));
-        if (found) {
-          specialistName = (found.assigned_specialist && (found.assigned_specialist.full_name || found.assigned_specialist.name)) || found.specialist_name || found.specialist || null;
-          // if specialist is an id, try to resolve
-          const specId = (found.assigned_specialist && found.assigned_specialist.id) || found.specialist_id || found.specialistId || null;
-          if (!specialistName && specId) {
-            const specs = JSON.parse(localStorage.getItem('specialists') || '[]');
-            const sp = Array.isArray(specs) && specs.find(s => String(s.id) === String(specId) || String(s.user_id) === String(specId) || String(s.username) === String(specId));
-            if (sp) specialistName = sp.full_name || sp.name || sp.username;
-          }
-        }
+  // Load assigned specialist from database
+  async function loadAssignedSpecialist() {
+    const el = document.getElementById('assignedSpecialist');
+    if (!el) return;
+
+    try {
+      console.log('Loading assigned specialist for patient_id:', patientIdFinal);
+      
+      const res = await fetch(`${API_BASE}/api/patient/${patientIdFinal}/specialist`);
+      
+      if (!res.ok) {
+        console.warn('Failed to load specialist, status:', res.status);
+        el.textContent = 'Not assigned';
+        return;
       }
-      // fallback: try a patient-level API? skip for now
-      const el = document.getElementById('assignedSpecialist');
-      if (el) el.textContent = specialistName || 'Not assigned';
-    }catch(e){ console.warn('Could not resolve assigned specialist', e); }
-  })();
+      
+      const data = await res.json();
+      console.log('Specialist data:', data);
+      
+      if (data.specialist) {
+        const spec = data.specialist;
+        el.textContent = `Dr. ${spec.first_name} ${spec.last_name} (${spec.email})`;
+      } else {
+        el.textContent = 'Not assigned';
+      }
+    } catch (e) {
+      console.error('Error loading assigned specialist:', e);
+      el.textContent = 'Not assigned';
+    }
+  }
+
+  // Call the function to load specialist
+  loadAssignedSpecialist();
 
   // ============================
   // SAVE NEW COMMENT

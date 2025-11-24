@@ -743,6 +743,7 @@
   </footer>
 
   <script>
+    const API_BASE = 'http://127.0.0.1:5000';
     const currentPatient = (localStorage.getItem('loggedInPatient') || 'patient').toLowerCase();
     const LS_KEY = 'health_' + currentPatient;
 
@@ -824,20 +825,26 @@
         const patientId = localStorage.getItem('patientId');
         const token = localStorage.getItem('bsm_token') || '';
         
+        console.log('Loading specialist assignment for patient_id:', patientId);
+        
         if (!patientId) {
           document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
           return;
         }
 
-        const response = await fetch(`http://127.0.0.1:5000/api/patient/${patientId}/specialist`, {
+        const response = await fetch(`${API_BASE}/api/patient/${patientId}/specialist`, {
           headers: {
             'Accept': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
 
+        console.log('Specialist assignment response status:', response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log('Specialist assignment data:', data);
+          
           if (data.specialist) {
             const spec = data.specialist;
             document.getElementById('specialistLine').textContent = 
@@ -845,6 +852,9 @@
           } else {
             document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
           }
+        } else {
+          console.warn('Failed to load specialist, status:', response.status);
+          document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
         }
       } catch (error) {
         console.error('Failed to load specialist:', error);
