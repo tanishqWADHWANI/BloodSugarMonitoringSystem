@@ -64,13 +64,15 @@
                             <option value="SystemDefault">SystemDefault</option>
                             <option value="PatientOverride">PatientOverride</option>
                         </select>
+                        <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Select PatientOverride to set for specific patient</small>
                     </div>
 
                     <div class="form-field" id="patientIdWrap" style="display:none">
-                        <label for="thPatientId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Patient</label>
-                        <select id="thPatientId" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: white;">
-                            <option value="">Select a patient...</option>
+                        <label for="thPatientId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Patient <span style="color: #dc3545;">*</span></label>
+                        <select id="thPatientId" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: white;">
+                            <option value="">Loading patients...</option>
                         </select>
+                        <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Choose patient for this threshold</small>
                     </div>
                 </div>
 
