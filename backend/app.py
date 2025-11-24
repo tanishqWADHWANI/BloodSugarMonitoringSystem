@@ -48,11 +48,47 @@ ml_service = MLService()
 notification_service = NotificationService()
 scheduler_service = SchedulerService(db, notification_service)
 
+# Helper function to extract user from token
+def get_user_from_token():
+    """Extract user info from authorization token"""
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    
+    token = auth_header.replace('Bearer ', '')
+    # Simple token format: token_{user_id}_{role}
+    try:
+        parts = token.split('_')
+        if len(parts) >= 2 and parts[0] == 'token':
+            user_id = int(parts[1])
+            return {'user_id': user_id}
+    except:
+        pass
+    return None
+
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health_check():
     """Check if the service is running"""
     return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()}), 200
+
+# Get current user profile (from token)
+@app.route('/api/me', methods=['GET'])
+def get_current_user():
+    """Get current logged-in user's profile using token"""
+    user_info = get_user_from_token()
+    if not user_info:
+        return jsonify({"error": "Unauthorized - Invalid or missing token"}), 401
+    
+    user = db.get_user(user_info['user_id'])
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    # Remove sensitive data
+    if 'password_hash' in user:
+        del user['password_hash']
+    
+    return jsonify(user), 200
 
 # User Management
 @app.route('/api/users/register', methods=['POST'])

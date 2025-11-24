@@ -679,26 +679,30 @@
 
   // Load staff profile data
   async function loadStaffProfile() {
-    const userId = localStorage.getItem('staffUserId') || localStorage.getItem('userId');
+    const token = localStorage.getItem('bsm_token');
     
-    if (!userId) {
-      console.warn('No staff user ID found');
+    if (!token) {
+      console.error('No authentication token found');
       return;
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`);
+      const response = await fetch(`http://127.0.0.1:5000/api/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const userData = await response.json();
 
-      if (response.ok && userData.user) {
+      if (response.ok && userData.user_id) {
         currentUserData = {
-          userId: userData.user.user_id,
-          firstName: userData.user.first_name,
-          lastName: userData.user.last_name,
-          email: userData.user.email,
-          phone: userData.user.phone || 'Not provided',
-          dateOfBirth: userData.user.date_of_birth || '',
-          licenseId: userData.user.license_id || 'N/A'
+          userId: userData.user_id,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          email: userData.email,
+          phone: userData.phone || 'Not provided',
+          dateOfBirth: userData.date_of_birth || '',
+          licenseId: userData.license_id || 'N/A'
         };
 
         // Update profile display
@@ -709,9 +713,9 @@
         document.getElementById('profileLicenseId').textContent = currentUserData.licenseId;
         
         // Display profile image if available
-        if (userData.user.profile_image) {
+        if (userData.profile_image) {
           const imgElement = document.getElementById('profileImageDisplay');
-          imgElement.src = userData.user.profile_image;
+          imgElement.src = userData.profile_image;
           imgElement.style.display = 'block';
         }
       } else {

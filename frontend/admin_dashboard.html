@@ -1746,15 +1746,19 @@
             }
 
             async function loadAdminProfile() {
-                const adminUserId = localStorage.getItem('adminUserId') || localStorage.getItem('userId');
+                const token = localStorage.getItem('bsm_token');
                 
-                if (!adminUserId) {
-                    console.warn('No admin user ID found');
+                if (!token) {
+                    console.warn('No authentication token found');
                     return;
                 }
 
                 try {
-                    const response = await fetch(`${API_BASE}/api/users/${adminUserId}`);
+                    const response = await fetch(`${API_BASE}/api/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
                     const userData = await response.json();
 
                     if (response.ok) {

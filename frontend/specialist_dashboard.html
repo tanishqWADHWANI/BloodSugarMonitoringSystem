@@ -272,14 +272,18 @@
 
   // Load specialist profile info
   async function loadSpecialistProfile() {
-    const userId = specialistUserId || localStorage.getItem('userId');
-    if (!userId) {
-      console.error('No userId found for specialist');
+    const token = localStorage.getItem('bsm_token');
+    if (!token) {
+      console.error('No authentication token found');
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/users/${userId}`);
+      const response = await fetch(`${API_BASE}/api/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const user = await response.json();
         currentUserData = user;
