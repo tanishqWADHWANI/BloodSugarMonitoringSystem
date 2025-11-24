@@ -67,8 +67,10 @@
                     </div>
 
                     <div class="form-field" id="patientIdWrap" style="display:none">
-                        <label for="thPatientId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Patient ID (for override)</label>
-                        <input type="number" id="thPatientId" min="1" placeholder="e.g., 101" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                        <label for="thPatientId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Patient</label>
+                        <select id="thPatientId" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: white;">
+                            <option value="">Select a patient...</option>
+                        </select>
                     </div>
                 </div>
 
@@ -132,6 +134,28 @@
         scopeEl.addEventListener('change', () => {
             patientWrap.style.display = scopeEl.value === 'PatientOverride' ? 'block' : 'none';
         });
+
+        // ====== Load patients ======
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users/all`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Filter only patients
+                const patients = data.users.filter(u => u.role === 'patient');
+                
+                // Populate dropdown
+                patientIdEl.innerHTML = '<option value="">Select a patient...</option>' +
+                    patients.map(p => 
+                        `<option value="${p.user_id}">${p.first_name} ${p.last_name} (ID: ${p.user_id})</option>`
+                    ).join('');
+            } catch (error) {
+                console.error('Error loading patients:', error);
+            }
+        }
 
         // ====== Load from backend ======
         async function loadThresholds() {
@@ -283,6 +307,7 @@
 
         // Init
         loadThresholds();
+        loadPatients();
     </script>
 </body>
 
