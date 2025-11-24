@@ -126,22 +126,6 @@
         <section class="card">
             <h2>Assign Patient to Specialist</h2>
             
-            <!-- Filter Section -->
-            <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
-                <div style="display: flex; gap: 15px; align-items: flex-end;">
-                    <div class="form-field" style="flex: 1;">
-                        <label for="patientFilterSelect" style="display: block; margin-bottom: 6px; font-weight: 500; color: #495057;">Filter Patients</label>
-                        <select id="patientFilterSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                            <option value="all">All Patients</option>
-                            <option value="assigned">Assigned Only</option>
-                            <option value="unassigned">Unassigned Only</option>
-                        </select>
-                    </div>
-                    <button type="button" id="applyFilterBtn" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500; height: 42px;">Apply Filter</button>
-                    <button type="button" id="resetFilterBtn" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500; height: 42px;">Reset</button>
-                </div>
-            </div>
-            
             <form id="assignForm" class="form-grid">
                 <div class="form-row" style="display: flex; gap: 20px; align-items: flex-end;">
                     <div class="form-field" style="flex: 1;">
@@ -401,39 +385,25 @@
         function updatePatientDropdown() {
             if (!patientSelect) return;
             
-            const filterValue = document.getElementById('patientFilterSelect')?.value || 'all';
+            const patients = window.ALL_PATIENTS || [];
             
-            // Use ASSIGNMENTS_CACHE from database instead of localStorage
+            console.log('Updating patient dropdown, patients count:', patients.length);
+            
+            if (patients.length === 0) {
+                patientSelect.innerHTML = '<option value="">No patients found</option>';
+                return;
+            }
+            
+            // Use ASSIGNMENTS_CACHE to mark assigned patients
             const assigns = ASSIGNMENTS_CACHE || [];
             const assignedPatientIds = assigns.map(a => String(a.patientId));
             
-            console.log('Filter update:', {
-                filterValue,
-                totalPatients: window.ALL_PATIENTS?.length || 0,
-                assignments: assigns.length,
-                assignedIds: assignedPatientIds
-            });
-            
-            let filteredPatients = window.ALL_PATIENTS || [];
-            
-            if (filterValue === 'assigned') {
-                filteredPatients = filteredPatients.filter(p => assignedPatientIds.includes(String(p.user_id)));
-            } else if (filterValue === 'unassigned') {
-                filteredPatients = filteredPatients.filter(p => !assignedPatientIds.includes(String(p.user_id)));
-            }
-            
-            console.log('Filtered patients:', filteredPatients.length);
-            
-            patientSelect.innerHTML = filteredPatients.map(p => {
+            patientSelect.innerHTML = patients.map(p => {
                 const label = `${p.first_name || ''} ${p.last_name || ''}`.trim() || (p.email || p.user_id);
                 const isAssigned = assignedPatientIds.includes(String(p.user_id));
                 const badge = isAssigned ? ' ✓' : '';
-                return `<option value="${escapeHtml(String(p.user_id))}">${escapeHtml(label)}${badge} ${p.number ? ('(' + escapeHtml(p.number) + ')') : ''} ${p.email ? ('<' + escapeHtml(p.email) + '>') : ''}</option>`;
+                return `<option value="${String(p.user_id)}">${label}${badge} (${p.email || ''})</option>`;
             }).join('');
-            
-            if (filteredPatients.length === 0) {
-                patientSelect.innerHTML = '<option value="">No patients found</option>';
-            }
         }
 
         async function renderAssignments() {
@@ -791,24 +761,6 @@
             if (assignForm) assignForm.addEventListener('submit', handleAssignSubmit);
             if (assignTableBody) assignTableBody.addEventListener('click', handleRemoveAssignment);
             if (usersTableBody) usersTableBody.addEventListener('click', handleDeleteUser);
-
-            // Patient filter buttons
-            const applyFilterBtn = document.getElementById('applyFilterBtn');
-            const resetFilterBtn = document.getElementById('resetFilterBtn');
-            
-            if (applyFilterBtn) {
-                applyFilterBtn.addEventListener('click', updatePatientDropdown);
-            }
-            
-            if (resetFilterBtn) {
-                resetFilterBtn.addEventListener('click', () => {
-                    const patientFilterSelect = document.getElementById('patientFilterSelect');
-                    if (patientFilterSelect) {
-                        patientFilterSelect.value = 'all';
-                        updatePatientDropdown();
-                    }
-                });
-            }
 
             const recalcBtn = document.getElementById('recalcBtn');
             if (recalcBtn) recalcBtn.addEventListener('click', renderReport);
