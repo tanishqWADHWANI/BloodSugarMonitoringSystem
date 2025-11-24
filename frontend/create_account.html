@@ -21,59 +21,88 @@
   </header>
 
   <main class="container">
-    <section class="login-section">
-      <h2>Create Patient Account</h2>
-      <p style="text-align:center; color: #666; margin-bottom: 25px;">
+    <section class="login-section" style="max-width: 600px; margin: 40px auto;">
+      <h2 style="color: #004080; text-align: center; margin-bottom: 10px;">Create Patient Account</h2>
+      <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 0.95rem;">
         Register for your patient portal to track your health readings and connect with specialists.
       </p>
 
-      <form id="registerForm" method="post" action="" enctype="multipart/form-data">
-        <label for="firstName">First Name *</label>
-        <input type="text" id="firstName" name="firstName" placeholder="e.g., Alice" required>
+      <form id="registerForm" method="post" action="" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 18px;">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label for="firstName" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">First Name *</label>
+            <input type="text" id="firstName" name="firstName" placeholder="e.g., Alice" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+          <div>
+            <label for="lastName" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Last Name *</label>
+            <input type="text" id="lastName" name="lastName" placeholder="e.g., Johnson" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+        </div>
 
-        <label for="lastName">Last Name *</label>
-        <input type="text" id="lastName" name="lastName" placeholder="e.g., Johnson" required>
+        <div>
+          <label for="healthCareNumber" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Health Care Number *</label>
+          <input type="text" id="healthCareNumber" name="healthCareNumber" placeholder="e.g., HCN123456" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+        </div>
 
-        <label for="healthCareNumber">Health Care Number *</label>
-        <input type="text" id="healthCareNumber" name="healthCareNumber" placeholder="e.g., HCN123456" required>
+        <div>
+          <label for="email" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Email Address *</label>
+          <input type="email" id="email" name="email" placeholder="e.g., alice@example.com" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+        </div>
 
-        <label for="email">Email Address *</label>
-        <input type="email" id="email" name="email" placeholder="e.g., alice@example.com" required>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label for="dateOfBirth" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Date of Birth *</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+          <div>
+            <label for="age" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Age</label>
+            <input type="number" id="age" name="age" placeholder="Auto-calculated" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; background: #f5f5f5; cursor: not-allowed; box-sizing: border-box;">
+          </div>
+        </div>
 
-        <label for="dateOfBirth">Date of Birth *</label>
-        <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label for="gender" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Gender</label>
+            <select id="gender" name="gender" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+              <option value="">-- Select Gender --</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="contact" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Contact Phone *</label>
+            <input type="tel" id="contact" name="contact" placeholder="e.g., +1 555 123 4567" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+        </div>
 
-        <label for="age">Age</label>
-        <input type="number" id="age" name="age" placeholder="Calculated from date of birth" readonly style="background: #f5f5f5; cursor: not-allowed;">
+        <div>
+          <label for="profileImage" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Profile Image (Optional)</label>
+          <input type="file" id="profileImage" name="profileImage" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;">
+          <small style="color: #666; display: block; margin-top: 5px; font-size: 0.85rem;">Upload your profile picture (JPG, PNG)</small>
+        </div>
 
-        <label for="gender">Gender</label>
-        <select id="gender" name="gender">
-          <option value="">-- Select Gender --</option>
-          <option value="Female">Female</option>
-          <option value="Male">Male</option>
-          <option value="Other">Other</option>
-        </select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label for="password" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Create Password *</label>
+            <input type="password" id="password" name="password" placeholder="Minimum 6 characters" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+          <div>
+            <label for="confirmPassword" style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Confirm Password *</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+        </div>
 
-        <label for="contact">Contact Phone Number *</label>
-        <input type="tel" id="contact" name="contact" placeholder="e.g., +1 555 123 4567" required>
-
-        <label for="profileImage">Profile Image (Optional)</label>
-        <input type="file" id="profileImage" name="profileImage" accept="image/*">
-        <small style="color: #666; display: block; margin-top: -10px; margin-bottom: 15px;">Upload your profile picture (JPG, PNG)</small>
-
-        <label for="password">Create Password *</label>
-        <input type="password" id="password" name="password" placeholder="Minimum 6 characters" required>
-
-        <label for="confirmPassword">Confirm Password *</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required>
-
-        <input type="submit" value="Create Account">
+        <button type="submit" style="width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 1.05rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: background 0.3s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
+          Create Account
+        </button>
       </form>
 
-      <div id="registerMsg" style="margin-top:15px; padding: 10px; border-radius: 5px; display: none;"></div>
+      <div id="registerMsg" style="margin-top: 20px; padding: 12px; border-radius: 6px; display: none; font-size: 0.95rem;"></div>
 
-      <p class="note" style="margin-top:20px; text-align:center;">
-        Already have an account? <a href="patient.html">Sign In here</a>
+      <p class="note" style="margin-top: 25px; text-align: center; color: #666; font-size: 0.95rem;">
+        Already have an account? <a href="patient.html" style="color: #007bff; text-decoration: none; font-weight: 500;">Sign In here</a>
       </p>
     </section>
   </main>
@@ -150,6 +179,22 @@
           healthCareNumber: healthCareNumber
         };
 
+        // Handle profile image file upload
+        const profileImageInput = document.getElementById('profileImage');
+        if (profileImageInput && profileImageInput.files && profileImageInput.files[0]) {
+          const file = profileImageInput.files[0];
+          const reader = new FileReader();
+          reader.onload = async function(event) {
+            payload.profileImage = event.target.result;
+            await submitRegistration(payload);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          await submitRegistration(payload);
+        }
+      });
+
+      async function submitRegistration(payload) {
         try {
           const response = await fetch(`${API_BASE}/api/users/register`, {
             method: 'POST',
@@ -173,6 +218,11 @@
           console.error('Registration error:', error);
           showMessage('❌ Registration failed: ' + error.message, 'error');
         }
+      }
+
+      form.addEventListener('submit', async function(e) {
+        // Prevent default form submission
+        return;
       });
 
       function showMessage(text, type) {

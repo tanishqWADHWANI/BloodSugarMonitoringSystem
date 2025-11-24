@@ -44,9 +44,11 @@
 
             <!-- Profile Display -->
             <div id="adminProfileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div><strong>👤 Full Name:</strong> <span id="adminFullName">Loading...</span></div>
                 <div><strong>📧 Email:</strong> <span id="adminEmail">Loading...</span></div>
                 <div><strong>📱 Phone:</strong> <span id="adminPhone">Loading...</span></div>
                 <div><strong>🎂 Birthday:</strong> <span id="adminBirthday">Loading...</span></div>
+                <div><strong>🆔 Working ID:</strong> <span id="adminWorkingId">Not applicable</span></div>
             </div>
 
             <!-- Edit Profile Form -->
@@ -79,9 +81,16 @@
                             <input type="date" id="adminEditDOB" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
                         </div>
                         <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Working ID (optional)</label>
+                            <input type="text" id="adminEditWorkingId" placeholder="Admin working ID" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
                             <label style="display: block; margin-bottom: 5px; font-weight: 500;">New Password</label>
                             <input type="password" id="adminEditPassword" placeholder="Leave blank to keep current" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
                         </div>
+                        <div></div>
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
                         <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">💾 Save Changes</button>
@@ -1658,6 +1667,7 @@
                         document.getElementById('adminEditEmail').value = currentAdminData.email || '';
                         document.getElementById('adminEditPhone').value = currentAdminData.phone || '';
                         document.getElementById('adminEditDOB').value = currentAdminData.date_of_birth || '';
+                        document.getElementById('adminEditWorkingId').value = currentAdminData.working_id || '';
                     }
                 } else {
                     form.style.display = 'none';
@@ -1688,7 +1698,8 @@
                     lastName: document.getElementById('adminEditLastName').value.trim(),
                     email: document.getElementById('adminEditEmail').value.trim(),
                     phone: document.getElementById('adminEditPhone').value.trim(),
-                    dateOfBirth: document.getElementById('adminEditDOB').value
+                    dateOfBirth: document.getElementById('adminEditDOB').value,
+                    workingId: document.getElementById('adminEditWorkingId').value.trim()
                 };
 
                 const password = document.getElementById('adminEditPassword').value.trim();
@@ -1744,9 +1755,12 @@
                     if (response.ok) {
                         currentAdminData = userData;
 
+                        const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Not provided';
+                        document.getElementById('adminFullName').textContent = fullName;
                         document.getElementById('adminEmail').textContent = userData.email || 'Not provided';
                         document.getElementById('adminPhone').textContent = userData.phone || 'Not provided';
                         document.getElementById('adminBirthday').textContent = userData.date_of_birth || 'Not set';
+                        document.getElementById('adminWorkingId').textContent = userData.working_id || 'Not applicable';
                         
                         // Display profile image if available
                         const imgElement = document.getElementById('adminProfileImage');

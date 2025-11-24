@@ -73,8 +73,8 @@ def register_user():
             role=data['role'],
             date_of_birth=data.get('dateOfBirth'),
             phone=data.get('phone'),
-            health_care_number=data.get('healthCareNumber')
-
+            health_care_number=data.get('healthCareNumber'),
+            profile_image=data.get('profileImage')
         )
         
         return jsonify({"userId": user_id, "message": "User registered successfully"}), 201
@@ -199,6 +199,7 @@ def create_user_admin():
         date_of_birth = data.get('dateOfBirth')
         working_id = data.get('workingId')  # For specialists/staff
         health_care_number = data.get('healthCareNumber')  # For patients
+        profile_image = data.get('profileImage')  # Optional profile image
         
         # Validate required fields
         if not all([email, password, first_name, last_name, role]):
@@ -214,7 +215,8 @@ def create_user_admin():
             date_of_birth=date_of_birth,
             phone=phone,
             health_care_number=health_care_number,
-            working_id=working_id
+            working_id=working_id,
+            profile_image=profile_image
         )
         
         return jsonify({

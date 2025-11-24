@@ -78,22 +78,23 @@ class Database:
             cursor.close()
     
     def create_user(self, email, password, first_name, last_name, role, 
-                   date_of_birth=None, phone=None, health_care_number=None, working_id=None):
+                   date_of_birth=None, phone=None, health_care_number=None, working_id=None, profile_image=None):
         """
         Create a new user (password stored as-is for demo, hash in production)
         
         Parameters:
         - health_care_number: Required for patients
         - working_id: Required for specialists and staff
+        - profile_image: Optional profile image URL or data URL
         """
         cursor = self._get_cursor()
         try:
             # Insert into users table
             sql = """
-                INSERT INTO users (email, password_hash, first_name, last_name, role, date_of_birth, phone)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO users (email, password_hash, first_name, last_name, role, date_of_birth, phone, profile_image)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            values = (email, password, first_name, last_name, role, date_of_birth, phone)
+            values = (email, password, first_name, last_name, role, date_of_birth, phone, profile_image)
             cursor.execute(sql, values)
             self.connection.commit()
             user_id = cursor.lastrowid
@@ -107,20 +108,38 @@ class Database:
                 self.connection.commit()
                 
             elif role == 'specialist':
-                # Insert with working_id if your table has that column
-                # Otherwise, just insert user_id
-                cursor.execute(
-                    "INSERT INTO specialists (user_id) VALUES (%s)",
-                    (user_id,)
-                )
+                if working_id:
+                    cursor.execute(
+                        "INSERT INTO specialists (user_id, working_id) VALUES (%s, %s)",
+                        (user_id, working_id)
+                    )
+                else:
+                    cursor.execute(
+                        "INSERT INTO specialists (user_id) VALUES (%s)",
+                        (user_id,)
+                    )
                 self.connection.commit()
                 
             elif role == 'staff':
-                cursor.execute(
-                    "INSERT INTO staff (user_id) VALUES (%s)",
-                    (user_id,)
-                )
+                if working_id:
+                    cursor.execute(
+                        "INSERT INTO staff (user_id, working_id) VALUES (%s, %s)",
+                        (user_id, working_id)
+                    )
+                else:
+                    cursor.execute(
+                        "INSERT INTO staff (user_id) VALUES (%s)",
+                        (user_id,)
+                    )
                 self.connection.commit()
+                
+            elif role == 'admin':
+                if working_id:
+                    cursor.execute(
+                        "INSERT INTO staff (user_id, working_id) VALUES (%s, %s)",
+                        (user_id, working_id)
+                    )
+                    self.connection.commit()
             
             return user_id
             
