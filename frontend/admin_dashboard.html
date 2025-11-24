@@ -1543,25 +1543,39 @@
             if (roleSelect && workingIdContainer && healthCareNumberContainer) {
                 roleSelect.addEventListener('change', (e) => {
                     const role = e.target.value;
+                    const healthCareInput = document.getElementById('healthCareNumber');
+                    const workingIdInput = document.getElementById('workingId');
+                    
                     if (role === 'patient') {
+                        // Show health care number, hide working ID
                         healthCareNumberContainer.style.display = 'block';
-                        document.getElementById('healthCareNumber').setAttribute('required', 'required');
+                        healthCareInput.setAttribute('required', 'required');
+                        healthCareInput.disabled = false;
                         workingIdContainer.style.display = 'none';
-                        document.getElementById('workingId').removeAttribute('required');
+                        workingIdInput.removeAttribute('required');
+                        workingIdInput.disabled = true;
                     } else if (role === 'specialist' || role === 'staff') {
-                        healthCareNumberContainer.style.display = 'none';
-                        document.getElementById('healthCareNumber').removeAttribute('required');
+                        // Hide health care number, show working ID
+                        healthCareNumberContainer.style.display = 'block';
+                        healthCareInput.removeAttribute('required');
+                        healthCareInput.disabled = true;
+                        healthCareInput.style.background = '#f5f5f5';
                         workingIdContainer.style.display = 'block';
-                        document.getElementById('workingId').setAttribute('required', 'required');
+                        workingIdInput.setAttribute('required', 'required');
+                        workingIdInput.disabled = false;
+                        workingIdInput.style.background = 'white';
                     } else {
+                        // Admin - hide both
                         healthCareNumberContainer.style.display = 'none';
-                        document.getElementById('healthCareNumber').removeAttribute('required');
+                        healthCareInput.removeAttribute('required');
+                        healthCareInput.disabled = true;
                         workingIdContainer.style.display = 'none';
-                        document.getElementById('workingId').removeAttribute('required');
+                        workingIdInput.removeAttribute('required');
+                        workingIdInput.disabled = true;
                     }
                 });
                 
-                // Trigger on load for initial state
+                // Trigger on load for initial state (default is Patient)
                 roleSelect.dispatchEvent(new Event('change'));
             }
 

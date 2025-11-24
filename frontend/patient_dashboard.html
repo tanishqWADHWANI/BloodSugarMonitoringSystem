@@ -1230,10 +1230,16 @@
           document.getElementById('greeting').textContent = `📊 Welcome, ${user.first_name || 'Patient'}!`;
           
           // Display profile image if available
-          if (user.profile_image) {
-            const imgElement = document.getElementById('profileImageDisplay');
+          const imgElement = document.getElementById('profileImageDisplay');
+          if (user.profile_image && user.profile_image.trim() !== '') {
             imgElement.src = user.profile_image;
             imgElement.style.display = 'block';
+            imgElement.onerror = function() {
+              console.warn('Failed to load profile image:', user.profile_image);
+              this.style.display = 'none';
+            };
+          } else {
+            imgElement.style.display = 'none';
           }
         }
       } catch (error) {

@@ -4,14 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Patient Account - Blood Sugar Monitor Clinic</title>
-
-  <!-- Use your unified global stylesheet -->
   <link rel="stylesheet" href="css/style.css" />
-  <script src="js/demo_users.js"></script>
 </head>
 
 <body>
-  <!-- HEADER -->
   <header>
     <nav>
       <ul>
@@ -24,15 +20,13 @@
     </nav>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main class="container">
     <section class="login-section">
       <h2>Create Patient Account</h2>
-      <p style="text-align:center;">
-        Please fill in your information below to register for your patient portal.
+      <p style="text-align:center; color: #666; margin-bottom: 25px;">
+        Register for your patient portal to track your health readings and connect with specialists.
       </p>
 
-      <!-- Registration Form -->
       <form id="registerForm" method="post" action="" enctype="multipart/form-data">
         <label for="firstName">First Name *</label>
         <input type="text" id="firstName" name="firstName" placeholder="e.g., Alice" required>
@@ -43,14 +37,14 @@
         <label for="healthCareNumber">Health Care Number *</label>
         <input type="text" id="healthCareNumber" name="healthCareNumber" placeholder="e.g., HCN123456" required>
 
-        <label for="email">Email *</label>
+        <label for="email">Email Address *</label>
         <input type="email" id="email" name="email" placeholder="e.g., alice@example.com" required>
 
         <label for="dateOfBirth">Date of Birth *</label>
         <input type="date" id="dateOfBirth" name="dateOfBirth" required>
 
         <label for="age">Age</label>
-        <input type="number" id="age" name="age" placeholder="Calculated from date of birth" readonly style="background: #f5f5f5;">
+        <input type="number" id="age" name="age" placeholder="Calculated from date of birth" readonly style="background: #f5f5f5; cursor: not-allowed;">
 
         <label for="gender">Gender</label>
         <select id="gender" name="gender">
@@ -63,12 +57,12 @@
         <label for="contact">Contact Phone Number *</label>
         <input type="tel" id="contact" name="contact" placeholder="e.g., +1 555 123 4567" required>
 
-        <label for="profileImage">Profile Image</label>
+        <label for="profileImage">Profile Image (Optional)</label>
         <input type="file" id="profileImage" name="profileImage" accept="image/*">
-        <small style="color: #666; display: block; margin-top: -10px; margin-bottom: 15px;">Optional: Upload your profile picture (JPG, PNG)</small>
+        <small style="color: #666; display: block; margin-top: -10px; margin-bottom: 15px;">Upload your profile picture (JPG, PNG)</small>
 
         <label for="password">Create Password *</label>
-        <input type="password" id="password" name="password" placeholder="Enter a strong password (min 6 characters)" required>
+        <input type="password" id="password" name="password" placeholder="Minimum 6 characters" required>
 
         <label for="confirmPassword">Confirm Password *</label>
         <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required>
@@ -76,25 +70,20 @@
         <input type="submit" value="Create Account">
       </form>
 
-      <div id="registerMsg" style="color:red; margin-top:10px;"></div>
+      <div id="registerMsg" style="margin-top:15px; padding: 10px; border-radius: 5px; display: none;"></div>
 
-      <p class="note" style="margin-top:15px; text-align:center;">
+      <p class="note" style="margin-top:20px; text-align:center;">
         Already have an account? <a href="patient.html">Sign In here</a>
       </p>
     </section>
   </main>
 
-  <!-- FOOTER -->
   <footer>
     <div class="footer-bottom">
       <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
     </div>
   </footer>
 
-  <!-- ======================================================
-       REGISTRATION SCRIPT
-       Handles validation, API call to backend
-       ====================================================== -->
   <script>
     const API_BASE = 'http://127.0.0.1:5000';
     
@@ -118,9 +107,12 @@
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        msg.style.color = 'red';
+        
+        // Reset message
+        msg.style.display = 'none';
         msg.textContent = '';
 
+        // Get form values
         const firstName = document.getElementById('firstName').value.trim();
         const lastName = document.getElementById('lastName').value.trim();
         const healthCareNumber = document.getElementById('healthCareNumber').value.trim();
@@ -129,25 +121,24 @@
         const contact = document.getElementById('contact').value.trim();
         const password = document.getElementById('password').value.trim();
         const confirmPassword = document.getElementById('confirmPassword').value.trim();
-        const profileImage = document.getElementById('profileImage').files[0];
 
         // Validation
         if (!firstName || !lastName || !healthCareNumber || !email || !dateOfBirth || !contact || !password || !confirmPassword) {
-          msg.textContent = 'Please fill out all required fields (*).';
+          showMessage('Please fill out all required fields (*).', 'error');
           return;
         }
 
         if (password.length < 6) {
-          msg.textContent = 'Password must be at least 6 characters long.';
+          showMessage('Password must be at least 6 characters long.', 'error');
           return;
         }
 
         if (password !== confirmPassword) {
-          msg.textContent = 'Passwords do not match.';
+          showMessage('Passwords do not match.', 'error');
           return;
         }
 
-        // Prepare data
+        // Prepare registration data
         const payload = {
           email: email,
           password: password,
@@ -159,30 +150,20 @@
           healthCareNumber: healthCareNumber
         };
 
-        // If profile image is provided, convert to base64 or upload separately
-        // For now, we'll send image URL as null and implement file upload later
-        if (profileImage) {
-          // TODO: Implement file upload to server
-          console.log('Profile image selected:', profileImage.name);
-        }
-
         try {
           const response = await fetch(`${API_BASE}/api/users/register`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
 
           const data = await response.json();
 
           if (!response.ok) {
-            throw new Error(data.error || `HTTP error ${response.status}`);
+            throw new Error(data.error || `Registration failed (Status: ${response.status})`);
           }
 
-          msg.style.color = 'green';
-          msg.textContent = 'Account created successfully! Redirecting to login...';
+          showMessage('✅ Account created successfully! Redirecting to login...', 'success');
           
           setTimeout(() => {
             window.location.href = 'patient.html';
@@ -190,9 +171,23 @@
 
         } catch (error) {
           console.error('Registration error:', error);
-          msg.textContent = 'Registration failed: ' + error.message;
+          showMessage('❌ Registration failed: ' + error.message, 'error');
         }
       });
+
+      function showMessage(text, type) {
+        msg.textContent = text;
+        msg.style.display = 'block';
+        if (type === 'error') {
+          msg.style.color = '#dc3545';
+          msg.style.background = '#f8d7da';
+          msg.style.border = '1px solid #f5c6cb';
+        } else {
+          msg.style.color = '#155724';
+          msg.style.background = '#d4edda';
+          msg.style.border = '1px solid #c3e6cb';
+        }
+      }
     })();
   </script>
 </body>
