@@ -140,7 +140,8 @@ def update_user(user_id):
             role=data.get('role'),
             date_of_birth=data.get('dateOfBirth'),
             phone=data.get('phone'),
-            health_care_number=data.get('healthCareNumber')
+            health_care_number=data.get('healthCareNumber'),
+            working_id=data.get('workingId')
         )
 
         if not updated:

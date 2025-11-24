@@ -58,7 +58,7 @@ class Database:
                     if specialist_data:
                         user['working_id'] = specialist_data.get('working_id')
                 
-                elif user['role'] == 'staff':
+                elif user['role'] in ('staff', 'admin'):
                     cursor.execute("SELECT working_id FROM staff WHERE user_id = %s", (user_id,))
                     staff_data = cursor.fetchone()
                     if staff_data:
@@ -153,7 +153,8 @@ class Database:
     def update_user(self, user_id, *, email: str | None = None, password: str | None = None, 
                    first_name: str | None = None, last_name: str | None = None, 
                    role: str | None = None, date_of_birth: str | None = None, 
-                   phone: str | None = None, health_care_number: str | None = None) -> bool:
+                   phone: str | None = None, health_care_number: str | None = None,
+                   working_id: str | None = None) -> bool:
         """
         Update user. Only provided fields are updated.
         Password is stored in plain text (demo only).
@@ -214,6 +215,24 @@ class Database:
                     "UPDATE patients SET health_care_number = %s WHERE user_id = %s",
                     (health_care_number, user_id)
                 )
+            
+            # Update working_id if provided (for specialists, staff, or admin)
+            if working_id is not None:
+                # Get current role
+                cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
+                result = cursor.fetchone()
+                current_role = result['role'] if result else None
+                
+                if current_role == 'specialist':
+                    cursor.execute(
+                        "UPDATE specialists SET working_id = %s WHERE user_id = %s",
+                        (working_id, user_id)
+                    )
+                elif current_role in ('staff', 'admin'):
+                    cursor.execute(
+                        "UPDATE staff SET working_id = %s WHERE user_id = %s",
+                        (working_id, user_id)
+                    )
 
             self.connection.commit()
             return True
