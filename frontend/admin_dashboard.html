@@ -887,10 +887,13 @@
                         
                         // Aggregate patient statistics
                         (monthData.patient_statistics || []).forEach(p => {
-                            if (!patientMap.has(p.patient_id)) {
-                                patientMap.set(p.patient_id, {
-                                    patient_id: p.patient_id,
-                                    patient_name: p.patient_name,
+                            const patientId = p.user_id || p.patient_id;
+                            const patientName = p.patient_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                            
+                            if (!patientMap.has(patientId)) {
+                                patientMap.set(patientId, {
+                                    patient_id: patientId,
+                                    patient_name: patientName,
                                     total_readings: 0,
                                     normal_count: 0,
                                     borderline_count: 0,
@@ -899,15 +902,15 @@
                                 });
                             }
                             
-                            const existing = patientMap.get(p.patient_id);
+                            const existing = patientMap.get(patientId);
                             existing.total_readings += p.total_readings || 0;
                             existing.normal_count += p.normal_count || 0;
                             existing.borderline_count += p.borderline_count || 0;
                             existing.abnormal_count += p.abnormal_count || 0;
                             
-                            if (p.average_value) existing.values.push(p.average_value);
-                            if (p.highest_value) existing.values.push(p.highest_value);
-                            if (p.lowest_value) existing.values.push(p.lowest_value);
+                            if (p.avg_value) existing.values.push(p.avg_value);
+                            if (p.max_value) existing.values.push(p.max_value);
+                            if (p.min_value) existing.values.push(p.min_value);
                         });
 
                         // Aggregate food triggers

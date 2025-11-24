@@ -994,7 +994,9 @@ def get_monthly_report():
                 AVG(r.value) as avg_value,
                 MAX(r.value) as max_value,
                 MIN(r.value) as min_value,
-                SUM(CASE WHEN r.status IN ('abnormal', 'borderline') THEN 1 ELSE 0 END) as abnormal_count
+                SUM(CASE WHEN r.status = 'normal' THEN 1 ELSE 0 END) as normal_count,
+                SUM(CASE WHEN r.status = 'borderline' THEN 1 ELSE 0 END) as borderline_count,
+                SUM(CASE WHEN r.status = 'abnormal' THEN 1 ELSE 0 END) as abnormal_count
             FROM users u
             LEFT JOIN bloodsugarreadings r ON u.user_id = r.user_id AND {date_filter}
             WHERE u.role = 'patient'
@@ -1003,8 +1005,11 @@ def get_monthly_report():
         cursor.execute(sql)
         patient_stats = cursor.fetchall()
         
-        # Convert Decimal to float
+        # Convert Decimal to float and add patient_name
         for stat in patient_stats:
+            # Combine first_name and last_name into patient_name
+            stat['patient_name'] = f"{stat.get('first_name', '')} {stat.get('last_name', '')}".strip()
+            
             if stat.get('avg_value'):
                 stat['avg_value'] = float(stat['avg_value'])
             if stat.get('max_value'):
@@ -1013,6 +1018,10 @@ def get_monthly_report():
                 stat['min_value'] = float(stat['min_value'])
             if stat.get('total_readings'):
                 stat['total_readings'] = int(stat['total_readings'])
+            if stat.get('normal_count'):
+                stat['normal_count'] = int(stat['normal_count'])
+            if stat.get('borderline_count'):
+                stat['borderline_count'] = int(stat['borderline_count'])
             if stat.get('abnormal_count'):
                 stat['abnormal_count'] = int(stat['abnormal_count'])
                 
@@ -1060,14 +1069,18 @@ def get_monthly_report():
             if trigger.get('avg_value'):
                 trigger['avg_value'] = float(trigger['avg_value'])
         
+        # Convert triggers to dictionary format for easier frontend processing
+        food_triggers_dict = {item['food_intake']: item['trigger_count'] for item in food_triggers}
+        activity_triggers_dict = {item['activity']: item['trigger_count'] for item in activity_triggers}
+        
         cursor.close()
         
         return jsonify({
             "period": month or year,
             "total_active_patients": total_patients,
             "patient_statistics": patient_stats,
-            "top_food_triggers": food_triggers,
-            "top_activity_triggers": activity_triggers,
+            "food_triggers": food_triggers_dict,
+            "activity_triggers": activity_triggers_dict,
             "generated_at": datetime.now().isoformat()
         }), 200
     
