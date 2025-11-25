@@ -1,0 +1,1357 @@
+================================================================================
+BLOOD SUGAR MONITORING SYSTEM - COMPLETE FUNCTIONS CATALOG
+================================================================================
+Generated: November 24, 2025
+Comprehensive list of all functions with descriptions and locations
+
+Total Functions Documented: 120+
+Organization: By file and category
+
+================================================================================
+BACKEND/APP.PY - MAIN FLASK APPLICATION (47 FUNCTIONS)
+================================================================================
+
+HELPER FUNCTIONS (2):
+---------------------
+1. allowed_file(filename)
+   Location: app.py, line 146
+   Purpose: Check if uploaded file has allowed extension
+   Parameters: filename (str) - Name of the uploaded file
+   Returns: bool - True if extension is allowed
+   Used By: upload_documents()
+   Description: Validates file extensions against ALLOWED_EXTENSIONS set
+
+2. get_user_from_token()
+   Location: app.py, line 172
+   Purpose: Extract and validate user from JWT token in Authorization header
+   Parameters: None (reads from request headers)
+   Returns: dict - User data from token payload
+   Used By: All authenticated endpoints
+   Description: Decodes JWT token, validates expiration, returns user info
+   
+HEALTH & TESTING (2):
+----------------------
+3. health_check()
+   Location: app.py, line 191
+   Route: GET /health
+   Purpose: API health check endpoint
+   Returns: JSON with status and timestamp
+   Description: Verifies API is running and responsive
+
+4. test_database()
+   Location: app.py, line 1577
+   Route: GET /test-db
+   Purpose: Test database connection and query execution
+   Returns: JSON with connection status and sample data
+   Description: Validates database connectivity
+
+USER MANAGEMENT CRUD (8):
+--------------------------
+5. get_current_user()
+   Location: app.py, line 197
+   Route: GET /api/users/me
+   Purpose: Get currently authenticated user's profile
+   Returns: JSON with user data (excluding password)
+   Description: Returns profile of user from JWT token
+
+6. register_user()
+   Location: app.py, line 215
+   Route: POST /api/users/register
+   Purpose: Register new user account (patient/specialist/staff/admin)
+   Parameters (JSON body): email, password, firstName, lastName, role, etc.
+   Returns: JSON with success message and user_id
+   Used By: create_account.html registration form
+   Description: Creates user account with hashed password, role-specific records
+
+7. get_all_users()
+   Location: app.py, line 246
+   Route: GET /api/admin/users/all
+   Purpose: Retrieve all users in system (admin only)
+   Returns: JSON array of all user records
+   Used By: admin_dashboard.html, user_management.html
+   Description: Returns complete user list for administration
+
+8. get_user(user_id)
+   Location: app.py, line 261
+   Route: GET /api/users/<user_id>
+   Purpose: Get specific user details by ID
+   Parameters: user_id (int) - User's unique identifier
+   Returns: JSON with user data
+   Used By: Various dashboards and profile pages
+   Description: Retrieves single user record with role-specific data
+
+9. update_user(user_id)
+   Location: app.py, line 287
+   Route: PUT /api/users/<user_id>
+   Purpose: Update existing user information
+   Parameters: user_id + JSON body with fields to update
+   Returns: JSON success message
+   Used By: edit_profile_*.html pages
+   Description: Updates user profile, handles password hashing if changed
+
+10. delete_user(user_id)
+    Location: app.py, line 330
+    Route: DELETE /api/users/<user_id>
+    Purpose: Delete user account from system
+    Parameters: user_id (int)
+    Returns: JSON success message
+    Used By: admin user management
+    Description: Removes user and cascades to related records
+
+11. create_user_admin()
+    Location: app.py, line 361
+    Route: POST /api/admin/users
+    Purpose: Admin-specific user creation endpoint
+    Parameters: JSON with user data
+    Returns: JSON with new user_id
+    Used By: user_management.html admin panel
+    Description: Allows admins to create accounts for any role
+
+12. delete_user_admin(user_id)
+    Location: app.py, line 407
+    Route: DELETE /api/admin/users/<user_id>
+    Purpose: Admin endpoint to delete users
+    Parameters: user_id (int)
+    Returns: JSON success message
+    Used By: user_management.html
+    Description: Admin-level user deletion with logging
+
+AUTHENTICATION (2):
+-------------------
+13. handle_auth_login()
+    Location: app.py, line 351
+    Route: POST /api/auth/login
+    Purpose: Primary authentication endpoint
+    Parameters: JSON {email, password, role}
+    Returns: JWT token and user data
+    Used By: All login pages (patient.html, specialist.html, etc.)
+    Description: Validates credentials, generates JWT token with 24h expiration
+
+14. login()
+    Location: app.py, line 628
+    Route: POST /api/login
+    Purpose: Alternative login endpoint
+    Parameters: JSON {email, password, role}
+    Returns: JWT token and user data
+    Used By: Legacy login forms
+    Description: Similar to handle_auth_login, supports older clients
+
+BLOOD SUGAR READINGS CRUD (4):
+-------------------------------
+15. add_reading()
+    Location: app.py, line 486
+    Route: POST /api/readings
+    Purpose: Add new blood sugar reading
+    Parameters: JSON {userId, value, unit, fasting, foodIntake, activity, symptoms}
+    Returns: JSON with reading_id and AI insights
+    Used By: patient_dashboard.html input form
+    Description: Records reading, triggers ML prediction, generates insights
+
+16. get_readings(user_id)
+    Location: app.py, line 561
+    Route: GET /api/readings/<user_id>
+    Query Params: days (optional, default 30)
+    Purpose: Retrieve user's blood sugar readings
+    Returns: JSON array of readings
+    Used By: patient_history.html, charts
+    Description: Fetches readings for specified time period
+
+17. update_readings(reading_id)
+    Location: app.py, line 579
+    Route: PUT /api/readings/<reading_id>
+    Purpose: Update existing blood sugar reading
+    Parameters: reading_id + JSON with fields to update
+    Returns: JSON success message
+    Used By: patient_history.html edit functionality
+    Description: Modifies reading record
+
+18. delete_reading(reading_id)
+    Location: app.py, line 605
+    Route: DELETE /api/readings/<reading_id>
+    Purpose: Delete blood sugar reading
+    Parameters: reading_id (int)
+    Returns: JSON success message
+    Used By: patient_history.html delete button
+    Description: Removes reading from database
+
+SPECIALIST FEATURES (8):
+------------------------
+19. specialist_search_readings(specialist_id)
+    Location: app.py, line 669
+    Route: POST /api/specialist/<specialist_id>/search-readings
+    Purpose: Search patient readings by criteria
+    Parameters: JSON {patientId, dateRange, status}
+    Returns: Filtered blood sugar readings
+    Used By: specialist_dashboard.html search
+    Description: Advanced search for specialist to find specific readings
+
+20. add_specialist_feedback()
+    Location: app.py, line 724
+    Route: POST /api/specialist/feedback
+    Purpose: Add specialist feedback/notes for patient
+    Parameters: JSON {specialistId, patientId, message, category}
+    Returns: JSON with feedback_id
+    Used By: specialist_patient_view.html
+    Description: Records specialist's observations and recommendations
+
+21. get_patient_feedback(patient_id)
+    Location: app.py, line 783
+    Route: GET /api/specialist/feedback/<patient_id>
+    Purpose: Retrieve all feedback for specific patient
+    Returns: JSON array of feedback records
+    Used By: patient_dashboard.html, specialist_patient_view.html
+    Description: Shows specialist comments to patient
+
+22. get_patient_specialist(patient_id)
+    Location: app.py, line 799
+    Route: GET /api/patients/<patient_id>/specialist
+    Purpose: Get assigned specialist for patient
+    Returns: JSON with specialist info or null
+    Used By: patient_dashboard.html
+    Description: Shows which specialist monitors the patient
+
+23. get_specialist_patients(specialist_id)
+    Location: app.py, line 1079
+    Route: GET /api/specialists/<specialist_id>/patients
+    Purpose: Get all patients assigned to specialist
+    Returns: JSON array of patients with recent readings
+    Used By: specialist_dashboard.html patient list
+    Description: Lists all patients under specialist's care
+
+24. get_specialist_dashboard(specialist_id)
+    Location: app.py, line 1117
+    Route: GET /api/specialist/<specialist_id>/dashboard
+    Purpose: Get dashboard summary for specialist
+    Returns: JSON with patient count, alerts, statistics
+    Used By: specialist_dashboard.html
+    Description: Overview of all patients and their status
+
+25. get_patients_needing_attention(specialist_id)
+    Location: app.py, line 1135
+    Route: GET /api/specialist/<specialist_id>/attention
+    Purpose: Get list of patients with concerning readings
+    Returns: JSON array of patients needing review
+    Used By: specialist_dashboard.html alerts section
+    Description: Prioritizes patients with abnormal patterns
+
+26. get_specialist_alerts(specialist_id)
+    Location: app.py, line 1151
+    Route: GET /api/specialist/<specialist_id>/alerts
+    Purpose: Get all alerts for specialist's patients
+    Returns: JSON array of alert records
+    Used By: specialist_dashboard.html notifications
+    Description: Shows all critical alerts for assigned patients
+
+AI & INSIGHTS (5):
+------------------
+27. get_insights(user_id)
+    Location: app.py, line 835
+    Route: GET /api/insights/<user_id>
+    Purpose: Generate AI insights from recent readings
+    Returns: JSON with patterns, suggestions, risk assessment
+    Used By: patient_dashboard.html insights widget
+    Description: Analyzes last 30 days of readings using ML model
+
+28. get_saved_insights(user_id)
+    Location: app.py, line 860
+    Route: GET /api/insights/<user_id>/saved
+    Purpose: Retrieve previously saved AI insights
+    Returns: JSON array of historical insights
+    Used By: view_reports.html
+    Description: Shows AI insights generated over time
+
+29. get_trends(user_id)
+    Location: app.py, line 877
+    Route: GET /api/trends/<user_id>
+    Purpose: Analyze blood sugar trends over time
+    Returns: JSON with trend direction, averages, variability
+    Used By: patient_dashboard.html charts
+    Description: Statistical analysis of reading patterns
+
+30. get_patterns(user_id)
+    Location: app.py, line 897
+    Route: GET /api/patterns/<user_id>
+    Purpose: Identify recurring patterns in readings
+    Returns: JSON with weekly, meal, and time-based patterns
+    Used By: patient_history.html pattern analysis
+    Description: Detects correlations between activities and readings
+
+31. get_alerts(user_id)
+    Location: app.py, line 918
+    Route: GET /api/alerts/<user_id>
+    Purpose: Get all alerts for user
+    Returns: JSON array of alert records
+    Used By: All dashboards for notifications
+    Description: Retrieves critical alerts and warnings
+
+THRESHOLDS (4):
+---------------
+32. get_thresholds(user_id)
+    Location: app.py, line 936
+    Route: GET /api/thresholds/<user_id>
+    Purpose: Get blood sugar threshold settings for user
+    Returns: JSON with normal, low, high ranges
+    Used By: thresholds.html settings page
+    Description: Retrieves personalized threshold values
+
+33. set_threshold(user_id)
+    Location: app.py, line 951
+    Route: POST /api/thresholds/<user_id>
+    Purpose: Set custom threshold for user
+    Parameters: JSON {status, minValue, maxValue}
+    Returns: JSON with threshold_id
+    Used By: thresholds.html form
+    Description: Allows customization of alert thresholds
+
+34. get_all_thresholds()
+    Location: app.py, line 977
+    Route: GET /api/thresholds
+    Purpose: Get all threshold configurations (admin)
+    Returns: JSON array of all thresholds
+    Used By: admin_dashboard.html
+    Description: System-wide threshold overview
+
+35. delete_threshold(threshold_id)
+    Location: app.py, line 992
+    Route: DELETE /api/thresholds/<threshold_id>
+    Purpose: Delete threshold configuration
+    Parameters: threshold_id (int)
+    Returns: JSON success message
+    Used By: thresholds.html delete button
+    Description: Removes custom threshold setting
+
+DIET RECOMMENDATIONS (1):
+-------------------------
+36. get_diet_recommendations(condition)
+    Location: app.py, line 1010
+    Route: GET /api/diet/<condition>
+    Purpose: Get diet recommendations for health condition
+    Parameters: condition (str) - diabetes, prediabetes, hypoglycemia
+    Returns: JSON with meal plans and food suggestions
+    Used By: patient_dashboard.html diet section
+    Description: Provides personalized nutrition advice
+
+PATIENT LISTS (2):
+------------------
+37. get_all_patients()
+    Location: app.py, line 1029
+    Route: GET /api/patients
+    Purpose: Get all patients in system
+    Returns: JSON array of patient records
+    Used By: assign_patients.html, staff_view.html
+    Description: Lists all registered patients
+
+38. get_all_specialists()
+    Location: app.py, line 1044
+    Route: GET /api/specialists
+    Purpose: Get all specialists in system
+    Returns: JSON array of specialist records
+    Used By: assign_patients.html dropdown
+    Description: Lists all healthcare providers
+
+REPORTS (3):
+------------
+39. generate_report(user_id)
+    Location: app.py, line 1182
+    Route: GET /api/reports/<user_id>
+    Purpose: Generate comprehensive health report
+    Returns: JSON with analysis, insights, recommendations
+    Used By: view_reports.html
+    Description: Creates detailed PDF-ready report
+
+40. get_monthly_report()
+    Location: app.py, line 1209
+    Route: GET /api/reports/monthly
+    Query Params: month, year
+    Purpose: Generate monthly statistical report
+    Returns: JSON with monthly aggregates
+    Used By: reports_management.html
+    Description: Monthly summary of readings and patterns
+
+41. get_annual_report()
+    Location: app.py, line 1343
+    Route: GET /api/reports/annual
+    Query Params: year
+    Purpose: Generate yearly health report
+    Returns: JSON with annual trends and statistics
+    Used By: reports_management.html
+    Description: Comprehensive yearly analysis
+
+ASSIGNMENTS (4):
+----------------
+42. assign_patient_api()
+    Location: app.py, line 1434
+    Route: POST /api/assignments/assign
+    Purpose: Assign patient to specialist
+    Parameters: JSON {patientId, specialistId}
+    Returns: JSON with assignment_id
+    Used By: assign_patients.html form
+    Description: Creates specialist-patient relationship
+
+43. assignments_api()
+    Location: app.py, line 1455
+    Route: GET /api/assignments
+    Route: POST /api/assignments
+    Purpose: Get all assignments or create new assignment
+    Returns: JSON assignments array or new assignment_id
+    Used By: patient_assignments.html
+    Description: Manages specialist-patient assignments
+
+44. delete_assignment_by_id(assignment_id)
+    Location: app.py, line 1518
+    Route: DELETE /api/assignments/<assignment_id>
+    Purpose: Delete assignment by ID
+    Parameters: assignment_id (int)
+    Returns: JSON success message
+    Used By: patient_assignments.html delete button
+    Description: Removes specialist-patient relationship
+
+45. remove_assignment_api(specialist_id, patient_id)
+    Location: app.py, line 1552
+    Route: DELETE /api/assignments/specialist/<specialist_id>/patient/<patient_id>
+    Purpose: Remove patient from specialist
+    Parameters: specialist_id, patient_id
+    Returns: JSON success message
+    Used By: specialist_dashboard.html
+    Description: Unassigns patient from specialist
+
+DOCUMENTS (1):
+--------------
+46. upload_documents(patient_id)
+    Location: app.py, line 1602
+    Route: POST /api/patients/<patient_id>/documents
+    Purpose: Upload patient medical documents
+    Parameters: patient_id + file in multipart/form-data
+    Returns: JSON with file path and metadata
+    Used By: upload_documents.html
+    Description: Stores files in uploads/patient_<id>/ directory
+
+SETUP (1):
+----------
+47. setup_demo_users()
+    Location: app.py, line 1663
+    Route: GET /setup/demo-users
+    Purpose: Create demo user accounts for testing
+    Returns: JSON with created user IDs
+    Used By: Initial setup/testing
+    Description: Populates database with sample users
+
+
+================================================================================
+BACKEND/MODELS.PY - DATABASE LAYER (35 METHODS)
+================================================================================
+
+DATABASE CLASS - Data Access Layer
+All methods are part of the Database class that handles MySQL operations
+
+CONNECTION MANAGEMENT (4):
+---------------------------
+1. __init__(self)
+   Location: models.py, line 102
+   Purpose: Initialize Database instance
+   Description: Creates database connection on instantiation
+
+2. connect(self)
+   Location: models.py, line 107
+   Purpose: Establish MySQL database connection
+   Returns: mysql.connector connection object
+   Description: Connects to blood_sugar_db with credentials
+
+3. _get_cursor(self)
+   Location: models.py, line 123
+   Purpose: Get database cursor (dictionary mode)
+   Returns: cursor object
+   Description: Helper method for queries, returns dict results
+
+4. close(self)
+   Location: models.py, line 968
+   Purpose: Close database connection
+   Description: Cleanup method to close connection
+
+USER MANAGEMENT CRUD (6):
+--------------------------
+5. get_user(self, user_id)
+   Location: models.py, line 134
+   Purpose: Retrieve user by ID with role-specific data
+   Parameters: user_id (int)
+   Returns: dict with user data (joined with patient/specialist/staff tables)
+   Used By: get_user() API endpoint
+   Description: Fetches complete user profile
+
+6. get_user_by_email(self, email)
+   Location: models.py, line 170
+   Purpose: Find user by email address
+   Parameters: email (str)
+   Returns: dict with user data or None
+   Used By: login() authentication
+   Description: Email-based user lookup for login
+
+7. create_user(self, email, password, first_name, last_name, role, ...)
+   Location: models.py, line 179
+   Purpose: Create new user account
+   Parameters: email, password, first_name, last_name, role, phone, dob, profile_image, license_id, specialization, medical_history
+   Returns: int - new user_id
+   Used By: register_user() API
+   Description: Inserts user and role-specific records (patient/specialist/staff)
+
+8. update_user(self, user_id, *, email=None, password=None, ...)
+   Location: models.py, line 252
+   Purpose: Update user information
+   Parameters: user_id + optional fields to update
+   Returns: bool - success status
+   Used By: update_user() API
+   Description: Updates users table and role-specific tables
+
+9. delete_user(self, user_id)
+   Location: models.py, line 360
+   Purpose: Delete user account
+   Parameters: user_id (int)
+   Returns: bool - success status
+   Used By: delete_user() API
+   Description: Removes user and related records
+
+10. get_all_users(self)
+    Location: models.py, line 829
+    Purpose: Retrieve all users
+    Returns: list of dict - all user records
+    Used By: get_all_users() API
+    Description: Fetches complete user list for admin
+
+SPECIALIST & PATIENT RELATIONSHIPS (7):
+----------------------------------------
+11. get_specialist_feedback(self, patient_id)
+    Location: models.py, line 377
+    Purpose: Get specialist feedback for patient
+    Parameters: patient_id (int)
+    Returns: list of feedback records
+    Used By: get_patient_feedback() API
+    Description: Retrieves specialist's notes and recommendations
+
+12. assign_patient_to_specialist(self, patient_user_id, specialist_user_id)
+    Location: models.py, line 407
+    Purpose: Create assignment relationship
+    Parameters: patient_user_id, specialist_user_id
+    Returns: int - assignment_id
+    Used By: assign_patient_api()
+    Description: Links patient to specialist in specialistpatient table
+
+13. get_patient_specialist(self, patient_user_id)
+    Location: models.py, line 853
+    Purpose: Get assigned specialist for patient
+    Parameters: patient_user_id (int)
+    Returns: dict with specialist info or None
+    Used By: get_patient_specialist() API
+    Description: Finds patient's assigned healthcare provider
+
+14. get_specialist_patients(self, specialist_id)
+    Location: models.py, line 871
+    Purpose: Get all patients for specialist
+    Parameters: specialist_id (int)
+    Returns: list of patient records
+    Used By: get_specialist_patients() API
+    Description: Lists patients under specialist's care
+
+15. get_all_patients(self)
+    Location: models.py, line 887
+    Purpose: Get all patients in system
+    Returns: list of patient records
+    Used By: get_all_patients() API
+    Description: Complete patient roster
+
+16. get_specialist_dashboard(self, specialist_id)
+    Location: models.py, line 902
+    Purpose: Get dashboard data for specialist
+    Parameters: specialist_id (int)
+    Returns: dict with stats and patient list
+    Used By: get_specialist_dashboard() API
+    Description: Aggregates data for specialist overview
+
+17. get_specialist_attention_list(self, specialist_id)
+    Location: models.py, line 923
+    Purpose: Get patients needing attention
+    Parameters: specialist_id (int)
+    Returns: list of patients with recent abnormal readings
+    Used By: get_patients_needing_attention() API
+    Description: Prioritizes patients with concerning patterns
+
+BLOOD SUGAR READINGS (7):
+--------------------------
+18. create_reading(self, user_id, value, unit='mg/dL', fasting=None, food_intake=None, ...)
+    Location: models.py, line 451
+    Purpose: Add blood sugar reading
+    Parameters: user_id, value, unit, fasting, food_intake, activity, symptoms, notes
+    Returns: int - reading_id
+    Used By: add_reading() API
+    Description: Inserts new reading into bloodsugarreadings table
+
+19. get_user_readings(self, user_id, days=30)
+    Location: models.py, line 478
+    Purpose: Get user's readings for time period
+    Parameters: user_id, days (default 30)
+    Returns: list of reading records
+    Used By: get_readings() API, ML analysis
+    Description: Fetches readings within date range
+
+20. get_all_readings_for_training(self)
+    Location: models.py, line 505
+    Purpose: Get all readings for ML training
+    Returns: list of all readings with features
+    Used By: train_model.py
+    Description: Exports dataset for model training
+
+21. update_reading(self, reading_id, **kwargs)
+    Location: models.py, line 536
+    Purpose: Update existing reading
+    Parameters: reading_id + fields to update
+    Returns: bool - success status
+    Used By: update_readings() API
+    Description: Modifies reading record
+
+22. delete_reading(self, reading_id)
+    Location: models.py, line 567
+    Purpose: Delete reading
+    Parameters: reading_id (int)
+    Returns: bool - success status
+    Used By: delete_reading() API
+    Description: Removes reading from database
+
+23. get_reading_by_id(self, reading_id)
+    Location: models.py, line 581
+    Purpose: Get specific reading by ID
+    Parameters: reading_id (int)
+    Returns: dict with reading data
+    Used By: Various endpoints
+    Description: Fetches single reading record
+
+24. get_abnormal_count(self, user_id, days=7)
+    Location: models.py, line 602
+    Purpose: Count abnormal readings
+    Parameters: user_id, days (default 7)
+    Returns: int - count of abnormal readings
+    Used By: Alert generation, dashboards
+    Description: Counts readings outside normal range
+
+AI INSIGHTS (2):
+----------------
+25. create_ai_insight(self, user_id, pattern, suggestion, confidence)
+    Location: models.py, line 619
+    Purpose: Save AI-generated insight
+    Parameters: user_id, pattern, suggestion, confidence
+    Returns: int - insight_id
+    Used By: add_reading() after ML prediction
+    Description: Stores ML insights in aiinsights table
+
+26. get_user_insights(self, user_id, limit=10)
+    Location: models.py, line 637
+    Purpose: Retrieve saved insights
+    Parameters: user_id, limit (default 10)
+    Returns: list of insight records
+    Used By: get_saved_insights() API
+    Description: Fetches historical AI insights
+
+ALERTS (2):
+-----------
+27. create_alert(self, user_id, reason, specialist_id=None)
+    Location: models.py, line 661
+    Purpose: Create alert record
+    Parameters: user_id, reason, specialist_id (optional)
+    Returns: int - alert_id
+    Used By: Automated alert system, add_reading()
+    Description: Generates alert for abnormal readings
+
+28. get_user_alerts(self, user_id, days=30)
+    Location: models.py, line 679
+    Purpose: Get user's alerts
+    Parameters: user_id, days (default 30)
+    Returns: list of alert records
+    Used By: get_alerts() API
+    Description: Retrieves recent alerts
+
+THRESHOLDS (4):
+---------------
+29. get_user_thresholds(self, user_id)
+    Location: models.py, line 703
+    Purpose: Get threshold settings for user
+    Parameters: user_id (int)
+    Returns: list of threshold records
+    Used By: get_thresholds() API
+    Description: Fetches custom threshold configurations
+
+30. set_user_threshold(self, user_id, status, min_value, max_value)
+    Location: models.py, line 725
+    Purpose: Set threshold for user
+    Parameters: user_id, status, min_value, max_value
+    Returns: int - threshold_id
+    Used By: set_threshold() API
+    Description: Creates/updates threshold settings
+
+31. get_all_thresholds(self)
+    Location: models.py, line 758
+    Purpose: Get all threshold configurations
+    Returns: list of all thresholds
+    Used By: get_all_thresholds() API (admin)
+    Description: System-wide threshold overview
+
+32. delete_threshold(self, threshold_id)
+    Location: models.py, line 782
+    Purpose: Delete threshold
+    Parameters: threshold_id (int)
+    Returns: bool - success status
+    Used By: delete_threshold() API
+    Description: Removes threshold configuration
+
+DIET RECOMMENDATIONS (1):
+-------------------------
+33. get_diet_recommendations(self, condition_name, meal_type=None)
+    Location: models.py, line 798
+    Purpose: Get diet recommendations
+    Parameters: condition_name, meal_type (optional)
+    Returns: list of diet records
+    Used By: get_diet_recommendations() API
+    Description: Fetches nutrition advice from dietrecommendations table
+
+ML TRAINING DATA (2):
+----------------------
+34. get_diabetes_dataset(self)
+    Location: models.py, line 948
+    Purpose: Load diabetes dataset from CSV
+    Returns: pandas DataFrame
+    Used By: train_model.py
+    Description: Reads datasets/Diabetes Classification.csv
+
+35. get_heart_disease_dataset(self)
+    Location: models.py, line 958
+    Purpose: Load heart disease dataset
+    Returns: pandas DataFrame
+    Used By: train_model.py (optional)
+    Description: Reads datasets/heart_disease.csv
+
+
+================================================================================
+BACKEND/ML_SERVICE.PY - MACHINE LEARNING SERVICE (15 METHODS)
+================================================================================
+
+MLService CLASS - Blood Sugar Prediction and Analysis
+All methods are part of the MLService class
+
+INITIALIZATION (1):
+-------------------
+1. __init__(self)
+   Location: ml_service.py, line 106
+   Purpose: Initialize ML service and load trained model
+   Description: Loads model, scaler, and feature columns from models/ directory
+   Loads: blood_sugar_model.joblib, scaler.joblib, feature_columns.joblib
+
+PREDICTIONS & STATUS (1):
+--------------------------
+2. predict_status(self, value, fasting=False, food_intake='', activity='', time_of_day=12)
+   Location: ml_service.py, line 122
+   Purpose: Predict blood sugar status using ML model
+   Parameters: value, fasting, food_intake, activity, time_of_day
+   Returns: dict with status, risk_level, confidence, message
+   Used By: add_reading() API endpoint
+   Description: Classifies reading as normal/prediabetic/diabetic using trained model
+
+INSIGHTS GENERATION (1):
+-------------------------
+3. generate_insights(self, readings)
+   Location: ml_service.py, line 178
+   Purpose: Generate comprehensive AI insights from readings
+   Parameters: readings (list) - blood sugar readings with metadata
+   Returns: dict with patterns, suggestions, risk_assessment
+   Used By: get_insights() API endpoint
+   Description: Analyzes patterns, correlations, and generates recommendations
+
+PATTERN ANALYSIS (4 private methods):
+--------------------------------------
+4. _analyze_food_patterns(self, df, abnormal_df)
+   Location: ml_service.py, line 225
+   Purpose: Analyze correlation between food and blood sugar
+   Parameters: df (DataFrame), abnormal_df (DataFrame)
+   Returns: dict with food correlations and risk foods
+   Used By: generate_insights()
+   Description: Identifies foods that cause spikes
+
+5. _analyze_activity_patterns(self, df, abnormal_df)
+   Location: ml_service.py, line 257
+   Purpose: Analyze correlation between activity and blood sugar
+   Parameters: df (DataFrame), abnormal_df (DataFrame)
+   Returns: dict with activity correlations
+   Used By: generate_insights()
+   Description: Identifies beneficial activities
+
+6. _analyze_time_patterns(self, df, abnormal_df)
+   Location: ml_service.py, line 294
+   Purpose: Analyze time-of-day patterns
+   Parameters: df (DataFrame), abnormal_df (DataFrame)
+   Returns: dict with time-based patterns
+   Used By: generate_insights()
+   Description: Identifies problematic times of day
+
+7. _analyze_symptom_patterns(self, df, abnormal_df)
+   Location: ml_service.py, line 337
+   Purpose: Analyze symptom correlations
+   Parameters: df (DataFrame), abnormal_df (DataFrame)
+   Returns: dict with symptom patterns
+   Used By: generate_insights()
+   Description: Identifies common symptoms with high readings
+
+TREND ANALYSIS (1):
+-------------------
+8. analyze_trends(self, readings)
+   Location: ml_service.py, line 494
+   Purpose: Analyze blood sugar trends over time
+   Parameters: readings (list)
+   Returns: dict with trend direction, averages, variability
+   Used By: get_trends() API endpoint
+   Description: Statistical analysis of reading patterns
+
+PATTERN IDENTIFICATION (1):
+----------------------------
+9. identify_patterns(self, readings)
+   Location: ml_service.py, line 512
+   Purpose: Identify recurring patterns
+   Parameters: readings (list)
+   Returns: dict with weekly, meal, and time patterns
+   Used By: get_patterns() API endpoint
+   Description: Detects repeating patterns in data
+
+PATTERN HELPERS (4 private methods):
+-------------------------------------
+10. _identify_weekly_patterns(self, df)
+    Location: ml_service.py, line 529
+    Purpose: Identify day-of-week patterns
+    Parameters: df (DataFrame)
+    Returns: dict with daily averages
+    Used By: identify_patterns()
+    Description: Finds patterns by day of week
+
+11. _identify_meal_patterns(self, df)
+    Location: ml_service.py, line 555
+    Purpose: Identify meal-related patterns
+    Parameters: df (DataFrame)
+    Returns: dict with meal type averages
+    Used By: identify_patterns()
+    Description: Analyzes fasting vs non-fasting readings
+
+12. _calculate_variability(self, df)
+    Location: ml_service.py, line 572
+    Purpose: Calculate reading variability
+    Parameters: df (DataFrame)
+    Returns: float - coefficient of variation
+    Used By: identify_patterns()
+    Description: Measures consistency of readings
+
+13. _assess_consistency(self, df)
+    Location: ml_service.py, line 580
+    Purpose: Assess reading consistency
+    Parameters: df (DataFrame)
+    Returns: str - consistency level (excellent/good/fair/poor)
+    Used By: identify_patterns()
+    Description: Evaluates variability score
+
+PERSONALIZED RECOMMENDATIONS (1):
+----------------------------------
+14. _generate_personalized_recommendations(self, food_correlations, activity_correlations, ...)
+    Location: ml_service.py, line 370
+    Purpose: Generate personalized recommendations
+    Parameters: food_correlations, activity_correlations, time_correlations, symptom_patterns, overall_avg, abnormal_count
+    Returns: list of recommendation strings
+    Used By: generate_insights()
+    Description: Creates actionable recommendations based on patterns
+
+REPORT GENERATION (1):
+-----------------------
+15. generate_report(self, user_id, readings)
+    Location: ml_service.py, line 602
+    Purpose: Generate comprehensive health report
+    Parameters: user_id, readings
+    Returns: dict with full analysis and recommendations
+    Used By: generate_report() API endpoint
+    Description: Combines all analyses into detailed report
+
+
+================================================================================
+BACKEND/NOTIFICATION_SERVICE.PY - EMAIL NOTIFICATIONS (3 METHODS)
+================================================================================
+
+NotificationService CLASS - Email Sending Service
+
+1. __init__(self)
+   Location: notification_service.py, line (varies)
+   Purpose: Initialize email service with SMTP configuration
+   Description: Loads SMTP credentials from environment variables
+
+2. send_email(self, to_email, subject, body)
+   Location: notification_service.py, line (varies)
+   Purpose: Send email via SMTP
+   Parameters: to_email, subject, body
+   Returns: bool - success status
+   Used By: send_alert_notification()
+   Description: Sends email using configured SMTP server
+
+3. send_alert_notification(self, user_email, alert_reason)
+   Location: notification_service.py, line (varies)
+   Purpose: Send alert notification email
+   Parameters: user_email, alert_reason
+   Returns: bool - success status
+   Used By: Automated alert system
+   Description: Sends formatted alert email to user
+
+
+================================================================================
+BACKEND/SCHEDULER_SERVICE.PY - BACKGROUND JOBS (3 METHODS)
+================================================================================
+
+SchedulerService CLASS - Background Task Scheduler
+
+1. __init__(self, db, notification_service)
+   Location: scheduler_service.py, line (varies)
+   Purpose: Initialize scheduler with APScheduler
+   Parameters: db (Database instance), notification_service
+   Description: Sets up BackgroundScheduler
+
+2. start(self)
+   Location: scheduler_service.py, line (varies)
+   Purpose: Start background scheduler
+   Description: Starts hourly notification checks
+
+3. check_and_send_notifications(self)
+   Location: scheduler_service.py, line (varies)
+   Purpose: Check for alerts and send notifications
+   Description: Runs every hour, checks for abnormal readings, sends emails
+
+
+================================================================================
+BACKEND/TRAIN_MODEL.PY - ML MODEL TRAINING (11+ METHODS)
+================================================================================
+
+BloodSugarMLTrainer CLASS - Machine Learning Training Pipeline
+
+DATA LOADING (3):
+-----------------
+1. __init__(self, db)
+   Location: train_model.py, line (varies)
+   Purpose: Initialize trainer with database connection
+   Parameters: db (Database instance)
+   Description: Sets up trainer for model training
+
+2. load_data(self)
+   Location: train_model.py, line (varies)
+   Purpose: Load training data from database
+   Returns: pandas DataFrame
+   Description: Fetches all readings for training
+
+3. load_external_datasets(self)
+   Location: train_model.py, line (varies)
+   Purpose: Load external diabetes datasets
+   Returns: pandas DataFrame
+   Description: Loads CSV datasets from datasets/ directory
+
+DATA GENERATION (1):
+--------------------
+4. generate_synthetic_data(self, n_samples=1000)
+   Location: train_model.py, line (varies)
+   Purpose: Generate synthetic training data
+   Parameters: n_samples (default 1000)
+   Returns: pandas DataFrame
+   Description: Creates realistic synthetic blood sugar data
+
+DATA PREPROCESSING (1):
+------------------------
+5. preprocess_data(self, df)
+   Location: train_model.py, line (varies)
+   Purpose: Preprocess data for training
+   Parameters: df (DataFrame)
+   Returns: preprocessed DataFrame
+   Description: Handles missing values, encodes features
+
+FEATURE ENGINEERING (1):
+-------------------------
+6. engineer_features(self, df)
+   Location: train_model.py, line (varies)
+   Purpose: Create additional features
+   Parameters: df (DataFrame)
+   Returns: DataFrame with new features
+   Description: Creates time-based and interaction features
+
+MODEL TRAINING (1):
+-------------------
+7. train_model(self, X, y)
+   Location: train_model.py, line (varies)
+   Purpose: Train machine learning model
+   Parameters: X (features), y (target)
+   Returns: trained model
+   Description: Trains RandomForestClassifier
+
+MODEL EVALUATION (1):
+---------------------
+8. evaluate_model(self, model, X_test, y_test)
+   Location: train_model.py, line (varies)
+   Purpose: Evaluate model performance
+   Parameters: model, X_test, y_test
+   Returns: dict with metrics
+   Description: Calculates accuracy, precision, recall
+
+MODEL PERSISTENCE (1):
+-----------------------
+9. save_model(self, model, scaler, feature_columns)
+   Location: train_model.py, line (varies)
+   Purpose: Save trained model to disk
+   Parameters: model, scaler, feature_columns
+   Description: Saves .joblib files to models/ directory
+
+MAIN EXECUTION (1):
+-------------------
+10. main(self)
+    Location: train_model.py, line (varies)
+    Purpose: Execute full training pipeline
+    Description: Orchestrates data loading, preprocessing, training, evaluation
+
+
+================================================================================
+FRONTEND/JS/API.JS - API CLIENT LIBRARY (25+ FUNCTIONS)
+================================================================================
+
+CORE API REQUEST (1):
+---------------------
+1. apiRequest(endpoint, options)
+   Location: api.js, line 44
+   Purpose: Core API request function with authentication
+   Parameters: endpoint (str), options (object with method, body, headers)
+   Returns: Promise<Response>
+   Used By: All API wrapper functions
+   Description: Handles JWT token injection, error handling, base URL
+
+USER MANAGEMENT (5):
+--------------------
+2. getUser(id)
+   Location: api.js, line 80
+   Purpose: Get user by ID
+   Parameters: id (int)
+   Returns: Promise<User>
+   Used By: Profile pages
+   Description: Wrapper for GET /api/users/<id>
+
+3. registerUser(payload)
+   Location: api.js, line 92
+   Purpose: Register new user
+   Parameters: payload (object) - user registration data
+   Returns: Promise<Response>
+   Used By: create_account.html
+   Description: Wrapper for POST /api/users/register
+
+4. updateUser(id, payload)
+   Location: api.js, line 104
+   Purpose: Update user information
+   Parameters: id, payload
+   Returns: Promise<Response>
+   Used By: edit_profile_*.html pages
+   Description: Wrapper for PUT /api/users/<id>
+
+5. deleteUser(id)
+   Location: api.js, line 115
+   Purpose: Delete user account
+   Parameters: id (int)
+   Returns: Promise<Response>
+   Used By: admin panels
+   Description: Wrapper for DELETE /api/users/<id>
+
+6. getAllUsers()
+   Location: api.js, line 319
+   Purpose: Get all users (admin)
+   Returns: Promise<User[]>
+   Used By: user_management.html
+   Description: Wrapper for GET /api/admin/users/all
+
+AUTHENTICATION (4):
+-------------------
+7. loginUser(email, password, role)
+   Location: api.js, line 127
+   Purpose: Login user
+   Parameters: email, password, role
+   Returns: Promise<{token, user}>
+   Used By: All login pages
+   Description: Wrapper for POST /api/auth/login
+
+8. login(email, password, role)
+   Location: api.js, line 140
+   Purpose: Alternative login function
+   Parameters: email, password, role
+   Returns: Promise<{token, user}>
+   Used By: Legacy login forms
+   Description: Wrapper for POST /api/login
+
+9. saveAuthUser(user)
+   Location: api.js, line 159
+   Purpose: Save user to localStorage
+   Parameters: user (object)
+   Description: Stores authenticated user data
+
+10. loadAuthUser()
+    Location: api.js, line 168
+    Purpose: Load user from localStorage
+    Returns: User object or null
+    Description: Retrieves stored user data
+
+11. requireRole(expectedRole)
+    Location: api.js, line 185
+    Purpose: Check user role and redirect if unauthorized
+    Parameters: expectedRole (str)
+    Description: Role-based access control for pages
+
+BLOOD SUGAR READINGS (4):
+--------------------------
+12. addReading(payload)
+    Location: api.js, line 212
+    Purpose: Add new blood sugar reading
+    Parameters: payload (object) - reading data
+    Returns: Promise<Response>
+    Used By: patient_dashboard.html form
+    Description: Wrapper for POST /api/readings
+
+13. getReadings(userId, days)
+    Location: api.js, line 224
+    Purpose: Get user's readings
+    Parameters: userId, days (default 30)
+    Returns: Promise<Reading[]>
+    Used By: patient_history.html, charts
+    Description: Wrapper for GET /api/readings/<userId>?days=<days>
+
+14. updateReading(readingId, payload)
+    Location: api.js, line 242
+    Purpose: Update reading
+    Parameters: readingId, payload
+    Returns: Promise<Response>
+    Used By: patient_history.html edit
+    Description: Wrapper for PUT /api/readings/<readingId>
+
+15. deleteReading(readingId)
+    Location: api.js, line 253
+    Purpose: Delete reading
+    Parameters: readingId
+    Returns: Promise<Response>
+    Used By: patient_history.html delete
+    Description: Wrapper for DELETE /api/readings/<readingId>
+
+AI & INSIGHTS (5):
+------------------
+16. getInsights(userId)
+    Location: api.js, line 266
+    Purpose: Get AI insights
+    Parameters: userId
+    Returns: Promise<Insights>
+    Used By: patient_dashboard.html
+    Description: Wrapper for GET /api/insights/<userId>
+
+17. getTrends(userId)
+    Location: api.js, line 274
+    Purpose: Get blood sugar trends
+    Parameters: userId
+    Returns: Promise<Trends>
+    Used By: patient_dashboard.html charts
+    Description: Wrapper for GET /api/trends/<userId>
+
+18. getPatterns(userId)
+    Location: api.js, line 282
+    Purpose: Get recurring patterns
+    Parameters: userId
+    Returns: Promise<Patterns>
+    Used By: patient_history.html analysis
+    Description: Wrapper for GET /api/patterns/<userId>
+
+19. getSavedInsights(userId)
+    Location: api.js, line 290
+    Purpose: Get saved insights
+    Parameters: userId
+    Returns: Promise<Insights[]>
+    Used By: view_reports.html
+    Description: Wrapper for GET /api/insights/<userId>/saved
+
+20. getAlerts(userId)
+    Location: api.js, line 300
+    Purpose: Get user alerts
+    Parameters: userId
+    Returns: Promise<Alert[]>
+    Used By: All dashboards
+    Description: Wrapper for GET /api/alerts/<userId>
+
+SPECIALIST (4):
+---------------
+21. getSpecialistPatients(specId)
+    Location: api.js, line 360
+    Purpose: Get specialist's patients
+    Parameters: specId (specialist ID)
+    Returns: Promise<Patient[]>
+    Used By: specialist_dashboard.html
+    Description: Wrapper for GET /api/specialists/<specId>/patients
+
+22. getSpecialistDashboard(specId)
+    Location: api.js, line 368
+    Purpose: Get specialist dashboard data
+    Parameters: specId
+    Returns: Promise<Dashboard>
+    Used By: specialist_dashboard.html
+    Description: Wrapper for GET /api/specialist/<specId>/dashboard
+
+23. getSpecialistAttention(specId)
+    Location: api.js, line 376
+    Purpose: Get patients needing attention
+    Parameters: specId
+    Returns: Promise<Patient[]>
+    Used By: specialist_dashboard.html alerts
+    Description: Wrapper for GET /api/specialist/<specId>/attention
+
+24. assignPatientToSpecialist(patientUserId, specialistUserId)
+    Location: api.js, line 344
+    Purpose: Assign patient to specialist
+    Parameters: patientUserId, specialistUserId
+    Returns: Promise<Response>
+    Used By: assign_patients.html
+    Description: Wrapper for POST /api/assignments/assign
+
+REPORTS & OTHER (3):
+--------------------
+25. getReport(userId)
+    Location: api.js, line 386
+    Purpose: Get health report
+    Parameters: userId
+    Returns: Promise<Report>
+    Used By: view_reports.html
+    Description: Wrapper for GET /api/reports/<userId>
+
+26. getDiet(condition)
+    Location: api.js, line 394
+    Purpose: Get diet recommendations
+    Parameters: condition (str)
+    Returns: Promise<Diet[]>
+    Used By: patient_dashboard.html
+    Description: Wrapper for GET /api/diet/<condition>
+
+27. getThresholds(userId)
+    Location: api.js, line 402
+    Purpose: Get threshold settings
+    Parameters: userId
+    Returns: Promise<Thresholds>
+    Used By: thresholds.html
+    Description: Wrapper for GET /api/thresholds/<userId>
+
+
+================================================================================
+FRONTEND/JS/LOGOUT.JS - SESSION MANAGEMENT (4 FUNCTIONS)
+================================================================================
+
+1. performLogout(redirectPage)
+   Location: logout.js, line 3
+   Purpose: Perform user logout
+   Parameters: redirectPage (default 'index.html')
+   Description: Clears localStorage, redirects to login
+
+2. resetInactivityTimer()
+   Location: logout.js, line 42
+   Purpose: Reset inactivity timer
+   Description: Resets 30-minute inactivity countdown
+
+3. setupActivityTracking()
+   Location: logout.js, line 51
+   Purpose: Set up activity listeners
+   Description: Tracks mouse/keyboard activity for auto-logout
+
+4. validateSession()
+   Location: logout.js, line 63
+   Purpose: Validate current session
+   Description: Checks if user is still authenticated
+
+
+================================================================================
+DEVELOPMENT/TESTING SCRIPTS - UTILITY FUNCTIONS
+================================================================================
+
+Various utility scripts in backend/ for development and testing purposes.
+These are documented in the script headers but not actively used in production.
+
+Example scripts include:
+- check_*.py files: Database verification functions
+- test_*.py files: API testing functions
+- populate_*.py files: Demo data generation functions
+- fix_*.py files: Database migration functions (completed)
+- update_*.py files: Data update functions (completed)
+
+
+================================================================================
+FUNCTION USAGE SUMMARY
+================================================================================
+
+Total Functions by Category:
+- Backend API Endpoints: 47 functions
+- Database Layer (models.py): 35 methods
+- ML Service (ml_service.py): 15 methods
+- Notification Service: 3 methods
+- Scheduler Service: 3 methods
+- ML Training (train_model.py): 11+ methods
+- Frontend API Client (api.js): 27+ functions
+- Frontend Session Management: 4 functions
+- Development/Testing Scripts: 25+ utility functions
+
+Grand Total: 170+ functions documented
+
+
+================================================================================
+FUNCTION NAMING CONVENTIONS
+================================================================================
+
+Backend API Functions:
+- Verb-first naming: get_user(), add_reading(), delete_threshold()
+- Descriptive names indicating action and resource
+- Snake_case naming convention
+
+Database Methods:
+- Class methods with self parameter
+- Verb-first naming: get_user(), create_reading(), update_user()
+- Private methods prefixed with underscore: _get_cursor()
+
+Frontend Functions:
+- CamelCase naming: apiRequest(), saveAuthUser()
+- Async functions for API calls
+- Arrow functions for simple wrappers
+
+ML Service Methods:
+- Class methods with self parameter
+- Descriptive analysis names: generate_insights(), analyze_trends()
+- Private helper methods: _analyze_food_patterns()
+
+
+================================================================================
+CROSS-REFERENCES
+================================================================================
+
+Most Used Functions:
+1. apiRequest() - Used by all frontend API calls
+2. get_user() - Used by authentication, profiles, dashboards
+3. get_user_readings() - Used by charts, analysis, reports
+4. generate_insights() - Used by dashboards, reports
+5. create_reading() - Used by patient data entry
+
+Critical Dependencies:
+- All API endpoints depend on get_user_from_token() for authentication
+- All ML features depend on MLService.predict_status()
+- All database operations depend on Database._get_cursor()
+- All frontend API calls depend on apiRequest()
+
+
+================================================================================
+NOTES
+================================================================================
+
+1. All backend API functions require JWT token authentication (except login/register)
+2. Database methods handle connection management and error handling
+3. ML Service functions require trained model files in models/ directory
+4. Frontend functions use async/await for API calls
+5. Notification service requires SMTP configuration in environment variables
+6. Many functions have comprehensive error handling and logging
+7. All functions are documented with docstrings in their respective files
+
+For detailed parameter information, return types, and implementation details,
+refer to the source code files and their comprehensive docstring documentation.
+
+================================================================================

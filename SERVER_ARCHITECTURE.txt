@@ -234,8 +234,8 @@ TYPICAL API REQUEST FLOW
 AUTHENTICATION MECHANISM
 ================================================================================
 
-TOKEN-BASED AUTHENTICATION
----------------------------
+TOKEN-BASED AUTHENTICATION - LINE BY LINE EXPLANATION
+-----------------------------------------------------
 
 1. LOGIN PROCESS
    User submits credentials → Server validates → Generates token
@@ -244,20 +244,134 @@ TOKEN-BASED AUTHENTICATION
    Storage: Client stores token in localStorage
    Usage: Sent in Authorization header for subsequent requests
 
-2. TOKEN VALIDATION
-   def get_user_from_token():
-       """Extract user info from authorization token"""
-       auth_header = request.headers.get('Authorization')
-       if not auth_header:
-           return None
-       
-       try:
-           token = auth_header.split(' ')[1]  # Bearer <token>
-           # Decode token and extract user_id
-           user_id = decode_token(token)
-           return db.get_user(user_id)
-       except:
-           return None
+2. TOKEN VALIDATION - DETAILED CODE EXPLANATION
+
+```python
+def get_user_from_token():
+    """Extract user info from authorization token"""
+    
+    # LINE 1: Get 'Authorization' header from HTTP request
+    # request.headers is dictionary of all HTTP headers
+    # Example header: "Authorization: Bearer abc123token456"
+    # .get() safely retrieves value (returns None if missing)
+    auth_header = request.headers.get('Authorization')
+    
+    # LINE 2: Check if Authorization header exists
+    # if not auth_header means header is None or empty string
+    # User hasn't provided authentication → Deny access
+    if not auth_header:
+        return None  # No token = not authenticated
+    
+    # LINE 3: Begin try block for error handling
+    # Token parsing/decoding can fail if format wrong
+    try:
+        # LINE 4: Extract token from header
+        # Header format: "Bearer abc123token456"
+        # .split(' ') splits by space: ['Bearer', 'abc123token456']
+        # [1] gets second element (the actual token)
+        # Result: token = 'abc123token456'
+        token = auth_header.split(' ')[1]
+        
+        # LINE 5: Decode token to get user_id
+        # decode_token() is custom function (or JWT library)
+        # Token contains encoded user_id: 'abc123' → decodes to → 42
+        # JWT example: jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        # Returns payload: {'user_id': 42, 'exp': 1700000000}
+        user_id = decode_token(token)
+        
+        # LINE 6: Fetch user from database
+        # db.get_user() queries: SELECT * FROM users WHERE user_id = 42
+        # Returns user dict: {'user_id': 42, 'email': 'john@example.com', 
+        #                     'role': 'patient', 'first_name': 'John', ...}
+        # This proves token is valid and user exists
+        return db.get_user(user_id)
+        
+    # LINE 7: Catch ANY exception
+    # Errors: invalid token format, decode failure, database error
+    # Example: token = 'invalid' → decode fails → exception caught
+    except:
+        return None  # Any error = deny access
+```
+
+WHY TOKEN VALIDATION IS CRITICAL:
+---------------------------------
+
+Without token validation:
+❌ Anyone could access any patient's medical records
+❌ No way to identify who is making the request
+❌ Attackers could impersonate users
+
+With token validation:
+✓ Only authenticated users access protected data
+✓ Each request is tied to specific user
+✓ Tokens can expire (security)
+✓ Server doesn't store session (stateless, scalable)
+
+USAGE IN PROTECTED ENDPOINT:
+---------------------------
+
+```python
+@app.route('/api/readings', methods=['POST'])
+def add_reading():
+    # LINE 1: Validate token and get user
+    # Calls get_user_from_token() defined above
+    user = get_user_from_token()
+    
+    # LINE 2: Check if authentication succeeded
+    # If user is None, token was invalid/missing
+    if not user:
+        # LINE 3: Return 401 Unauthorized error
+        # HTTP 401 = Authentication failed
+        # jsonify() converts Python dict to JSON response
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # LINE 4: Extract user_id from authenticated user
+    # Now we know WHO is making this request
+    user_id = user['user_id']
+    
+    # LINE 5: Get data from request body
+    # request.json parses JSON to Python dict
+    data = request.json
+    value = data.get('value')
+    
+    # LINE 6: Store reading for authenticated user
+    # Associates data with correct user_id
+    db.create_reading(user_id, value, ...)
+    
+    # LINE 7: Return success response
+    return jsonify({'success': True}), 201
+```
+
+TOKEN FLOW DIAGRAM:
+------------------
+
+1. User Login:
+   POST /api/login {email, password}
+   ↓
+2. Server validates credentials:
+   SELECT * FROM users WHERE email = ? AND password_hash = ?
+   ↓
+3. Server generates token:
+   token = encode({'user_id': 42, 'exp': time + 24h})
+   ↓
+4. Server returns token:
+   {"token": "eyJhbGciOiJIUzI1NiIs..."}
+   ↓
+5. Client stores token:
+   localStorage.setItem('token', token)
+   ↓
+6. Client includes token in every request:
+   fetch('/api/readings', {
+       headers: {'Authorization': `Bearer ${token}`}
+   })
+   ↓
+7. Server validates token (get_user_from_token):
+   - Extract from header
+   - Decode to get user_id
+   - Verify user exists
+   ↓
+8. If valid → Process request
+   If invalid → Return 401 error
 
 3. PROTECTED ROUTES
    Every protected endpoint calls get_user_from_token():
@@ -383,10 +497,143 @@ PROFILE IMAGES & MEDICAL RECORDS
 CORS CONFIGURATION
 ================================================================================
 
-CROSS-ORIGIN RESOURCE SHARING
-------------------------------
+CROSS-ORIGIN RESOURCE SHARING - LINE BY LINE EXPLANATION
+---------------------------------------------------------
 
-Purpose: Allow frontend (HTML files) to call backend API
+Purpose: Allow frontend (HTML files) to call backend API from different origins
+
+WHAT IS CORS?
+CORS = Cross-Origin Resource Sharing
+- Origin = Protocol + Domain + Port
+- http://127.0.0.1:5000 (backend) ≠ file:/// (frontend) = Different origins
+- Browser blocks cross-origin requests by default for security
+- CORS headers tell browser: "This cross-origin request is allowed"
+
+CODE EXPLANATION:
+```python
+# LINE 1: Import Flask to create web application
+# Flask is the web framework that handles HTTP requests
+from flask import Flask, request, jsonify
+
+# LINE 2: Import CORS extension
+# CORS = Cross-Origin Resource Sharing
+# Allows frontend from different domain/port to access API
+from flask_cors import CORS
+
+# LINE 3: Create Flask application instance
+# __name__ tells Flask the name of current module
+# Used to locate templates, static files, etc.
+app = Flask(__name__)
+
+# LINE 4: Enable CORS for ALL routes in application
+# This ONE line adds CORS headers to EVERY API response
+# Without this line, browser blocks frontend API calls
+# CORS(app) is shorthand for allowing all origins (*)
+CORS(app)
+```
+
+WHAT HAPPENS WITHOUT CORS?
+--------------------------
+Scenario: Frontend tries to call backend
+
+```javascript
+// Frontend JavaScript (index.html)
+fetch('http://127.0.0.1:5000/api/login', {
+    method: 'POST',
+    body: JSON.stringify({email, password})
+})
+```
+
+Browser Console Error:
+"Access to fetch at 'http://127.0.0.1:5000/api/login' from origin 'file://'
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header
+is present on the requested resource."
+
+Request is BLOCKED before reaching server!
+
+WHAT HAPPENS WITH CORS?
+-----------------------
+CORS(app) adds these headers to EVERY response:
+
+```http
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Max-Age: 3600
+```
+
+HEADER EXPLANATIONS:
+-------------------
+
+1. Access-Control-Allow-Origin: *
+   - Tells browser: "Allow requests from ANY origin"
+   - * = wildcard (all domains)
+   - Example: file://, http://localhost:3000, https://myapp.com all allowed
+   - Production best practice: Replace * with specific domain
+     CORS(app, origins=['https://bloodsugar-app.com'])
+
+2. Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+   - Lists HTTP methods frontend can use
+   - GET: Retrieve data (read)
+   - POST: Create new data (write)
+   - PUT: Update existing data (modify)
+   - DELETE: Remove data (delete)
+   - OPTIONS: Preflight check (browser asks permission first)
+
+3. Access-Control-Allow-Headers: Content-Type, Authorization
+   - Lists headers frontend can include in requests
+   - Content-Type: application/json (tells server data format)
+   - Authorization: Bearer <token> (for authentication)
+   - Without this, browser blocks requests with these headers
+
+4. Access-Control-Max-Age: 3600
+   - Browser caches CORS permission for 3600 seconds (1 hour)
+   - Reduces preflight OPTIONS requests
+   - Improves performance
+
+PREFLIGHT REQUEST EXPLAINED:
+---------------------------
+For POST/PUT/DELETE with JSON or custom headers, browser sends
+"preflight" OPTIONS request BEFORE the actual request:
+
+Step 1: Browser sends OPTIONS request (asks permission)
+```http
+OPTIONS /api/readings HTTP/1.1
+Host: 127.0.0.1:5000
+Origin: file://
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: Content-Type, Authorization
+```
+
+Step 2: Server responds with CORS headers (grants permission)
+```http
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: POST
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Max-Age: 3600
+```
+
+Step 3: Browser sees permission granted → Sends actual POST request
+```http
+POST /api/readings HTTP/1.1
+Host: 127.0.0.1:5000
+Content-Type: application/json
+Authorization: Bearer abc123token
+
+{"value": 125, "fasting": true}
+```
+
+Step 4: Server processes request and responds with CORS headers
+```http
+HTTP/1.1 201 Created
+Access-Control-Allow-Origin: *
+Content-Type: application/json
+
+{"success": true, "reading_id": 1234}
+```
+
+Without CORS headers in step 2 or 4 → Browser BLOCKS the request!
 
 Configuration:
    from flask_cors import CORS

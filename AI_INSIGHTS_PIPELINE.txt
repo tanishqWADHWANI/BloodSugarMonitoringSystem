@@ -17,6 +17,27 @@ Data Processing: pandas, numpy
 Model Storage: joblib (models/ directory)
 Fallback: Rule-based analysis when models unavailable
 
+CORE CONCEPTS EXPLAINED:
+------------------------
+
+1. MACHINE LEARNING MODEL:
+   - Algorithm: Trained on historical blood sugar data
+   - Input: glucose value, fasting status, food, activity, time
+   - Output: Classification (normal/prediabetic/high/low)
+   - Confidence: 0.0 to 1.0 (how certain the model is)
+
+2. PANDAS DATAFRAME:
+   - Like an Excel spreadsheet in Python
+   - Rows: Individual readings
+   - Columns: value, date_time, food_intake, activity, etc.
+   - Enables statistical calculations and filtering
+
+3. CORRELATION ANALYSIS:
+   - Measures relationship between two variables
+   - Example: Does eating pizza cause high glucose?
+   - Calculation: (abnormal_readings_with_pizza / total_readings_with_pizza) × 100
+   - >60% = strong correlation = high risk food
+
 
 ================================================================================
 HOW AI INSIGHTS ARE POPULATED

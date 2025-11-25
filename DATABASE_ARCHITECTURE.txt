@@ -39,18 +39,121 @@ Environment Variables Used:
    - DB_PORT: Not explicitly set, uses MySQL default 3306
 
 
-2. CONNECTION METHOD
---------------------
-   def connect(self):
-       """Establish database connection"""
-       try:
-           self.connection = mysql.connector.connect(
-               host=os.environ.get('DB_HOST', '127.0.0.1'),
-               user=os.environ.get('DB_USER', 'root'),
-               password=os.environ.get('DB_PASSWORD'),
-               database=os.environ.get('DB_NAME', 'blood_sugar_db'),
-               autocommit=False
-           )
+2. CONNECTION METHOD - LINE BY LINE EXPLANATION
+-----------------------------------------------
+
+```python
+def connect(self):
+    """Establish database connection"""
+    
+    # LINE 1: Begin try block for error handling
+    # Connection can fail: wrong password, MySQL not running, etc.
+    try:
+        # LINE 2-7: Create database connection
+        # mysql.connector.connect() establishes TCP connection to MySQL server
+        self.connection = mysql.connector.connect(
+            
+            # LINE 3: Database server address
+            # os.environ.get('DB_HOST', '127.0.0.1') explained:
+            #   - os.environ.get() reads environment variable
+            #   - First arg: variable name to read (DB_HOST)
+            #   - Second arg: default if not set ('127.0.0.1')
+            # 127.0.0.1 = localhost = your own computer
+            # Set environment: Windows: set DB_HOST=192.168.1.100
+            #                 Linux/Mac: export DB_HOST=192.168.1.100
+            host=os.environ.get('DB_HOST', '127.0.0.1'),
+            
+            # LINE 4: Database username
+            # 'root' is MySQL administrator account (full privileges)
+            # Production: Use limited-privilege account for security
+            # Example: CREATE USER 'app_user'@'localhost' IDENTIFIED BY 'pass';
+            user=os.environ.get('DB_USER', 'root'),
+            
+            # LINE 5: Database password
+            # NO DEFAULT for security - must set environment variable
+            # os.environ.get('DB_PASSWORD') returns None if not set
+            # Connection fails if password is None → Intentional security
+            # Set: Windows: set DB_PASSWORD=mySecurePassword123
+            #      Linux/Mac: export DB_PASSWORD=mySecurePassword123
+            password=os.environ.get('DB_PASSWORD'),
+            
+            # LINE 6: Database name
+            # Connects to specific database (MySQL can have multiple)
+            # Like opening specific folder in file system
+            # 'blood_sugar_db' is our application's database
+            database=os.environ.get('DB_NAME', 'blood_sugar_db'),
+            
+            # LINE 7: Disable autocommit
+            # autocommit=False means changes aren't saved automatically
+            # Must call connection.commit() to save changes
+            # Allows transactions: multiple operations succeed or fail together
+            # Example: Insert reading AND create alert → both or neither
+            autocommit=False
+        )
+        
+        # LINE 8: Check if connection successful
+        # is_connected() returns True if connection active
+        # Can be False even after connect() if network issue
+        if self.connection.is_connected():
+            # LINE 9: Log success message
+            # logger.info() writes to log file with timestamp
+            # Example log: "2025-11-24 10:30:15 - INFO - Database connection established"
+            logger.info("Database connection established")
+            
+    # LINE 10: Catch MySQL-specific errors
+    # Error class from mysql.connector (not generic Exception)
+    # Includes: authentication failed, database doesn't exist, etc.
+    except Error as e:
+        # LINE 11: Log error with details
+        # f-string inserts error message: f"...error: {e}"
+        # Example: "Database connection error: Access denied for user 'root'@'localhost'"
+        logger.error(f"Database connection error: {e}")
+        
+        # LINE 12: Re-raise the exception
+        # raise stops program execution
+        # In production, might want to retry instead of stopping
+        # For now: Can't run without database → Stop application
+        raise
+```
+
+CONNECTION PARAMETERS EXPLAINED:
+--------------------------------
+
+1. host='127.0.0.1'
+   - IP address of database server
+   - 127.0.0.1 = localhost = your computer
+   - For remote database: '192.168.1.100' or 'db.example.com'
+   - Port 3306 (MySQL default) used automatically
+
+2. user='root'
+   - MySQL username to log in as
+   - 'root' = administrator (full access)
+   - Production: CREATE USER 'limited_user'@'localhost';
+   - Grant only needed privileges: GRANT SELECT, INSERT, UPDATE ON ...
+
+3. password=os.environ.get('DB_PASSWORD')
+   - Retrieved from environment variable (NOT hardcoded)
+   - Keeps passwords out of source code / version control
+   - If not set → None → connection fails → Security by design
+
+4. database='blood_sugar_db'
+   - Which database to use (server can host multiple)
+   - Must exist: CREATE DATABASE blood_sugar_db;
+   - Can switch later: connection.cursor().execute("USE other_db")
+
+5. autocommit=False
+   - Manual transaction control
+   - Changes not saved until connection.commit()
+   - Rollback possible: connection.rollback()
+   - Transaction example:
+     ```python
+     try:
+         cursor.execute("INSERT INTO readings ...")
+         cursor.execute("INSERT INTO alerts ...")
+         connection.commit()  # Both saved
+     except:
+         connection.rollback()  # Neither saved
+     ```
 
 Key Features:
    ✓ Environment variable configuration for security
