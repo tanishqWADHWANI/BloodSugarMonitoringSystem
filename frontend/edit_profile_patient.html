@@ -288,10 +288,10 @@
 
     // Load current user data
     async function loadUserData() {
-      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+      const userId = localStorage.getItem('patientId');
       
       if (!userId) {
-        showMessage('User ID not found. Please log in again.', 'error');
+        showMessage('Patient ID not found. Please log in again.', 'error');
         setTimeout(() => window.location.href = 'patient.html', 2000);
         return;
       }
@@ -351,10 +351,10 @@
     document.getElementById('profileForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+      const userId = localStorage.getItem('patientId');
       
       if (!userId) {
-        showMessage('User ID not found', 'error');
+        showMessage('Patient ID not found', 'error');
         return;
       }
 

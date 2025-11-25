@@ -288,10 +288,10 @@
 
     // Load current user data
     async function loadUserData() {
-      const userId = localStorage.getItem('userId') || localStorage.getItem('adminUserId');
+      const userId = localStorage.getItem('adminUserId');
       
       if (!userId) {
-        showMessage('User ID not found. Please log in again.', 'error');
+        showMessage('Admin ID not found. Please log in again.', 'error');
         setTimeout(() => window.location.href = 'admin.html', 2000);
         return;
       }
@@ -351,10 +351,10 @@
     document.getElementById('profileForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const userId = localStorage.getItem('userId') || localStorage.getItem('adminUserId');
+      const userId = localStorage.getItem('adminUserId');
       
       if (!userId) {
-        showMessage('User ID not found', 'error');
+        showMessage('Admin ID not found', 'error');
         return;
       }
 

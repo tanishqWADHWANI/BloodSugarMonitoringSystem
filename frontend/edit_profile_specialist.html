@@ -293,10 +293,10 @@
 
     // Load current user data
     async function loadUserData() {
-      const userId = localStorage.getItem('userId') || localStorage.getItem('specialistUserId');
+      const userId = localStorage.getItem('specialistUserId');
       
       if (!userId) {
-        showMessage('User ID not found. Please log in again.', 'error');
+        showMessage('Specialist ID not found. Please log in again.', 'error');
         setTimeout(() => window.location.href = 'specialist.html', 2000);
         return;
       }
@@ -356,10 +356,10 @@
     document.getElementById('profileForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const userId = localStorage.getItem('userId') || localStorage.getItem('specialistUserId');
+      const userId = localStorage.getItem('specialistUserId');
       
       if (!userId) {
-        showMessage('User ID not found', 'error');
+        showMessage('Specialist ID not found', 'error');
         return;
       }
 

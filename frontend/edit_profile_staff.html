@@ -288,10 +288,10 @@
 
     // Load current user data
     async function loadUserData() {
-      const userId = localStorage.getItem('userId') || localStorage.getItem('staffUserId');
+      const userId = localStorage.getItem('staffUserId');
       
       if (!userId) {
-        showMessage('User ID not found. Please log in again.', 'error');
+        showMessage('Staff ID not found. Please log in again.', 'error');
         setTimeout(() => window.location.href = 'staff.html', 2000);
         return;
       }
@@ -352,10 +352,10 @@
     document.getElementById('profileForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const userId = localStorage.getItem('userId') || localStorage.getItem('staffUserId');
+      const userId = localStorage.getItem('staffUserId');
       
       if (!userId) {
-        showMessage('User ID not found', 'error');
+        showMessage('Staff ID not found', 'error');
         return;
       }
 
