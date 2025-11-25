@@ -11,8 +11,58 @@
         .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 25px; }
         .form-field { margin-bottom: 15px; }
         .form-field label { display: block; margin-bottom: 6px; color: #004080; font-weight: 500; }
-        .table-wrapper { overflow-x: auto; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .hint { margin-bottom: 20px; padding: 12px 16px; background: #f8f9fa; border-radius: 6px; color: #666; font-size: 0.9rem; line-height: 1.6; }
+        
+        /* Responsive navbar */
+        @media (max-width: 900px) {
+            .navbar {
+                flex-direction: column;
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            .navbar nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+            }
+            .navbar nav a {
+                font-size: 0.9rem;
+                padding: 8px 12px;
+            }
+        }
+        @media (max-width: 768px) {
+            .dashboard-header > div {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            .dashboard-header h1 {
+                font-size: 1.5rem !important;
+            }
+            .card {
+                padding: 20px;
+            }
+            .form-row {
+                grid-template-columns: 1fr !important;
+            }
+            .form-actions {
+                flex-direction: column !important;
+            }
+            .form-actions button {
+                width: 100%;
+            }
+            #detailedReportArea > div:nth-child(2) {
+                grid-template-columns: 1fr !important;
+            }
+            #trendAnalysisArea {
+                grid-template-columns: 1fr !important;
+            }
+            table {
+                min-width: 600px;
+            }
+        }
     </style>
 </head>
 <body>

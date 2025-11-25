@@ -223,11 +223,39 @@ consider scheduling a follow-up appointment.
 
 ## Security Notes
 
+⚠️ **CRITICAL SECURITY WARNINGS**
+
+### Never Expose Credentials
 - **Never commit `.env` file to version control** (it contains passwords)
 - The `.env` file is already in `.gitignore`
+- **Never share terminal screenshots** that might show SMTP credentials
+- **Never print passwords in logs** or terminal output
+- Test scripts mask passwords automatically for safety
+
+### Password Protection
 - Use App Passwords instead of regular passwords for Gmail
+- App Passwords can be revoked independently
+- Never share your SMTP credentials with anyone
 - Store credentials securely
-- Don't share your SMTP credentials
+- Rotate passwords periodically
+
+### Access Control
+- Limit who has access to the server/backend directory
+- Use environment variables (never hardcode credentials)
+- Keep `.env` file permissions restricted (not world-readable)
+- Monitor email sending logs for unauthorized activity
+
+### Git Safety
+The following files should NEVER be committed:
+- `.env` - Contains actual passwords
+- Any file with actual SMTP credentials
+- Terminal screenshots showing passwords
+- Log files containing sensitive data
+
+✅ Safe to commit:
+- `.env.example` - Template with placeholder values
+- Code that reads from environment variables
+- Documentation about setup process
 
 ## Quick Start Checklist
 

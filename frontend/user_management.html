@@ -9,6 +9,46 @@
     <link rel="stylesheet" href="css/dasshboard.css" />
     <script src="js/api.js"></script>
     <script src="js/demo_users.js"></script>
+    <style>
+        /* Responsive improvements */
+        @media (max-width: 900px) {
+            header nav ul {
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .dashboard-header > div {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            .dashboard-header h1 {
+                font-size: 1.5rem !important;
+            }
+            .card > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            .card > div:first-child > div {
+                flex-direction: column !important;
+                width: 100%;
+                gap: 10px;
+            }
+            #searchInput {
+                width: 100% !important;
+            }
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            table {
+                min-width: 800px;
+            }
+        }
+    </style>
 </head>
 
 <body>

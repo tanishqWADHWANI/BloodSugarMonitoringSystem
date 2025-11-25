@@ -233,12 +233,18 @@ class Database:
                 self.connection.commit()
                 
             elif role == 'admin':
+                # Admin users need a staff table entry for license_id storage
                 if license_id:
                     cursor.execute(
                         "INSERT INTO staff (user_id, license_id) VALUES (%s, %s)",
                         (user_id, license_id)
                     )
-                    self.connection.commit()
+                else:
+                    cursor.execute(
+                        "INSERT INTO staff (user_id) VALUES (%s)",
+                        (user_id,)
+                    )
+                self.connection.commit()
             
             return user_id
             
@@ -335,16 +341,39 @@ class Database:
                 current_role = result['role'] if result else None
                 
                 if current_role == 'specialist':
-                    cursor.execute(
-                        "UPDATE specialists SET license_id = %s WHERE user_id = %s",
-                        (license_id, user_id)
-                    )
+                    # Check if specialist record exists
+                    cursor.execute("SELECT user_id FROM specialists WHERE user_id = %s", (user_id,))
+                    spec_exists = cursor.fetchone()
+                    cursor.fetchall()
+                    
+                    if spec_exists:
+                        cursor.execute(
+                            "UPDATE specialists SET license_id = %s WHERE user_id = %s",
+                            (license_id, user_id)
+                        )
+                    else:
+                        cursor.execute(
+                            "INSERT INTO specialists (user_id, license_id) VALUES (%s, %s)",
+                            (user_id, license_id)
+                        )
                     cursor.fetchall()  # Consume any remaining results
+                    
                 elif current_role in ('staff', 'admin'):
-                    cursor.execute(
-                        "UPDATE staff SET license_id = %s WHERE user_id = %s",
-                        (license_id, user_id)
-                    )
+                    # Check if staff record exists
+                    cursor.execute("SELECT user_id FROM staff WHERE user_id = %s", (user_id,))
+                    staff_exists = cursor.fetchone()
+                    cursor.fetchall()
+                    
+                    if staff_exists:
+                        cursor.execute(
+                            "UPDATE staff SET license_id = %s WHERE user_id = %s",
+                            (license_id, user_id)
+                        )
+                    else:
+                        cursor.execute(
+                            "INSERT INTO staff (user_id, license_id) VALUES (%s, %s)",
+                            (user_id, license_id)
+                        )
                     cursor.fetchall()  # Consume any remaining results
 
             self.connection.commit()

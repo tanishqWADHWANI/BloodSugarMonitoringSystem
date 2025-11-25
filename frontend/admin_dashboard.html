@@ -408,10 +408,14 @@
         // ADMIN DASHBOARD - Single Script Block
         // =========================================================================
 
+        // API Configuration
+        const API_BASE = 'http://127.0.0.1:5000';
+
         // Global State
         let USERS_CACHE = [];
         let ASSIGNMENTS_CACHE = [];
         const ASSIGN_KEY = 'assignments';
+        let currentAdminData = null;
 
         // Element References
         let createForm;
@@ -434,7 +438,7 @@
         async function fetchAssignmentsFromAPI() {
             try {
                 const token = localStorage.getItem('bsm_token') || '';
-                const response = await fetch('http://127.0.0.1:5000/api/assignments', {
+                const response = await fetch(`${API_BASE}/api/assignments`, {
                     headers: {
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -1632,7 +1636,9 @@
             }
 
             async function loadAdminProfile() {
+                console.log('[DEBUG] loadAdminProfile called');
                 const token = localStorage.getItem('bsm_token');
+                console.log('[DEBUG] Token:', token ? 'exists' : 'missing');
                 let userData = null;
                 
                 // Verify token matches admin role
@@ -1646,11 +1652,14 @@
                 // Try to fetch from database using token first
                 if (token) {
                     try {
+                        console.log('[DEBUG] Fetching from /api/me...');
                         const response = await fetch(`${API_BASE}/api/me`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
+                        console.log('[DEBUG] /api/me response status:', response.status);
                         if (response.ok) {
                             userData = await response.json();
+                            console.log('[DEBUG] /api/me userData:', userData);
                             
                             // Verify user role is admin
                             if (userData.role !== 'admin') {
@@ -1660,6 +1669,8 @@
                                 window.location.href = 'admin.html';
                                 return;
                             }
+                        } else {
+                            console.warn('[DEBUG] /api/me failed with status:', response.status);
                         }
                     } catch (error) {
                         console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
@@ -1668,7 +1679,9 @@
                 
                 // Fallback to localStorage if /api/me failed
                 if (!userData) {
+                    console.log('[DEBUG] Trying fallback with adminUserId...');
                     const adminUserId = localStorage.getItem('adminUserId');
+                    console.log('[DEBUG] adminUserId:', adminUserId);
                     if (!adminUserId) {
                         console.warn('No admin user ID found');
                         alert('Please log in as admin');
@@ -1678,6 +1691,7 @@
                     try {
                         const response = await fetch(`${API_BASE}/api/users/${adminUserId}`);
                         userData = await response.json();
+                        console.log('[DEBUG] /api/users/:id userData:', userData);
                         
                         // Verify user role is admin
                         if (userData.role !== 'admin') {
@@ -1693,11 +1707,13 @@
                     }
                 }
 
+                console.log('[DEBUG] About to update UI with userData:', userData);
                 try {
                     if (userData && userData.user_id) {
                         currentAdminData = userData;
 
                         const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Not provided';
+                        console.log('[DEBUG] Full name:', fullName);
                         const adminFullNameEl = document.getElementById('adminFullName');
                         const adminEmailEl = document.getElementById('adminEmail');
                         const adminPhoneEl = document.getElementById('adminPhone');
@@ -1705,12 +1721,26 @@
                         const adminUserIdEl = document.getElementById('adminUserId');
                         const adminLicenseIdEl = document.getElementById('adminLicenseId');
                         
-                        if (adminFullNameEl) adminFullNameEl.textContent = fullName;
+                        console.log('[DEBUG] Elements found:', {
+                            fullName: !!adminFullNameEl,
+                            email: !!adminEmailEl,
+                            phone: !!adminPhoneEl,
+                            birthday: !!adminBirthdayEl,
+                            userId: !!adminUserIdEl,
+                            licenseId: !!adminLicenseIdEl
+                        });
+                        
+                        if (adminFullNameEl) {
+                            adminFullNameEl.textContent = fullName;
+                            console.log('[DEBUG] Set full name to:', fullName);
+                        }
                         if (adminEmailEl) adminEmailEl.textContent = userData.email || 'Not provided';
                         if (adminPhoneEl) adminPhoneEl.textContent = userData.phone || 'Not provided';
                         if (adminBirthdayEl) adminBirthdayEl.textContent = userData.date_of_birth || 'Not set';
                         if (adminUserIdEl) adminUserIdEl.textContent = userData.user_id || 'N/A';
                         if (adminLicenseIdEl) adminLicenseIdEl.textContent = userData.license_id || 'Not applicable';
+                        
+                        console.log('[DEBUG] All fields updated successfully');
                         
                         // Display profile image if available
                         const imgElement = document.getElementById('adminProfileImage');
@@ -1724,6 +1754,7 @@
                             imgElement.style.display = 'none';
                         }
                     } else {
+                        console.error('[DEBUG] userData is invalid:', userData);
                         // No user data found, clear loading text
                         const adminFullNameEl = document.getElementById('adminFullName');
                         const adminEmailEl = document.getElementById('adminEmail');
@@ -1742,6 +1773,7 @@
                     }
                 } catch (error) {
                     console.error('Error loading admin profile:', error);
+                    console.error('[DEBUG] Error stack:', error.stack);
                     // Clear loading text on error
                     const adminFullNameEl = document.getElementById('adminFullName');
                     const adminEmailEl = document.getElementById('adminEmail');

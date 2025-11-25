@@ -82,8 +82,18 @@ def test_environment_variables():
     all_set = True
     for var_name, var_value in required_vars.items():
         if var_value:
-            # Mask password for security
-            display_value = var_value if var_name != 'SMTP_PASSWORD' else '*' * len(var_value)
+            # Mask sensitive credentials for security
+            if var_name == 'SMTP_PASSWORD':
+                display_value = '********' + var_value[-4:] if len(var_value) > 4 else '********'
+            elif var_name == 'SMTP_USERNAME':
+                # Mask email username (show only domain)
+                if '@' in var_value:
+                    parts = var_value.split('@')
+                    display_value = parts[0][:2] + '***@' + parts[1]
+                else:
+                    display_value = var_value[:3] + '***'
+            else:
+                display_value = var_value
             print_success(f"{var_name}: {display_value}")
         else:
             print_error(f"{var_name}: NOT SET")
@@ -119,6 +129,9 @@ def test_smtp_connection():
         return False
     
     try:
+        # Mask username for display
+        masked_username = smtp_username[:3] + '***@' + smtp_username.split('@')[1] if '@' in smtp_username else smtp_username[:3] + '***'
+        
         print_info(f"Connecting to {smtp_server}:{smtp_port}...")
         server = smtplib.SMTP(smtp_server, smtp_port)
         print_success("Connected to SMTP server")
@@ -127,7 +140,7 @@ def test_smtp_connection():
         server.starttls()
         print_success("TLS encryption enabled")
         
-        print_info(f"Logging in as {smtp_username}...")
+        print_info(f"Logging in as {masked_username}...")
         server.login(smtp_username, smtp_password)
         print_success("Login successful")
         
@@ -179,13 +192,16 @@ Blood Sugar Monitoring System
         
         msg.attach(MIMEText(body, 'plain'))
         
-        print_info(f"Sending test email to {smtp_username}...")
+        # Mask email for display
+        masked_email = smtp_username[:3] + '***@' + smtp_username.split('@')[1] if '@' in smtp_username else 'your email'
+        
+        print_info(f"Sending test email to {masked_email}...")
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(smtp_username, smtp_password)
             server.send_message(msg)
         
-        print_success(f"Test email sent successfully to {smtp_username}")
+        print_success(f"Test email sent successfully to {masked_email}")
         print_info("Check your inbox to confirm receipt!")
         return True
     except Exception as e:
@@ -288,13 +304,16 @@ This is an automated alert. Do not reply to this email.
         msg.attach(MIMEText(text_body, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
         
-        print_info(f"Sending HTML alert email to {smtp_username}...")
+        # Mask email for display
+        masked_email = smtp_username[:3] + '***@' + smtp_username.split('@')[1] if '@' in smtp_username else 'your email'
+        
+        print_info(f"Sending HTML alert email to {masked_email}...")
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(smtp_username, smtp_password)
             server.send_message(msg)
         
-        print_success(f"HTML alert email sent successfully to {smtp_username}")
+        print_success(f"HTML alert email sent successfully to {masked_email}")
         print_info("Check your inbox - the email should have nice formatting!")
         return True
     except Exception as e:
@@ -319,7 +338,9 @@ def test_notification_service():
         print_success("NotificationService initialized successfully")
         
         smtp_username = os.getenv('SMTP_USERNAME')
-        print_info(f"Sending test email via NotificationService to {smtp_username}...")
+        # Mask email for display
+        masked_email = smtp_username[:3] + '***@' + smtp_username.split('@')[1] if '@' in smtp_username else 'your email'
+        print_info(f"Sending test email via NotificationService to {masked_email}...")
         
         subject = "NotificationService Test"
         body = "This email was sent using the NotificationService class.\n\nIf you received this, the service is working correctly!"

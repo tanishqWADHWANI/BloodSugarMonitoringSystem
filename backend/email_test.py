@@ -47,14 +47,20 @@ message = "This is a test email sent from your Python backend."
 
 email_text = f"Subject: {subject}\n\n{message}"
 
+# Mask credentials for display
+masked_username = smtp_username[:3] + '***@' + smtp_username.split('@')[1] if smtp_username and '@' in smtp_username else '***'
+
 try:
+    print(f"Connecting to {smtp_server}:{smtp_port}...")
     server = smtplib.SMTP(smtp_server, smtp_port)
     server.starttls()
+    print(f"Logging in as {masked_username}...")
     server.login(smtp_username, smtp_password)
     server.sendmail(smtp_username, to_email, email_text)
     server.quit()
-    print("Email sent successfully!")
+    print("✓ Email sent successfully!")
+    print(f"Check inbox at {masked_username}")
 except Exception as e:
-    print("Error:", e)
+    print("✗ Error:", e)
 
   
