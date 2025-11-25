@@ -13884,7 +13884,7 @@ CREATE TABLE `specialist_feedback` (
 CREATE TABLE `staff` (
   `staff_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `working_id` varchar(50) DEFAULT NULL,
+  `license_id` varchar(50) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -13892,7 +13892,7 @@ CREATE TABLE `staff` (
 -- Dumping data for table `staff`
 --
 
-INSERT INTO `staff` (`staff_id`, `user_id`, `working_id`, `created_at`) VALUES
+INSERT INTO `staff` (`staff_id`, `user_id`, `license_id`, `created_at`) VALUES
 (4, 13, 'ST002', '2025-11-05 22:25:34');
 
 -- --------------------------------------------------------
@@ -14218,7 +14218,7 @@ ALTER TABLE `specialist_feedback`
 --
 ALTER TABLE `staff`
   ADD PRIMARY KEY (`staff_id`),
-  ADD UNIQUE KEY `working_id` (`working_id`),
+  ADD UNIQUE KEY `license_id` (`license_id`),
   ADD KEY `idx_staff_user` (`user_id`);
 
 --
