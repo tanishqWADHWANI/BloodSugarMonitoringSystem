@@ -1,0 +1,815 @@
+================================================================================
+              CODE EXPLANATIONS - LINE BY LINE
+================================================================================
+                Blood Sugar Monitoring System
+                Technical Documentation with Detailed Code Explanations
+================================================================================
+
+This document provides detailed, line-by-line explanations of key technical
+concepts and code implementations in the Blood Sugar Monitoring System.
+
+================================================================================
+1. TOKEN VALIDATION - EXPLAINED
+================================================================================
+
+PURPOSE: Verify that a user is authenticated before allowing access to 
+protected API endpoints.
+
+FULL CODE WITH LINE-BY-LINE EXPLANATION:
+-----------------------------------------
+
+```python
+def get_user_from_token():
+    """Extract user info from authorization token"""
+    
+    # LINE 1: Get the 'Authorization' header from the incoming HTTP request
+    # The request.headers is a dictionary-like object containing all HTTP headers
+    # Example header: "Authorization: Bearer abc123token"
+    auth_header = request.headers.get('Authorization')
+    
+    # LINE 2: Check if the Authorization header exists
+    # If it's missing (None), the user hasn't provided credentials
+    if not auth_header:
+        return None  # Return None to indicate no authentication
+    
+    # LINE 3: Begin error handling block
+    # Token parsing can fail if format is incorrect
+    try:
+        # LINE 4: Split the header value by space character
+        # Format is "Bearer <token>", so we split into ['Bearer', 'abc123token']
+        # [1] gets the second element (the actual token)
+        # Example: "Bearer abc123" → split → ['Bearer', 'abc123'] → [1] → 'abc123'
+        token = auth_header.split(' ')[1]
+        
+        # LINE 5: Decode the token to extract user_id
+        # This is a placeholder for actual token decoding logic
+        # In production, this would use JWT (JSON Web Token) decoding
+        # Example: jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        # Returns the payload containing user_id and other claims
+        user_id = decode_token(token)
+        
+        # LINE 6: Query database to get full user information
+        # db is a Database instance (global variable in app.py)
+        # get_user() retrieves user record from users table
+        # Returns dictionary with user details (id, email, role, etc.)
+        return db.get_user(user_id)
+        
+    # LINE 7: Catch any exception (invalid token format, decode error, etc.)
+    except:
+        # Return None if anything goes wrong during token validation
+        return None
+```
+
+WHY TOKEN VALIDATION IS NEEDED:
+--------------------------------
+
+1. SECURITY: Prevents unauthorized access to user data
+   - Without tokens, anyone could access any patient's medical records
+   - Tokens prove identity without sending password on every request
+
+2. STATELESS AUTHENTICATION: Server doesn't need to store session data
+   - Token contains all necessary information (user_id, role, expiry)
+   - Scales better than server-side sessions
+
+3. API PROTECTION: Every protected endpoint checks the token
+   - If token is missing or invalid → Return 401 Unauthorized
+   - If token is valid → Process the request
+
+EXAMPLE USAGE IN PROTECTED ENDPOINT:
+-------------------------------------
+
+```python
+@app.route('/api/readings', methods=['POST'])
+def add_reading():
+    # LINE 1: Validate the token and get user information
+    user = get_user_from_token()
+    
+    # LINE 2: Check if authentication succeeded
+    if not user:
+        # LINE 3: Return error response with 401 status code
+        # 401 = Unauthorized (authentication failed)
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # LINE 4: If we reach here, user is authenticated
+    # Extract user_id to associate reading with correct patient
+    user_id = user['user_id']
+    
+    # LINE 5: Parse the request body (JSON data)
+    # Contains reading details: value, fasting, food_intake, etc.
+    data = request.json
+    
+    # LINE 6: Extract glucose value from request
+    value = data.get('value')
+    
+    # LINE 7: Store reading in database for this authenticated user
+    db.create_reading(user_id, value, ...)
+    
+    # LINE 8: Return success response
+    return jsonify({'success': True}), 201
+```
+
+TOKEN FLOW DIAGRAM:
+-------------------
+
+1. User logs in with email/password
+   ↓
+2. Server validates credentials
+   ↓
+3. Server generates token with user_id encoded
+   ↓
+4. Server returns token to client
+   ↓
+5. Client stores token (localStorage)
+   ↓
+6. Client includes token in every API request
+   Authorization: Bearer <token>
+   ↓
+7. Server validates token on each request
+   ↓
+8. If valid → Process request
+   If invalid → Return 401 error
+
+
+================================================================================
+2. CORS CONFIGURATION - EXPLAINED
+================================================================================
+
+PURPOSE: Allow frontend (HTML/JavaScript) to make requests to backend API 
+from different origins (domains/ports).
+
+FULL CODE WITH LINE-BY-LINE EXPLANATION:
+-----------------------------------------
+
+```python
+# LINE 1: Import the Flask class to create web application
+from flask import Flask, request, jsonify
+
+# LINE 2: Import CORS (Cross-Origin Resource Sharing) extension
+# This extension handles CORS headers automatically
+from flask_cors import CORS
+
+# LINE 3: Create Flask application instance
+# __name__ tells Flask where to look for templates and static files
+app = Flask(__name__)
+
+# LINE 4: Enable CORS for all routes in the application
+# This single line adds CORS headers to every API response
+CORS(app)
+```
+
+WHAT IS CORS AND WHY DO WE NEED IT?
+------------------------------------
+
+CORS = Cross-Origin Resource Sharing
+
+PROBLEM WITHOUT CORS:
+---------------------
+
+Scenario: Your application has:
+   - Backend API: http://127.0.0.1:5000
+   - Frontend: file:///C:/frontend/index.html (or different port)
+
+When frontend JavaScript tries to call backend:
+   ```javascript
+   fetch('http://127.0.0.1:5000/api/login', {
+       method: 'POST',
+       body: JSON.stringify({email, password})
+   })
+   ```
+
+Browser blocks it with error:
+   "Access to fetch at 'http://127.0.0.1:5000/api/login' from origin 
+    'file://' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' 
+    header is present on the requested resource."
+
+WHY BROWSER BLOCKS IT:
+----------------------
+
+Security: By default, browsers implement "Same-Origin Policy"
+   - Prevents malicious websites from accessing data from other sites
+   - Origin = Protocol + Domain + Port
+   - http://127.0.0.1:5000 ≠ file:/// → Different origins → Blocked
+
+HOW CORS SOLVES IT:
+-------------------
+
+The CORS(app) line adds these HTTP headers to every response:
+
+```http
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Max-Age: 3600
+```
+
+HEADER EXPLANATIONS:
+--------------------
+
+1. Access-Control-Allow-Origin: *
+   - Tells browser: "Allow requests from ANY origin"
+   - * means all domains (wildcard)
+   - In production, replace * with specific domain:
+     Access-Control-Allow-Origin: https://myapp.com
+
+2. Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+   - Lists HTTP methods the frontend can use
+   - GET: Retrieve data
+   - POST: Create new data
+   - PUT: Update existing data
+   - DELETE: Remove data
+   - OPTIONS: Preflight check (browser asks permission before actual request)
+
+3. Access-Control-Allow-Headers: Content-Type, Authorization
+   - Lists headers the frontend can include in requests
+   - Content-Type: application/json (tells server data is JSON)
+   - Authorization: Bearer <token> (for authentication)
+
+4. Access-Control-Max-Age: 3600
+   - Browser caches CORS permission for 1 hour (3600 seconds)
+   - Reduces preflight requests for better performance
+
+PREFLIGHT REQUEST EXPLAINED:
+-----------------------------
+
+For certain requests (POST with JSON, custom headers), browser sends 
+"preflight" OPTIONS request first:
+
+```http
+OPTIONS /api/readings HTTP/1.1
+Host: 127.0.0.1:5000
+Origin: file://
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: Content-Type, Authorization
+```
+
+Server responds with CORS headers:
+
+```http
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: POST
+Access-Control-Allow-Headers: Content-Type, Authorization
+```
+
+Browser sees permission granted → Sends actual POST request
+
+WITHOUT CORS HEADERS → Browser blocks the request
+
+ADVANCED CORS CONFIGURATION:
+----------------------------
+
+For more control, you can configure CORS with specific options:
+
+```python
+# LINE 1: Import CORS with configuration options
+from flask_cors import CORS
+
+# LINE 2: Configure CORS with specific settings
+CORS(app, 
+     # Allow requests only from specific origins
+     origins=['http://localhost:3000', 'https://myapp.com'],
+     
+     # Allow credentials (cookies, authorization headers)
+     supports_credentials=True,
+     
+     # Allow specific methods only
+     methods=['GET', 'POST', 'PUT', 'DELETE'],
+     
+     # Allow specific headers
+     allow_headers=['Content-Type', 'Authorization'],
+     
+     # Expose additional headers to frontend
+     expose_headers=['X-Total-Count'],
+     
+     # Cache preflight for 2 hours
+     max_age=7200
+)
+```
+
+PRODUCTION BEST PRACTICES:
+---------------------------
+
+1. DON'T USE * in production
+   ```python
+   # Development (permissive)
+   CORS(app)  # Allows all origins
+   
+   # Production (secure)
+   CORS(app, origins=['https://bloodsugar-app.com'])
+   ```
+
+2. Use HTTPS in production
+   - CORS works with HTTP, but data is unencrypted
+   - HTTPS encrypts all communication
+
+3. Limit allowed methods
+   - Only enable methods you actually use
+   - Don't expose DELETE if users can't delete
+
+4. Be specific with headers
+   - Only allow headers your app needs
+   - Reduces attack surface
+
+
+================================================================================
+3. DATABASE CONNECTION - EXPLAINED
+================================================================================
+
+FULL CODE WITH LINE-BY-LINE EXPLANATION:
+-----------------------------------------
+
+```python
+# LINE 1: Import mysql.connector library
+# This is the official MySQL driver for Python
+# Allows Python to communicate with MySQL database
+import mysql.connector
+
+# LINE 2: Import Error class for exception handling
+# Used to catch database-specific errors
+from mysql.connector import Error
+
+# LINE 3: Import os module to access environment variables
+# Environment variables store sensitive data like passwords
+import os
+
+# LINE 4: Define Database class
+class Database:
+    
+    # LINE 5: Constructor method (called when creating Database instance)
+    def __init__(self):
+        # LINE 6: Initialize connection attribute as None
+        # Will store the actual connection object later
+        self.connection = None
+        
+        # LINE 7: Call connect method to establish database connection
+        # Happens immediately when Database() is instantiated
+        self.connect()
+    
+    # LINE 8: Method to establish database connection
+    def connect(self):
+        # LINE 9: Begin try block for error handling
+        try:
+            # LINE 10-15: Create database connection
+            # mysql.connector.connect() establishes TCP connection to MySQL
+            self.connection = mysql.connector.connect(
+                
+                # LINE 11: Database server address
+                # os.environ.get('DB_HOST', '127.0.0.1') means:
+                #   - Try to read environment variable DB_HOST
+                #   - If not set, use default '127.0.0.1' (localhost)
+                # 127.0.0.1 = local machine IP address
+                host=os.environ.get('DB_HOST', '127.0.0.1'),
+                
+                # LINE 12: Database username
+                # Default 'root' is the MySQL administrator account
+                user=os.environ.get('DB_USER', 'root'),
+                
+                # LINE 13: Database password
+                # No default for security - must be set in environment
+                # Setting environment variable:
+                #   Windows: set DB_PASSWORD=mypassword
+                #   Linux/Mac: export DB_PASSWORD=mypassword
+                password=os.environ.get('DB_PASSWORD'),
+                
+                # LINE 14: Database name to connect to
+                # 'blood_sugar_db' is our application's database
+                database=os.environ.get('DB_NAME', 'blood_sugar_db'),
+                
+                # LINE 15: Disable autocommit
+                # autocommit=False means we control when to COMMIT changes
+                # Allows transactions: multiple operations succeed or fail together
+                autocommit=False
+            )
+            
+            # LINE 16: Check if connection was successful
+            # is_connected() returns True if connection is active
+            if self.connection.is_connected():
+                # LINE 17: Log success message
+                # logger writes to log file for debugging
+                logger.info("Database connection established")
+                
+        # LINE 18: Catch MySQL errors
+        # Error is raised for connection failures, authentication errors, etc.
+        except Error as e:
+            # LINE 19: Log the error with details
+            # f-string inserts error message into log
+            logger.error(f"Database connection error: {e}")
+            
+            # LINE 20: Re-raise the exception
+            # Stops program execution if database unavailable
+            # In production, might want to retry instead
+            raise
+```
+
+CONNECTION PARAMETERS EXPLAINED:
+---------------------------------
+
+1. host='127.0.0.1'
+   - IP address of database server
+   - 127.0.0.1 = localhost = your own computer
+   - For remote database: host='192.168.1.100' or 'db.example.com'
+
+2. user='root'
+   - MySQL username
+   - 'root' has full privileges (admin account)
+   - In production, create limited-privilege user:
+     CREATE USER 'bloodsugar_app'@'localhost' IDENTIFIED BY 'password';
+     GRANT SELECT, INSERT, UPDATE, DELETE ON blood_sugar_db.* TO 'bloodsugar_app'@'localhost';
+
+3. password=os.environ.get('DB_PASSWORD')
+   - Retrieved from environment variable
+   - Never hardcode passwords in source code
+   - Environment variables keep secrets out of version control
+
+4. database='blood_sugar_db'
+   - Which database to use (server can have multiple databases)
+   - Like opening a specific folder in file system
+
+5. autocommit=False
+   - Manual transaction control
+   - Changes aren't saved until we call connection.commit()
+   - Allows rollback if error occurs
+
+CURSOR EXPLAINED:
+-----------------
+
+```python
+def _get_cursor(self):
+    """Get a cursor, reconnecting if necessary"""
+    
+    # LINE 1: Try to check connection status
+    try:
+        # LINE 2: Check if connection exists and is still alive
+        # not self.connection → True if connection is None
+        # not self.connection.is_connected() → True if disconnected
+        if not self.connection or not self.connection.is_connected():
+            # LINE 3: Reconnect if connection lost
+            self.connect()
+    
+    # LINE 4: If check itself fails, reconnect anyway
+    except:
+        self.connect()
+    
+    # LINE 5: Create and return cursor object
+    # Cursor is like a pointer for executing queries
+    # dictionary=True → Results as dictionaries (key-value pairs)
+    #   Without: row = (1, 'John', 'Doe')
+    #   With: row = {'id': 1, 'first_name': 'John', 'last_name': 'Doe'}
+    # buffered=True → Fetch all results immediately
+    #   Prevents "unread result" errors when executing multiple queries
+    return self.connection.cursor(dictionary=True, buffered=True)
+```
+
+QUERY EXECUTION EXAMPLE:
+------------------------
+
+```python
+def get_user(self, user_id):
+    """Get user by ID"""
+    
+    # LINE 1: Get cursor (database query executor)
+    cursor = self._get_cursor()
+    
+    try:
+        # LINE 2: Execute SQL query with parameter
+        # %s is a placeholder for safe parameter substitution
+        # (user_id,) is a tuple containing the parameter value
+        # This prevents SQL injection attacks
+        # SAFE: cursor.execute("SELECT * FROM users WHERE user_id = %s", (42,))
+        # UNSAFE: cursor.execute(f"SELECT * FROM users WHERE user_id = {user_id}")
+        cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+        
+        # LINE 3: Fetch one result row
+        # Returns dictionary because we set dictionary=True
+        # {'user_id': 42, 'email': 'john@example.com', 'first_name': 'John', ...}
+        user = cursor.fetchone()
+        
+        # LINE 4: Consume any remaining results
+        # buffered=True usually handles this, but good practice
+        cursor.fetchall()
+        
+        # LINE 5: Return the user dictionary (or None if not found)
+        return user
+        
+    finally:
+        # LINE 6: Always close cursor to free resources
+        # Happens even if error occurs (finally block always runs)
+        cursor.close()
+```
+
+
+================================================================================
+4. PASSWORD HASHING - EXPLAINED
+================================================================================
+
+FULL CODE WITH LINE-BY-LINE EXPLANATION:
+-----------------------------------------
+
+```python
+# LINE 1: Import hashlib library
+# Provides cryptographic hash functions (SHA-256, MD5, etc.)
+import hashlib
+
+# LINE 2: Function to hash a password
+def hash_password(password):
+    """Convert plain text password to secure hash"""
+    
+    # LINE 3: Convert string to bytes
+    # encode() converts string 'mypassword' to bytes b'mypassword'
+    # Hash functions work with bytes, not strings
+    # Default encoding is UTF-8 (handles special characters)
+    password_bytes = password.encode()
+    
+    # LINE 4: Create SHA-256 hash object
+    # SHA-256 = Secure Hash Algorithm, 256-bit output
+    # Creates a hash object that can process data
+    hash_object = hashlib.sha256(password_bytes)
+    
+    # LINE 5: Get hexadecimal representation of hash
+    # hexdigest() converts hash to readable hex string
+    # Example: b'\x5e\x88...' → '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'
+    # This is what we store in database (64 characters long)
+    hashed_password = hash_object.hexdigest()
+    
+    # LINE 6: Return the hash
+    return hashed_password
+
+# SHORTHAND VERSION (same as above):
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+```
+
+WHY WE HASH PASSWORDS:
+----------------------
+
+PROBLEM: Storing plain text passwords is dangerous
+   Database: users table
+   | user_id | email           | password    |
+   |---------|-----------------|-------------|
+   | 1       | john@email.com  | password123 |  ← VISIBLE!
+   
+   If database is breached → All passwords stolen → Users compromised
+
+SOLUTION: Hash passwords before storing
+   Database: users table
+   | user_id | email           | password_hash                                                    |
+   |---------|-----------------|------------------------------------------------------------------|
+   | 1       | john@email.com  | 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8 |
+   
+   If database is breached → Hashes stolen → Attackers can't reverse them
+
+PROPERTIES OF HASH FUNCTIONS:
+------------------------------
+
+1. ONE-WAY: Can't reverse hash to get original password
+   - Hash: 'password123' → '5e884898da28...'
+   - Cannot: '5e884898da28...' → 'password123'
+
+2. DETERMINISTIC: Same input always gives same output
+   - 'password123' → Always '5e884898da28...'
+   - Used for verification
+
+3. AVALANCHE EFFECT: Tiny change = completely different hash
+   - 'password123' → '5e884898da28...'
+   - 'password124' → '0b14d501a594...' (completely different!)
+
+4. COLLISION RESISTANT: Extremely unlikely two inputs give same hash
+   - Billions of possible passwords
+   - Each has unique hash
+
+LOGIN VERIFICATION:
+-------------------
+
+```python
+def verify_login(email, password):
+    """Check if email and password match"""
+    
+    # LINE 1: Get user from database by email
+    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+    user = cursor.fetchone()
+    
+    # LINE 2: Check if user exists
+    if not user:
+        return None  # Email not found
+    
+    # LINE 3: Hash the provided password
+    # User enters 'password123'
+    # We hash it to '5e884898da28...'
+    provided_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    # LINE 4: Get stored hash from database
+    stored_hash = user['password_hash']
+    
+    # LINE 5: Compare hashes
+    # If they match, password is correct
+    # We never store or compare plain text passwords
+    if provided_hash == stored_hash:
+        return user  # Login successful
+    else:
+        return None  # Wrong password
+```
+
+REGISTRATION WITH HASHING:
+---------------------------
+
+```python
+def register_user(email, password, first_name, last_name):
+    """Create new user account"""
+    
+    # LINE 1: Hash the password before storing
+    # User provides: 'mySecurePass123'
+    # We store: 'a4e624d686e03ed2767c0abd85c14426b0b1157d2ce81d27bb4fe4bc6...
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    # LINE 2: Insert user with hashed password
+    # NEVER insert plain text password into database
+    cursor.execute("""
+        INSERT INTO users (email, password_hash, first_name, last_name)
+        VALUES (%s, %s, %s, %s)
+    """, (email, password_hash, first_name, last_name))
+    
+    # LINE 3: Commit the transaction
+    connection.commit()
+```
+
+SECURITY CONSIDERATIONS:
+------------------------
+
+1. SHA-256 is fast (good for hashing, but allows brute force attacks)
+   Better: Use bcrypt or Argon2 (designed for passwords)
+   
+   ```python
+   import bcrypt
+   
+   # Hashing with bcrypt (includes salt automatically)
+   hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+   
+   # Verification with bcrypt
+   if bcrypt.checkpw(password.encode(), stored_hash):
+       print("Login successful")
+   ```
+
+2. Add salt (random data) to prevent rainbow table attacks
+   - Rainbow table: Pre-computed hash dictionary
+   - Salt makes each hash unique even for same password
+
+3. Use slow hash functions (makes brute force impractical)
+   - bcrypt has cost factor (how many rounds of hashing)
+   - More rounds = slower = harder to crack
+
+
+================================================================================
+5. JSON REQUEST/RESPONSE - EXPLAINED
+================================================================================
+
+PARSING REQUEST DATA:
+---------------------
+
+```python
+@app.route('/api/readings', methods=['POST'])
+def add_reading():
+    """Add new blood sugar reading"""
+    
+    # LINE 1: Get JSON data from request body
+    # request.json automatically parses JSON string to Python dictionary
+    # Frontend sends: {"value": 125, "fasting": true, "food_intake": "breakfast"}
+    # Python receives: {'value': 125, 'fasting': True, 'food_intake': 'breakfast'}
+    data = request.json
+    
+    # LINE 2: Extract individual values from dictionary
+    # .get() method safely retrieves values
+    # If key doesn't exist, returns None (doesn't crash)
+    value = data.get('value')
+    
+    # LINE 3: Get with default value
+    # If 'fasting' key missing, defaults to False
+    fasting = data.get('fasting', False)
+    
+    # LINE 4: Get optional field
+    # food_intake might be empty string or None
+    food_intake = data.get('food_intake', '')
+    
+    # LINE 5: Validate required fields
+    if not value:
+        # LINE 6: Return error response
+        # jsonify() converts Python dict to JSON string
+        # Status code 400 = Bad Request (client error)
+        return jsonify({'error': 'Value is required'}), 400
+    
+    # LINE 7: Process the data
+    # Store in database, run ML analysis, etc.
+    result = db.create_reading(user_id, value, fasting, food_intake)
+    
+    # LINE 8: Return success response
+    # jsonify() converts dict to JSON
+    # Status code 201 = Created (new resource created)
+    return jsonify({
+        'success': True,
+        'reading_id': result['reading_id'],
+        'message': 'Reading added successfully'
+    }), 201
+```
+
+RESPONSE FORMAT:
+----------------
+
+```python
+# SUCCESS RESPONSE
+{
+    "success": true,               ← Boolean flag
+    "data": {                      ← Actual data payload
+        "reading_id": 1234,
+        "value": 125,
+        "status": "normal"
+    },
+    "message": "Operation successful"  ← Human-readable message
+}
+
+# ERROR RESPONSE
+{
+    "success": false,              ← Always false for errors
+    "error": "Invalid input",      ← Error type
+    "details": "Value must be positive",  ← Specific details
+    "code": "VALIDATION_ERROR"     ← Machine-readable code
+}
+```
+
+
+================================================================================
+6. SQL INJECTION PREVENTION - EXPLAINED
+================================================================================
+
+UNSAFE CODE (VULNERABLE):
+--------------------------
+
+```python
+# ❌ NEVER DO THIS - SQL INJECTION VULNERABILITY
+def get_user_unsafe(email):
+    # LINE 1: Dangerous string concatenation
+    # If email = "'; DROP TABLE users; --"
+    # Query becomes: SELECT * FROM users WHERE email = ''; DROP TABLE users; --'
+    # This deletes the entire users table!
+    query = f"SELECT * FROM users WHERE email = '{email}'"
+    
+    # LINE 2: Execute dangerous query
+    cursor.execute(query)
+    return cursor.fetchone()
+```
+
+SAFE CODE (PROTECTED):
+-----------------------
+
+```python
+# ✅ CORRECT - Uses parameterized query
+def get_user_safe(email):
+    # LINE 1: Use placeholder %s instead of direct substitution
+    # mysql.connector treats this as DATA, not CODE
+    # Even if email contains SQL, it's treated as literal text
+    query = "SELECT * FROM users WHERE email = %s"
+    
+    # LINE 2: Pass parameters as tuple
+    # mysql.connector escapes special characters automatically
+    # "'; DROP TABLE users; --" becomes safe literal string
+    cursor.execute(query, (email,))
+    return cursor.fetchone()
+```
+
+HOW PARAMETERIZED QUERIES WORK:
+--------------------------------
+
+1. Query with placeholder sent to MySQL
+   SQL: "SELECT * FROM users WHERE email = %s"
+
+2. Parameter sent separately
+   Parameter: "attacker'; DROP TABLE users; --"
+
+3. MySQL treats parameter as literal string
+   Final query: SELECT * FROM users WHERE email = 'attacker\'; DROP TABLE users; --'
+   The semicolon and quotes are escaped, preventing injection
+
+
+================================================================================
+CONCLUSION
+================================================================================
+
+This document explained the key technical concepts used throughout the Blood
+Sugar Monitoring System with detailed, line-by-line code explanations:
+
+✓ Token Validation - Authentication and authorization
+✓ CORS Configuration - Cross-origin request handling  
+✓ Database Connection - MySQL connectivity and cursors
+✓ Password Hashing - Secure password storage
+✓ JSON Request/Response - API data handling
+✓ SQL Injection Prevention - Security best practices
+
+Each concept includes:
+- Complete code examples
+- Line-by-line explanations
+- Purpose and use cases
+- Security considerations
+- Best practices
+
+These explanations serve as educational resources for understanding how the
+system implements security, authentication, data handling, and API communication.
+
+================================================================================
