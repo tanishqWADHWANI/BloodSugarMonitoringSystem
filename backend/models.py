@@ -89,6 +89,7 @@ from datetime import datetime, timedelta
 import os
 import logging
 import hashlib
+from werkzeug.security import generate_password_hash
 
 # Set up logging for database operations
 logger = logging.getLogger(__name__)
@@ -179,7 +180,7 @@ class Database:
     def create_user(self, email, password, first_name, last_name, role, 
                    date_of_birth=None, phone=None, health_care_number=None, license_id=None, profile_image=None):
         """
-        Create a new user (password stored as-is for demo, hash in production)
+        Create a new user with hashed password
         
         Parameters:
         - health_care_number: Required for patients
@@ -188,12 +189,15 @@ class Database:
         """
         cursor = self._get_cursor()
         try:
+            # Hash the password using werkzeug
+            password_hash = generate_password_hash(password)
+            
             # Insert into users table
             sql = """
                 INSERT INTO users (email, password_hash, first_name, last_name, role, date_of_birth, phone, profile_image)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            values = (email, password, first_name, last_name, role, date_of_birth, phone, profile_image)
+            values = (email, password_hash, first_name, last_name, role, date_of_birth, phone, profile_image)
             cursor.execute(sql, values)
             self.connection.commit()
             user_id = cursor.lastrowid

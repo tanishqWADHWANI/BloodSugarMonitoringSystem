@@ -939,15 +939,14 @@
         if (userId) {
           const timestamp = `${entry.date} ${entry.time}:00`;
           await addReading({
-            user_id: userId,
+            userId: userId,
             value: parseFloat(entry.bloodSugar),
-            timestamp: timestamp,
-            bloodPressure: entry.bloodPressure,
-            heartRate: entry.heartRate ? parseInt(entry.heartRate) : null,
-            medications: entry.medications,
-            food_time: entry.foodTime,
-            food_intake: entry.foodTaken,
-            symptoms_notes: entry.activity
+            date_time: timestamp,
+            fasting: false,
+            foodIntake: entry.foodTaken || '',
+            activity: entry.activity || '',
+            symptomsNotes: entry.medications || '',
+            unit: 'mg/dL'
           });
           console.log('✓ Entry saved to database');
           alert('Your health entry has been saved successfully! View it in your Health History page.');
@@ -1149,15 +1148,14 @@
               for (const entry of demoEntries) {
                 const timestamp = `${entry.date} ${entry.time}:00`;
                 await addReading({
-                  user_id: userId,
+                  userId: userId,
                   value: parseFloat(entry.bloodSugar),
-                  timestamp: timestamp,
-                  bloodPressure: entry.bloodPressure,
-                  heartRate: entry.heartRate ? parseInt(entry.heartRate) : null,
-                  medications: entry.medications,
-                  food_time: entry.foodTime,
-                  food_intake: entry.foodTaken,
-                  symptoms_notes: entry.activity
+                  date_time: timestamp,
+                  fasting: false,
+                  foodIntake: entry.foodTaken || '',
+                  activity: entry.activity || '',
+                  symptomsNotes: entry.medications || '',
+                  unit: 'mg/dL'
                 });
               }
               console.log('✓ Demo health history created and saved to database - 8 entries');
