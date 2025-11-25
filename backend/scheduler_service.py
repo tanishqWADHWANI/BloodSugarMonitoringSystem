@@ -1,24 +1,48 @@
+"""
+Blood Sugar Monitoring System - Scheduler Service
+=================================================
+This module handles background task scheduling using APScheduler.
+
+Scheduled Tasks:
+- Check for abnormal readings and send notifications (hourly)
+- Process threshold breach alerts
+- Send reminder emails for readings
+- Clean up old temporary data
+- Generate periodic reports
+
+The scheduler runs in the background and executes tasks at configured intervals
+without blocking the main Flask application.
+
+Uses: APScheduler BackgroundScheduler
+"""
+
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
 
+# Set up logging for scheduler operations
 logger = logging.getLogger(__name__)
 
 class SchedulerService:
+    """
+    Background task scheduler for automated notifications and maintenance.
+    Runs periodic jobs independently of user requests.
+    """
+    
     def __init__(self, database, notification_service):
-        """Initialize scheduler"""
+        """Initialize scheduler with database and notification service references"""
         self.db = database
         self.notification_service = notification_service
         self.scheduler = BackgroundScheduler()
     
     def start(self):
-        """Start scheduled tasks"""
-        # Check alerts every hour
+        """Start all scheduled background tasks"""
+        # Check for notifications and alerts every hour
         self.scheduler.add_job(
             func=self.check_all_notifications,
             trigger='interval',
             hours=1,
             id='check_notifications',
-            name='Check notifications',
+            name='Check notifications for abnormal readings',
             replace_existing=True
         )
         

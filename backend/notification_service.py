@@ -1,24 +1,52 @@
+"""
+Blood Sugar Monitoring System - Notification Service
+====================================================
+This module handles email notifications for the system.
+
+Features:
+- Email alerts for abnormal blood sugar readings
+- Threshold breach notifications to patients and specialists
+- Appointment reminders
+- System notifications to staff and admins
+- HTML and plain text email support
+
+Email is sent via SMTP (default: Gmail)
+Configuration is loaded from environment variables:
+- SMTP_USERNAME: Email account username
+- SMTP_PASSWORD: Email account password
+- SMTP_SERVER: SMTP server address (default: smtp.gmail.com)
+- SMTP_PORT: SMTP port (default: 587 for TLS)
+
+Note: Gmail requires "App Passwords" for secure access
+"""
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 import logging
 
+# Set up logging for email operations
 logger = logging.getLogger(__name__)
 
 class NotificationService:
+    """
+    Email notification service for sending alerts and messages.
+    Uses SMTP to send emails through configured email server.
+    """
+    
     def __init__(self):
-        """Initialize email service"""
+        """Initialize email service with SMTP configuration from environment"""
         self.smtp_username = os.environ.get('SMTP_USERNAME')
         self.smtp_password = os.environ.get('SMTP_PASSWORD')
         self.smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
         self.smtp_port = int(os.environ.get('SMTP_PORT', 587))
         
         if not self.smtp_username or not self.smtp_password:
-            logger.warning("SMTP not configured. Emails disabled.")
+            logger.warning("SMTP credentials not configured. Email notifications are disabled.")
     
     def send_email(self, to_email, subject, body, html=False):
-        """Send email"""
+        """Send email to specified recipient"""
         if not self.smtp_username or not self.smtp_password:
             logger.warning(f"Email not sent: SMTP not configured")
             return False

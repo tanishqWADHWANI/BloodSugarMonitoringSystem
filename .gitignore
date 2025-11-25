@@ -1,4 +1,14 @@
+# Git ignore file - specifies files/folders that should NOT be tracked by Git
+# This prevents sensitive data and temporary files from being committed to the repository
+
+# Environment variables file (may contain sensitive data like API keys, passwords)
 .env
+
+# Python virtual environment directory
 venv/
+
+# Python compiled bytecode cache directories
 __pycache__/
+
+# Individual Python compiled files
 *.pyc

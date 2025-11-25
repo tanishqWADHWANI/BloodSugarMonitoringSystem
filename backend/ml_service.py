@@ -1,3 +1,22 @@
+"""
+Blood Sugar Monitoring System - Machine Learning Service
+=========================================================
+This module provides ML-powered analysis and predictions for blood sugar data.
+
+Features:
+- Blood sugar level predictions based on patient history
+- Risk assessment and categorization
+- Pattern analysis and trend detection
+- Food and activity trigger identification
+- Personalized recommendations generation
+- Anomaly detection in readings
+
+The service uses scikit-learn models trained on historical blood sugar data.
+If trained models are not available, it falls back to rule-based analysis.
+
+Models stored in: models/blood_sugar_model.joblib, models/scaler.joblib
+"""
+
 import joblib
 import numpy as np
 import pandas as pd
@@ -5,20 +24,26 @@ from datetime import datetime
 import logging
 import os
 
+# Set up logging for ML operations
 logger = logging.getLogger(__name__)
 
 class MLService:
+    """
+    Machine Learning service for blood sugar analysis and predictions.
+    Loads pre-trained models or uses rule-based fallback logic.
+    """
+    
     def __init__(self):
-        """Initialize ML service"""
+        """Initialize ML service and load trained models if available"""
         try:
             if os.path.exists('models/blood_sugar_model.joblib'):
                 self.model = joblib.load('models/blood_sugar_model.joblib')
                 self.scaler = joblib.load('models/scaler.joblib')
-                logger.info("ML models loaded")
+                logger.info("ML models loaded successfully")
             else:
                 self.model = None
                 self.scaler = None
-                logger.warning("ML models not found, using rules")
+                logger.warning("ML models not found, using rule-based analysis")
         except Exception as e:
             logger.error(f"Error loading models: {e}")
             self.model = None

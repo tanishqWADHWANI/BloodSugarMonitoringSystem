@@ -1,3 +1,23 @@
+"""
+Blood Sugar Monitoring System - Database Models
+================================================
+This module provides the Database class for all database operations.
+It handles connections to MySQL and provides methods for:
+- User authentication and management (CRUD operations)
+- Patient and specialist data management
+- Blood sugar readings storage and retrieval
+- Threshold management
+- Patient-specialist assignments
+- Medical records and documents
+- Dashboard statistics and analytics
+- Admin reports (monthly/annual)
+
+The Database class uses mysql.connector for direct SQL queries
+and includes connection pooling, error handling, and logging.
+
+Database: blood_sugar_db (MySQL/MariaDB on port 3306)
+"""
+
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
@@ -5,16 +25,22 @@ import os
 import logging
 import hashlib
 
+# Set up logging for database operations
 logger = logging.getLogger(__name__)
 
 class Database:
+    """
+    Main database interface class for Blood Sugar Monitoring System.
+    Manages MySQL connections and provides data access methods.
+    """
+    
     def __init__(self):
         """Initialize database connection"""
         self.connection = None
         self.connect()
     
     def connect(self):
-        """Establish database connection"""
+        """Establish database connection using environment variables or defaults"""
         try:
             self.connection = mysql.connector.connect(
                 host=os.environ.get('DB_HOST', '127.0.0.1'),

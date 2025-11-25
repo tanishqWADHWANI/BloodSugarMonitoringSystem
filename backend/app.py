@@ -1,3 +1,27 @@
+"""
+Blood Sugar Monitoring System - Main Flask Application
+========================================================
+This is the main backend API server for the Blood Sugar Monitoring System.
+It provides REST API endpoints for:
+- User authentication and management (patients, specialists, staff, admin)
+- Blood sugar readings tracking and analysis
+- Patient-specialist assignments
+- Threshold management and alerts
+- Document uploads and medical records
+- Notifications and email services
+- Machine learning predictions
+- Administrative reports and analytics
+
+Technologies:
+- Flask: Web framework for REST API
+- MySQL: Database for storing all application data
+- scikit-learn: Machine learning for blood sugar predictions
+- APScheduler: Background task scheduling for notifications
+
+Port: 5000 (default Flask development server)
+Database: MySQL on port 3306 (blood_sugar_db)
+"""
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -12,12 +36,14 @@ from notification_service import NotificationService
 from scheduler_service import SchedulerService
 from datetime import datetime
 
-# Load environment variables
+# Load environment variables from .env file (if exists)
 load_dotenv()
 
-# Initialize Flask app
+# Initialize Flask application
 app = Flask(__name__)
-# ===== File upload config =====
+
+# ===== File Upload Configuration =====
+# Set up directories for patient document uploads
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -26,8 +52,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'}
 
 def allowed_file(filename):
+    """Check if uploaded file has an allowed extension"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# ===== CORS Configuration =====
 # Allow frontend from anywhere (file://, localhost, etc.)
 CORS(app, resources={
     r"/api/*": {

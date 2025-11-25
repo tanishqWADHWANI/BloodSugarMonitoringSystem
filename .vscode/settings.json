@@ -1,8 +1,17 @@
 {
+    // Disables type checking to avoid strict type errors in Python code
     "python.analysis.typeCheckingMode": "off",
+    
+    // Only analyzes Python files that are currently open in the editor (improves performance)
     "python.analysis.diagnosticMode": "openFilesOnly",
+    
+    // Enables automatic import suggestions when typing code
     "python.analysis.autoImportCompletions": true,
+    
+    // Automatically searches for Python modules in workspace paths
     "python.analysis.autoSearchPaths": true,
+    
+    // Additional paths to search for Python modules (includes the backend directory)
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend"
     ]

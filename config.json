@@ -1,21 +1,31 @@
 {
+  // Configuration file for Blood Sugar Monitoring System
+  // Contains settings for backend API server, database connection, and frontend
+  
   "backend": {
-    "host": "127.0.0.1",
-    "port": 5000,
-    "api_url": "http://127.0.0.1:5000"
+    // Flask API server configuration
+    "host": "127.0.0.1",           // Localhost IP address
+    "port": 5000,                  // Port where Flask API server runs
+    "api_url": "http://127.0.0.1:5000"  // Full URL for API endpoints
   },
+  
   "database": {
-    "host": "127.0.0.1",
-    "port": 3306,
-    "name": "blood_sugar_db",
-    "user": "root",
-    "password": ""
+    // MySQL database connection settings
+    "host": "127.0.0.1",           // Database server IP (localhost)
+    "port": 3306,                  // MySQL default port
+    "name": "blood_sugar_db",      // Database name
+    "user": "root",                // Database username
+    "password": ""                 // Database password (empty for local development)
   },
+  
   "frontend": {
-    "default_page": "index.html",
-    "api_endpoint": "http://127.0.0.1:5000"
+    // Frontend application settings
+    "default_page": "index.html",  // Landing page for the application
+    "api_endpoint": "http://127.0.0.1:5000"  // Backend API endpoint URL
   },
+  
   "notes": {
+    // Important configuration notes and common pitfalls
     "backend_port": "Flask API server runs on port 5000",
     "database_port": "MySQL/MariaDB runs on default port 3306 (not specified in code, uses default)",
     "common_mistake": "Do NOT use port 5000 for database connections - that's the Flask API port",
