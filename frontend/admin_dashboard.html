@@ -152,11 +152,11 @@
 
             <!-- Profile Display -->
             <div id="adminProfileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <div><strong>👤 Full Name:</strong> <span id="adminFullName">Loading...</span></div>
-                <div><strong>📧 Email:</strong> <span id="adminEmail">Loading...</span></div>
-                <div><strong>📱 Phone:</strong> <span id="adminPhone">Loading...</span></div>
-                <div><strong>🎂 Birthday:</strong> <span id="adminBirthday">Loading...</span></div>
-                <div><strong>🔢 User ID:</strong> <span id="adminUserId">Loading...</span></div>
+                <div><strong>👤 Full Name:</strong> <span id="adminFullName">-</span></div>
+                <div><strong>📧 Email:</strong> <span id="adminEmail">-</span></div>
+                <div><strong>📱 Phone:</strong> <span id="adminPhone">-</span></div>
+                <div><strong>🎂 Birthday:</strong> <span id="adminBirthday">-</span></div>
+                <div><strong>🔢 User ID:</strong> <span id="adminUserId">-</span></div>
                 <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">System account identifier</div>
                 <div><strong>🆔 License ID:</strong> <span id="adminLicenseId">Not applicable</span></div>
                 <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">ℹ️ Province/State Professional License Number</div>
@@ -281,9 +281,19 @@
             </form>
         </section>
 
-        <section class="card" style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='user_management.html'" onmouseenter="this.style.background='#e9ecef'" onmouseleave="this.style.background='#f8f9fa'">
-            <h2 style="color: #004080; margin-bottom: 15px; font-size: 1.4rem;">👥 User Management</h2>
-            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px;">View and manage all system users across different roles</p>
+        <section class="card" style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <h2 style="color: #004080; margin-bottom: 10px; font-size: 1.4rem;">👥 User Management</h2>
+                    <p style="color: #666; font-size: 0.95rem; margin-bottom: 15px;">View and manage all system users across different roles</p>
+                    <p style="color: #555; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px;">
+                        Access the complete user database to create, edit, and delete user accounts. View detailed profiles for patients, specialists, staff, and administrators. Search and filter users by role, manage account permissions, and update user information.
+                    </p>
+                </div>
+                <a href="user_management.html" style="background: #007bff; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
+                    Open →
+                </a>
+            </div>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
                 <div style="text-align: center;">
                     <div style="font-size: 1.8rem; font-weight: bold; color: #004080;" id="totalUsersCount">-</div>
@@ -304,9 +314,19 @@
             </div>
         </section>
 
-        <section class="card" style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='patient_assignments.html'" onmouseenter="this.style.background='#e9ecef'" onmouseleave="this.style.background='#f8f9fa'">
-            <h2 style="color: #004080; margin-bottom: 15px; font-size: 1.4rem;">Patient Assignments</h2>
-            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px;">Assign patients to specialists and manage patient-specialist relationships</p>
+        <section class="card" style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <h2 style="color: #004080; margin-bottom: 10px; font-size: 1.4rem;">Patient Assignments</h2>
+                    <p style="color: #666; font-size: 0.95rem; margin-bottom: 15px;">Assign patients to specialists and manage patient-specialist relationships</p>
+                    <p style="color: #555; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px;">
+                        Create and manage the connections between patients and their healthcare specialists. Assign patients to specialists for ongoing care, view all current assignments, reassign patients to different specialists, and track patient-specialist relationships across the system.
+                    </p>
+                </div>
+                <a href="patient_assignments.html" style="background: #007bff; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
+                    Open →
+                </a>
+            </div>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                 <div style="text-align: center;">
                     <div style="font-size: 1.8rem; font-weight: bold; color: #004080;" id="totalAssignmentsCount">-</div>
@@ -319,9 +339,19 @@
             </div>
         </section>
 
-        <section class="card" style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" onclick="window.location.href='reports_management.html'" onmouseenter="this.style.background='#e9ecef'" onmouseleave="this.style.background='#f8f9fa'">
-            <h2 style="color: #004080; margin-bottom: 15px; font-size: 1.4rem;">Monthly & Annual Reports</h2>
-            <p style="color: #666; font-size: 0.95rem; margin-bottom: 20px;">Generate reports with patient statistics, blood sugar trends, and AI insights</p>
+        <section class="card" style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <h2 style="color: #004080; margin-bottom: 10px; font-size: 1.4rem;">Monthly & Annual Reports</h2>
+                    <p style="color: #666; font-size: 0.95rem; margin-bottom: 15px;">Generate reports with patient statistics, blood sugar trends, and AI insights</p>
+                    <p style="color: #555; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px;">
+                        Generate comprehensive analytical reports for any time period. View detailed patient statistics, blood sugar trends, and patterns. Access AI-powered insights that identify food triggers, activity correlations, and time-based patterns. Export reports as PDF, CSV, or JSON for external analysis.
+                    </p>
+                </div>
+                <a href="reports_management.html" style="background: #007bff; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
+                    Open →
+                </a>
+            </div>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                 <div style="text-align: center;">
                     <div style="font-size: 1.5rem; color: #004080;">📊</div>
@@ -1668,12 +1698,19 @@
                         currentAdminData = userData;
 
                         const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Not provided';
-                        document.getElementById('adminFullName').textContent = fullName;
-                        document.getElementById('adminEmail').textContent = userData.email || 'Not provided';
-                        document.getElementById('adminPhone').textContent = userData.phone || 'Not provided';
-                        document.getElementById('adminBirthday').textContent = userData.date_of_birth || 'Not set';
-                        document.getElementById('adminUserId').textContent = userData.user_id || 'N/A';
-                        document.getElementById('adminLicenseId').textContent = userData.license_id || 'Not applicable';
+                        const adminFullNameEl = document.getElementById('adminFullName');
+                        const adminEmailEl = document.getElementById('adminEmail');
+                        const adminPhoneEl = document.getElementById('adminPhone');
+                        const adminBirthdayEl = document.getElementById('adminBirthday');
+                        const adminUserIdEl = document.getElementById('adminUserId');
+                        const adminLicenseIdEl = document.getElementById('adminLicenseId');
+                        
+                        if (adminFullNameEl) adminFullNameEl.textContent = fullName;
+                        if (adminEmailEl) adminEmailEl.textContent = userData.email || 'Not provided';
+                        if (adminPhoneEl) adminPhoneEl.textContent = userData.phone || 'Not provided';
+                        if (adminBirthdayEl) adminBirthdayEl.textContent = userData.date_of_birth || 'Not set';
+                        if (adminUserIdEl) adminUserIdEl.textContent = userData.user_id || 'N/A';
+                        if (adminLicenseIdEl) adminLicenseIdEl.textContent = userData.license_id || 'Not applicable';
                         
                         // Display profile image if available
                         const imgElement = document.getElementById('adminProfileImage');
@@ -1683,12 +1720,42 @@
                             imgElement.onerror = function() {
                                 this.style.display = 'none';
                             };
+                        } else {
+                            imgElement.style.display = 'none';
                         }
                     } else {
-                        console.error('Failed to load admin profile:', userData.error);
+                        // No user data found, clear loading text
+                        const adminFullNameEl = document.getElementById('adminFullName');
+                        const adminEmailEl = document.getElementById('adminEmail');
+                        const adminPhoneEl = document.getElementById('adminPhone');
+                        const adminBirthdayEl = document.getElementById('adminBirthday');
+                        const adminUserIdEl = document.getElementById('adminUserId');
+                        const adminLicenseIdEl = document.getElementById('adminLicenseId');
+                        
+                        if (adminFullNameEl) adminFullNameEl.textContent = 'Not available';
+                        if (adminEmailEl) adminEmailEl.textContent = 'Not available';
+                        if (adminPhoneEl) adminPhoneEl.textContent = 'Not available';
+                        if (adminBirthdayEl) adminBirthdayEl.textContent = 'Not available';
+                        if (adminUserIdEl) adminUserIdEl.textContent = 'Not available';
+                        if (adminLicenseIdEl) adminLicenseIdEl.textContent = 'Not applicable';
+                        console.error('Failed to load admin profile:', userData ? userData.error : 'No user data');
                     }
                 } catch (error) {
                     console.error('Error loading admin profile:', error);
+                    // Clear loading text on error
+                    const adminFullNameEl = document.getElementById('adminFullName');
+                    const adminEmailEl = document.getElementById('adminEmail');
+                    const adminPhoneEl = document.getElementById('adminPhone');
+                    const adminBirthdayEl = document.getElementById('adminBirthday');
+                    const adminUserIdEl = document.getElementById('adminUserId');
+                    const adminLicenseIdEl = document.getElementById('adminLicenseId');
+                    
+                    if (adminFullNameEl) adminFullNameEl.textContent = 'Error loading';
+                    if (adminEmailEl) adminEmailEl.textContent = 'Error loading';
+                    if (adminPhoneEl) adminPhoneEl.textContent = 'Error loading';
+                    if (adminBirthdayEl) adminBirthdayEl.textContent = 'Error loading';
+                    if (adminUserIdEl) adminUserIdEl.textContent = 'Error loading';
+                    if (adminLicenseIdEl) adminLicenseIdEl.textContent = 'Not applicable';
                 }
             }
 
@@ -1794,25 +1861,31 @@
             }
             
             // Initial Load
-                // Load admin profile
-                loadAdminProfile();
-                
-                // Clear any stray autocomplete or demo values in the form fields
+            (async function initializeDashboard() {
                 try {
-                    const emailEl = document.getElementById('email');
-                    if (emailEl) {
-                        emailEl.value = '';
-                        emailEl.setAttribute('autocomplete', 'off');
-                    }
-                    const formEl = document.getElementById('createUserForm');
-                    if (formEl) formEl.setAttribute('autocomplete', 'off');
-                } catch (e) { /* ignore */ }
+                    // Load admin profile first
+                    await loadAdminProfile();
+                    
+                    // Clear any stray autocomplete or demo values in the form fields
+                    try {
+                        const emailEl = document.getElementById('email');
+                        if (emailEl) {
+                            emailEl.value = '';
+                            emailEl.setAttribute('autocomplete', 'off');
+                        }
+                        const formEl = document.getElementById('createUserForm');
+                        if (formEl) formEl.setAttribute('autocomplete', 'off');
+                    } catch (e) { /* ignore */ }
 
-                await fetchUsersFromAPI();
-                await fetchAssignmentsFromAPI();
-                updateUserStats();
-                await renderAssignments();
-                await renderReport();
+                    await fetchUsersFromAPI();
+                    await fetchAssignmentsFromAPI();
+                    updateUserStats();
+                    await renderAssignments();
+                    await renderReport();
+                } catch (error) {
+                    console.error('Error initializing dashboard:', error);
+                }
+            })();
 
             // Show alert if a new patient was registered (from create_account)
             try {

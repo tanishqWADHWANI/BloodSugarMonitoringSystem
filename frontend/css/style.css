@@ -213,3 +213,72 @@ header nav ul li a:hover {
 .health-info li {
   margin-bottom: 8px;
 }
+
+/* ===========================
+   Responsive Design - Mobile & Small Screens
+=========================== */
+@media (max-width: 900px) {
+  header {
+    height: auto;
+    min-height: 180px;
+    background-size: 60%;
+  }
+  
+  header nav {
+    margin-top: 120px;
+    padding: 8px 0;
+  }
+  
+  header nav ul {
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  
+  header nav ul li a {
+    font-size: 18px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  header {
+    min-height: 140px;
+    background-size: 50%;
+  }
+  
+  header nav {
+    margin-top: 80px;
+    padding: 6px 0;
+  }
+  
+  header nav ul {
+    gap: 8px;
+    padding: 0 5px;
+  }
+  
+  header nav ul li a {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+  
+  body {
+    padding: 5px;
+  }
+  
+  .container {
+    padding: 15px;
+  }
+  
+  /* Table responsive */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  
+  table th, table td {
+    min-width: 100px;
+    font-size: 0.85rem !important;
+    padding: 8px 10px !important;
+  }
+}
