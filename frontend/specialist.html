@@ -215,12 +215,18 @@
         
         const email = emailMap[username] || username;
 
+        console.log('Attempting login with:', { username, email });
+
         try {
           // Try database login first
           const response = await loginUser(email, password);
           
+          console.log('Login response:', response);
+          
           if (response && response.user && response.user.role === 'specialist') {
             const user = response.user;
+            
+            console.log('Login successful! Token:', response.token);
             
             // Store specialist info from database
             localStorage.setItem('specialistUsername', username);
@@ -233,13 +239,16 @@
             // Store token - this is critical for edit profile!
             if (response.token || response.access_token) {
               localStorage.setItem('bsm_token', response.token || response.access_token);
+              console.log('Token stored:', localStorage.getItem('bsm_token'));
+            } else {
+              console.error('NO TOKEN IN RESPONSE!');
             }
             
             window.location.href = 'specialist_dashboard.html';
             return;
           }
         } catch (error) {
-          console.warn('Database login failed, trying demo accounts:', error);
+          console.error('Database login failed:', error);
         }
 
         // Fallback to demo accounts
