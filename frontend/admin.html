@@ -1,0 +1,182 @@
+<!--
+  Blood Sugar Monitoring System - Admin Login Page
+  =================================================
+  This page provides authentication for system administrators.
+  
+  Features:
+  - Admin email/password login form
+  - Credentials validation against backend
+  - Session management with localStorage
+  - Demo account information display
+  - Redirects to admin_dashboard.html after successful login
+  
+  Admin Capabilities (after login):
+  - View and manage all users (patients, specialists, staff)
+  - Generate system reports (monthly/annual analytics)
+  - Manage patient-specialist assignments
+  - View system-wide statistics
+  - Bulk email operations
+  
+  Security:
+  - Admin role verification on backend
+  - Token-based authentication
+  - Password not stored in frontend
+  - Admin token stored with "_admin" suffix for easy identification
+  
+  Related Files:
+  - admin_dashboard.html (main admin interface)
+  - user_management.html (user CRUD operations)
+  - patient_assignments.html (assignment management)
+  - reports_management.html (analytics and reports)
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
+  <script src="js/demo_users.js"></script>  <!-- Demo account credentials -->
+ 
+</head>
+
+<body>
+  <!-- Top navigation bar -->
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>  <!-- Homepage -->
+        <li><a href="patient.html">Patient</a></li>  <!-- Patient login -->
+        <li><a href="specialist.html">Specialist</a></li>  <!-- Specialist login -->
+        <li><a href="clinic.html">Clinic</a></li>  <!-- Clinic info -->
+        <li><a href="contact.html">Contact Us</a></li>  <!-- Contact page -->
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="login-section">
+      <h2>Admin Login</h2>
+      <form id="adminLoginForm" class="form-grid">
+        <div class="form-field">
+          <label for="adminEmail">Username or Email</label>
+          <input id="adminEmail" name="email" type="text" placeholder="admin@x.com" required />
+        </div>
+        <div class="form-field">
+          <label for="adminPassword">Password</label>
+          <input id="adminPassword" name="password" type="password" placeholder="••••••••" required />
+        </div>
+  
+        <p id="adminMsg" style="color: red; text-align: center; grid-column: 1 / -1;"></p> 
+
+        <div class="form-actions">
+          <button type="submit">Login</button>
+        </div>
+      </form>
+      
+      <!-- Demo Credentials -->
+      <div style="background:#e8f4f8;border:2px solid #004080;border-radius:8px;padding:15px;margin-top:20px;">
+        <h4 style="color:#004080;margin:0 0 10px 0;">🔐 Demo Admin Login</h4>
+        <div style="font-size:0.9rem;line-height:1.8;">
+          <strong>Email:</strong> admin@clinic.com<br>
+          <strong>Password:</strong> admin123
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Admin Panel</h2>
+      <p class="subtext">Manage users, permissions, system settings, and audit logs.</p>
+      <ul>
+        <li>After logging in, you’ll be redirected to <code>admin_dashboard.html</code>.</li>
+        <li>Create users with phone, DOB, image, and role.</li>
+        <li>Assign patients to specialists.</li>
+        <li>View audit reports and system settings.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  
+  <!-- JS Logic -->
+  <script>
+    // Clear any existing session on page load
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('adminId');
+    localStorage.removeItem('adminUserId');
+    localStorage.removeItem('loggedInAdmin');
+    localStorage.removeItem('adminName');
+    
+    // 1. ADD: Wrap all logic inside DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // 2. MOVE: Element references inside the wrapper
+      const form = document.getElementById('adminLoginForm');
+      const emailEl = document.getElementById('adminEmail');
+      const passEl = document.getElementById('adminPassword');
+      const msgEl = document.getElementById('adminMsg');
+
+      // 3. CRITICAL CHECK: Ensure form exists before binding events
+      if (!form) {
+          console.error("Initialization Error: adminLoginForm not found.");
+          return; 
+      }
+
+      // This block is inside admin.html's <script> tag
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        msgEl.textContent = '';
+
+        const email = (emailEl.value || '').trim();
+        const pass = (passEl.value || '').trim();
+        if (!email || !pass) {
+          msgEl.textContent = 'Please enter email and password.';
+          return;
+        }
+
+        try {
+          // Try database login using the global loginUser function
+          const resp = await loginUser(email, pass, 'admin');
+
+          // Persist token if present
+          const token = resp && (resp.token || resp.access_token);
+          if (token) {
+            try { localStorage.setItem('bsm_token', token); } catch(e) {}
+          }
+
+          if (resp && resp.user && (resp.user.role === 'admin' || resp.user.is_admin)) {
+            const u = resp.user;
+            const adminObj = {
+              email: u.email || email,
+              role: 'admin',
+              id: u.user_id || u.id || 0,
+              firstName: u.firstName || u.first_name || (u.email || email).split('@')[0],
+              lastName: u.lastName || u.last_name || ''
+            };
+            try { localStorage.setItem('loggedInAdmin', JSON.stringify(adminObj)); } catch(e) {}
+            try { localStorage.setItem('adminUserId', String(u.user_id || u.id || 0)); } catch(e) {}
+            try { localStorage.setItem('userId', String(u.user_id || u.id || 0)); } catch(e) {}
+            
+            msgEl.textContent = 'Signing in…';
+            msgEl.style.color = 'green';
+            setTimeout(() => { window.location.href = 'admin_dashboard.html'; }, 200);
+          } else {
+            msgEl.textContent = 'Invalid credentials or insufficient permissions.';
+          }
+        } catch (err) {
+          console.error('Admin login failed', err);
+          msgEl.textContent = 'Login failed: ' + (err && err.message ? err.message : err);
+        }
+      });
+    }); // 4. CLOSE: End of DOMContentLoaded listener
+  </script>
+</body>
+
+</html>

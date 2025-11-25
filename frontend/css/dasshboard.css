@@ -1,0 +1,47 @@
+/*
+  Blood Sugar Monitoring System - Dashboard Stylesheet
+  ======================================================
+  This stylesheet provides styling specifically for dashboard pages.
+  
+  Purpose:
+  - Card-based layout for dashboard components
+  - Grid system for responsive dashboard widgets
+  - Data visualization styling (charts, tables)
+  - Dashboard-specific component styling
+  
+  Used By:
+  - patient_dashboard.html
+  - admin_dashboard.html
+  - specialist_dashboard.html
+  - staff_dashboard.html
+  
+  Components:
+  - Card: White background containers for dashboard widgets
+  - Grid: Responsive grid layout for multiple cards
+  - Charts: Styling for Chart.js visualizations
+  - Statistics: Number displays and metrics
+  
+  Design:
+  - White cards with shadow for depth
+  - Grid layout with auto-fit columns
+  - Minimum 200px column width
+  - 10px gap between grid items
+  
+  File Size: Small, focused on card/grid layout
+*/
+
+/* Card Component - White container with shadow for dashboard widgets */
+.card {
+  background: white;  /* White background for content */
+  padding: 20px;  /* Internal spacing */
+  margin: 10px;  /* Space around cards */
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
+}
+
+/* Grid Layout - Responsive grid system for dashboard widgets */
+.grid {
+  display: grid;  /* CSS Grid layout */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));  /* Responsive columns: auto-fit with minimum 200px width */
+  gap: 10px;  /* Space between grid items */
+}
+

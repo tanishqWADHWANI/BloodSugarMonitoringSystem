@@ -1,0 +1,665 @@
+<!--
+  Blood Sugar Monitoring System - Specialist Dashboard
+  ======================================================
+  This is the main interface for authenticated specialists to manage assigned patients.
+  
+  Features Overview:
+  - View all assigned patients with key health metrics
+  - Patient search and filtering functionality
+  - Individual patient detail view
+  - Glucose readings analysis
+  - Dietary recommendation suggestions
+  - Alert monitoring for critical readings
+  - Patient communication tools
+  
+  Key Components:
+  1. Navigation Bar - Home, Logout
+  2. Dashboard Header - Specialist welcome message
+  3. Patient Search - Search by name, ID, or email
+  4. Assigned Patients List:
+     - Patient name, ID, email
+     - Last reading date and value
+     - Average glucose level
+     - Alert indicators
+     - Action buttons (View Details, Send Message)
+  
+  5. Patient Detail Modal:
+     - Full patient profile
+     - Recent glucose readings (last 30 days)
+     - Trend analysis (line chart)
+     - Pattern detection
+     - Dietary recommendations
+     - Alert history
+  
+  6. Quick Actions:
+     - View patient readings
+     - Send dietary advice
+     - Respond to alerts
+     - Schedule follow-ups
+  
+  Patient List Features:
+  - Real-time data loading from API
+  - Search functionality (client-side filtering)
+  - Sort by last reading date, average glucose, name
+  - Color-coded alert indicators (red = critical, yellow = warning)
+  - Expandable patient cards
+  
+  Patient Detail View:
+  - 30-day glucose trend chart (Chart.js)
+  - Readings table with meal type, timestamp, notes
+  - Average, min, max glucose calculations
+  - Pattern analysis (morning highs, post-meal spikes)
+  - Food trigger detection
+  - Recommended diet modifications
+  
+  Dietary Recommendations:
+  - AI-powered suggestions based on glucose patterns
+  - Meal type-specific advice (breakfast, lunch, dinner, snacks)
+  - Food substitution recommendations
+  - Portion size guidance
+  - Hydration reminders
+  
+  Alert Management:
+  - Critical high/low glucose notifications
+  - Color-coded severity levels
+  - Alert timestamps
+  - Quick response actions
+  - Dismiss functionality
+  
+  Security:
+  - Specialist role verification required
+  - Token-based authentication
+  - Automatic redirect to specialist.html if unauthenticated
+  - Specialist token stored with "_specialist" suffix
+  - Patient data access limited to assigned patients only
+  
+  Data Management:
+  - Real-time API integration via api.js
+  - LocalStorage for authentication state
+  - Automatic patient list refresh
+  - Error handling with user-friendly messages
+  
+  Related Files:
+  - specialist.html (login page)
+  - specialist_patient_view.html (detailed patient view)
+  - js/api.js (API client library)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 576 lines (interactive specialist interface)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specialist Dashboard - Online Blood Sugar Monitor</title>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <style>
+   /* Logout button styling - red accent for visibility */
+    .logout-btn {
+      background: #dc3545;  /* Red background */
+      border: none;  /* Remove default border */
+      border-radius: 6px;  /* Rounded corners */
+      padding: 10px 20px;  /* Button padding */
+      cursor: pointer;  /* Pointer cursor on hover */
+      color: white;  /* White text */
+      font-weight: 500;  /* Medium font weight */
+      font-size: 0.95rem;  /* Slightly smaller text */
+    }
+    .logout-btn:hover { background: #c82333; }  /* Darker red on hover */
+
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }  /* Main container */
+    h1, h2, h3, h4, p { margin: 0 0 15px 0; }  /* Consistent heading margins */
+    .dashboard-section { margin-top: 30px; }  /* Section spacing */
+
+    /* Patient search bar styling */
+    .patient-search { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }  /* Flexbox layout */
+    .patient-search input, .patient-search button {
+      padding: 8px; border-radius: 5px; border: 1px solid #ccc;  /* Input/button styling */
+    }
+    .patient-search button {
+      background: #004080; color: white; border: none; cursor: pointer;  /* Blue search button */
+    }
+    .patient-search button:hover { background: #0066cc; }
+
+    table {
+      width: 100%; border-collapse: collapse; background: white; border-radius: 10px;
+      overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #004080; color: white; }
+    tr:hover { background: #f1f1f1; cursor: pointer; }
+
+    footer { background: #004080; color: white; text-align: center; padding: 10px; margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="specialist.html" class="active">Specialist</a></li>
+		<li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li style="margin-left:auto;">
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Welcome, <span id="specialistNameDisplay">Specialist</span></h1>
+    <p>View your patients' latest updates and access their detailed health records.</p>
+
+    <!-- Specialist Profile Section -->
+    <div class="dashboard-section" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img id="profileImageDisplay" src="" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid #007bff;" />
+          <h2 style="margin: 0;">👤 My Profile</h2>
+        </div>
+        <button onclick="window.location.href='edit_profile_specialist.html'" id="editProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
+      </div>
+
+      <!-- Profile Display -->
+      <div id="profileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div><strong>💼 Email:</strong> <span id="profileEmail">Loading...</span></div>
+        <div><strong>📱 Phone:</strong> <span id="profilePhone">Loading...</span></div>
+        <div><strong>🎂 Birthday:</strong> <span id="profileBirthday">Loading...</span></div>
+        <div><strong>🔢 User ID:</strong> <span id="profileUserId">Loading...</span></div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">System account identifier</div>
+        <div><strong>🆔 License ID:</strong> <span id="profileLicenseId">Loading...</span></div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">ℹ️ Province/State Professional License Number</div>
+      </div>
+
+      <!-- Edit Profile Form -->
+      <div id="editProfileForm" style="display: none; margin-top: 20px;">
+        <h3 style="color: #004080; margin-bottom: 15px;">Edit Your Profile</h3>
+        <form id="profileUpdateForm" style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">First Name *</label>
+              <input type="text" id="editFirstName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Last Name *</label>
+              <input type="text" id="editLastName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Email *</label>
+              <input type="email" id="editEmail" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Phone</label>
+              <input type="tel" id="editPhone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Date of Birth</label>
+              <input type="date" id="editDateOfBirth" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">License ID</label>
+              <input type="text" id="editLicenseId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+              <small style="color: #666; font-size: 0.8rem;">Professional license number issued by province/state</small>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">New Password</label>
+              <input type="password" id="editPassword" placeholder="Leave blank to keep current" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+              <small style="color: #666;">Leave blank if you don't want to change password</small>
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Profile Image</label>
+              <input type="file" id="editProfileImage" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+              <small style="color: #666;">Upload a new profile picture (optional)</small>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">💾 Save Changes</button>
+            <button type="button" onclick="cancelEditProfile()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">❌ Cancel</button>
+          </div>
+        </form>
+        <div id="profileUpdateMsg" style="margin-top: 15px; padding: 10px; border-radius: 4px;"></div>
+      </div>
+    </div>
+
+    <div class="dashboard-section">
+      <h2>Patient List</h2>
+      <div class="patient-search">
+        <input type="text" id="search-name" placeholder="Search by Name">
+        <input type="text" id="search-number" placeholder="Search by Patient ID">
+        <input type="date" id="start-date">
+        <input type="date" id="end-date">
+        <button id="search-btn">Search</button>
+        <button id="reset-btn">Reset</button>
+      </div>
+
+      <table id="patient-table">
+        <thead>
+          <tr>
+            <th>Patient Number</th>
+            <th>Name</th>
+            <th>Last Checked</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+  const API_BASE = 'http://127.0.0.1:5000';
+
+  // Profile Edit Functions
+  let currentUserData = null;
+
+  function toggleEditProfile() {
+    const form = document.getElementById('editProfileForm');
+    const display = document.getElementById('profileDisplay');
+    const btn = document.getElementById('editProfileBtn');
+    
+    if (form.style.display === 'none') {
+      // Populate form with current data
+      if (currentUserData) {
+        document.getElementById('editFirstName').value = currentUserData.first_name || '';
+        document.getElementById('editLastName').value = currentUserData.last_name || '';
+        document.getElementById('editEmail').value = currentUserData.email || '';
+        document.getElementById('editPhone').value = currentUserData.phone || '';
+        document.getElementById('editDateOfBirth').value = currentUserData.date_of_birth || '';
+        document.getElementById('editLicenseId').value = currentUserData.license_id || '';
+      }
+      form.style.display = 'block';
+      display.style.display = 'none';
+      btn.textContent = '👁️ View Profile';
+    } else {
+      form.style.display = 'none';
+      display.style.display = 'grid';
+      btn.textContent = '✏️ Edit Profile';
+    }
+  }
+
+  function cancelEditProfile() {
+    document.getElementById('editProfileForm').style.display = 'none';
+    document.getElementById('profileDisplay').style.display = 'grid';
+    document.getElementById('editProfileBtn').textContent = '✏️ Edit Profile';
+    document.getElementById('profileUpdateMsg').textContent = '';
+  }
+
+  // Handle profile update form submission
+  document.getElementById('profileUpdateForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const msgEl = document.getElementById('profileUpdateMsg');
+    msgEl.style.color = 'blue';
+    msgEl.style.background = '#e7f3ff';
+    msgEl.style.padding = '10px';
+    msgEl.textContent = 'Updating profile...';
+    
+    const userId = specialistUserId || localStorage.getItem('userId');
+    
+    const payload = {
+      firstName: document.getElementById('editFirstName').value.trim(),
+      lastName: document.getElementById('editLastName').value.trim(),
+      email: document.getElementById('editEmail').value.trim(),
+      phone: document.getElementById('editPhone').value.trim(),
+      dateOfBirth: document.getElementById('editDateOfBirth').value
+    };
+    
+    // Only include password if entered
+    const password = document.getElementById('editPassword').value.trim();
+    if (password) {
+      if (password.length < 6) {
+        msgEl.style.color = 'red';
+        msgEl.style.background = '#ffe7e7';
+        msgEl.textContent = 'Password must be at least 6 characters long.';
+        return;
+      }
+      payload.password = password;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        msgEl.style.color = 'green';
+        msgEl.style.background = '#e7ffe7';
+        msgEl.textContent = '✅ Profile updated successfully!';
+        
+        // Reload profile info
+        await loadSpecialistProfile();
+        
+        // Close form after 2 seconds
+        setTimeout(() => {
+          cancelEditProfile();
+        }, 2000);
+      } else {
+        throw new Error(data.error || 'Update failed');
+      }
+    } catch (error) {
+      msgEl.style.color = 'red';
+      msgEl.style.background = '#ffe7e7';
+      msgEl.textContent = '❌ Error: ' + error.message;
+    }
+  });
+
+  // Load specialist profile info
+  async function loadSpecialistProfile() {
+    const token = localStorage.getItem('bsm_token');
+    let user = null;
+    
+    // Try to fetch from database using token first
+    if (token) {
+      try {
+        const response = await fetch(`${API_BASE}/api/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          user = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
+      }
+    }
+    
+    // Fallback to localStorage if /api/me failed
+    if (!user) {
+      const userId = specialistUserId || localStorage.getItem('userId');
+      if (!userId) {
+        console.error('No userId found for specialist');
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE}/api/users/${userId}`);
+        user = await response.json();
+      } catch (error) {
+        console.error('Failed to load specialist profile:', error);
+        return;
+      }
+    }
+
+    try {
+      if (user && user.user_id) {
+        currentUserData = user;
+        
+        document.getElementById('profileEmail').textContent = user.email || 'Not provided';
+        document.getElementById('profilePhone').textContent = user.phone || 'Not provided';
+        document.getElementById('profileBirthday').textContent = user.date_of_birth || 'Not provided';
+        document.getElementById('profileUserId').textContent = user.user_id || 'N/A';
+        document.getElementById('profileLicenseId').textContent = user.license_id || 'Not provided';
+        
+        // Display profile image if available
+        if (user.profile_image) {
+          const imgElement = document.getElementById('profileImageDisplay');
+          imgElement.src = user.profile_image;
+          imgElement.style.display = 'block';
+        }
+        
+        // Update greeting
+        const specialistNameDisplay = document.getElementById('specialistNameDisplay');
+        if (specialistNameDisplay && user.first_name) {
+          specialistNameDisplay.textContent = `${user.first_name} ${user.last_name || ''}`.trim();
+        }
+      }
+    } catch (error) {
+      console.error('Error loading specialist profile:', error);
+    }
+  }
+
+  // AUTH / BASIC INFO
+  const loggedInSpecialist = localStorage.getItem('specialistUsername');
+  if (!loggedInSpecialist) {
+    // Not logged in, send back to login page
+    window.location.href = 'specialist.html';
+  }
+
+  // Resolve specialist display info
+  const storedUsername = (localStorage.getItem('specialistUsername') || '').toString().trim();
+  let storedFull = (localStorage.getItem('specialistFullName') || '').toString().trim();
+  const specialistDisplayMap = { 
+    'jsmith': 'Dr. John Smith', 
+    'ajones': 'Dr. Alex Jones', 
+    'clee': 'Dr. Christina Lee' 
+  };
+  
+  // Map usernames to actual user_ids in the database
+  const usernameToUserIdMap = {
+    'jsmith': 101,  // Dr. John Smith's user_id
+    'ajones': 102,  // Dr. Alex Jones's user_id
+    'clee': 103     // Dr. Christina Lee's user_id
+  };
+  
+  let specialistName = 'Specialist';
+  let specialistUserId = localStorage.getItem('specialistUserId') || '';
+  let specialistId = localStorage.getItem('specialistId') || '';
+  
+  if (storedUsername) {
+    const usernameLower = storedUsername.toLowerCase();
+    if (specialistDisplayMap[usernameLower]) {
+      specialistName = specialistDisplayMap[usernameLower];
+      
+      // Set the user_id for API calls
+      if (usernameToUserIdMap[usernameLower]) {
+        specialistUserId = String(usernameToUserIdMap[usernameLower]);
+        localStorage.setItem('specialistUserId', specialistUserId);
+      }
+      
+      // Keep old specialistId for compatibility
+      const demoMap = { 'jsmith': 1, 'ajones': 2, 'clee': 3 };
+      if (!specialistId && demoMap[usernameLower]) {
+        specialistId = String(demoMap[usernameLower]);
+        localStorage.setItem('specialistId', specialistId);
+      }
+    } else if (storedFull) {
+      specialistName = storedFull;
+    }
+  } else if (storedFull) {
+    specialistName = storedFull;
+  }
+  
+  console.log('Specialist Info:', { 
+    username: storedUsername, 
+    name: specialistName, 
+    userId: specialistUserId,
+    oldId: specialistId 
+  });
+  
+  const specialistNameDisplay = document.getElementById('specialistNameDisplay');
+  if (specialistNameDisplay) {
+    specialistNameDisplay.textContent = specialistName;
+  }
+
+  const tableBody = document.querySelector('#patient-table tbody');
+  let patientsCache = [];
+
+  function renderTable(data) {
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+    if (!data || data.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">No patients assigned to you.</td></tr>';
+      return;
+    }
+    data.forEach(p => {
+      const row = document.createElement('tr');
+      row.innerHTML = `\
+        <td>${p.number || p.patient_id || ''}</td>\
+        <td>${p.name || p.first_name + ' ' + p.last_name || ''}</td>\
+        <td>${p.lastChecked || p.last_date_time || 'Not available'}</td>`;
+      row.addEventListener('click', () => {
+        try { localStorage.setItem('viewingPatientNumber', p.number || p.patient_id || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientName', p.name || (p.first_name + ' ' + p.last_name) || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientUserId', p.userId || p.user_id || ''); } catch(e){}
+        try { localStorage.setItem('viewingPatientId', p.patientId || p.patient_id || p.id || ''); } catch(e){}
+        window.location.href = 'specialist_patient_view.html';
+      });
+      tableBody.appendChild(row);
+    });
+  }
+
+  // Load patients from server (filtered by specialist)
+  async function loadPatientsFromServer() {
+    // Use specialistUserId if available, otherwise fall back to specialistId
+    const idToUse = specialistUserId || specialistId;
+    
+    if (!idToUse) {
+      console.error('Missing specialist ID. Cannot load patients.');
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: red;">Error: Specialist ID not found. Please log in again.</td></tr>';
+      return;
+    }
+
+    try {
+      console.log('Loading patients for specialist user_id:', idToUse);
+      const res = await fetch(`${API_BASE}/api/specialist/${idToUse}/patients?t=${Date.now()}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('bsm_token') || ''}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      const data = await res.json();
+      console.log('API returned data:', data);
+      
+      const mapped = (data.patients || []).map(p => ({
+        patientId: p.patient_id,
+        userId: p.user_id,
+        number: p.patient_id,
+        name: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+        lastChecked: p.last_date_time ? String(p.last_date_time).split('T')[0] : 'Not available'
+      }));
+      
+      patientsCache = mapped;
+      renderTable(mapped);
+      console.log(`✅ Loaded ${mapped.length} patients for specialist user_id ${idToUse}:`, mapped);
+    } catch(err) {
+      console.warn('Server patient load failed:', err);
+      // Fallback to localStorage if server fails
+      loadPatientsFromLocalStorage();
+    }
+  }
+
+  // Fallback to localStorage
+  function loadPatientsFromLocalStorage() {
+    try {
+      let patients = JSON.parse(localStorage.getItem('patients') || '[]');
+      if (!Array.isArray(patients) && typeof patients === 'object') {
+        patients = Object.values(patients);
+      }
+      
+      // Filter by assignments if available
+      const assigns = JSON.parse(localStorage.getItem('assignments') || '[]');
+      const idToUse = specialistUserId || specialistId;
+      if (Array.isArray(assigns) && assigns.length > 0 && idToUse) {
+        const myPatientIds = assigns
+          .filter(a => String(a.specialistId) === String(idToUse))
+          .map(a => String(a.patientId).toLowerCase());
+        
+        if (myPatientIds.length > 0) {
+          patients = patients.filter(p => {
+            const ids = [p.patientId, p.patient_id, p.number, p.userId, p.user_id, p.id]
+              .map(x => String(x || '').toLowerCase());
+            return ids.some(id => id && myPatientIds.includes(id));
+          });
+        }
+      }
+      
+      const mapped = patients.map(p => ({
+        patientId: p.patientId || p.patient_id || p.id,
+        userId: p.userId || p.user_id,
+        number: p.number || p.patient_id || p.id || '-',
+        name: p.name || p.fullName || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown',
+        lastChecked: p.lastChecked || p.last_date_time || 'Not available'
+      }));
+      
+      patientsCache = mapped;
+      renderTable(mapped);
+    } catch(e) {
+      console.error('Failed to load patients from localStorage:', e);
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">No patients found.</td></tr>';
+    }
+  }
+
+  // Load on page start
+  loadPatientsFromServer();
+  loadSpecialistProfile();
+
+  // Search and Reset
+  document.getElementById('search-btn').addEventListener('click', () => {
+    const nameVal = document.getElementById('search-name').value.toLowerCase();
+    const numberVal = document.getElementById('search-number').value.toLowerCase();
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+
+    const filtered = patientsCache.filter(p => {
+      const matchName = (p.name || '').toLowerCase().includes(nameVal);
+      const matchNumber = String(p.number || '').toLowerCase().includes(numberVal);
+      const matchDate = (!startDate || p.lastChecked >= startDate) && (!endDate || p.lastChecked <= endDate);
+      return matchName && matchNumber && matchDate;
+    });
+    renderTable(filtered);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    document.getElementById('search-name').value = '';
+    document.getElementById('search-number').value = '';
+    document.getElementById('start-date').value = '';
+    document.getElementById('end-date').value = '';
+    renderTable(patientsCache);
+  });
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', e => {
+    e.preventDefault();
+    // Clear all specialist session data
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('specialistId');
+    localStorage.removeItem('specialistUserId');
+    localStorage.removeItem('specialistUsername');
+    localStorage.removeItem('specialistFullName');
+    localStorage.removeItem('specialistSpecialty');
+    alert('You have been logged out.');
+    window.location.href = 'specialist.html';
+  });
+  
+  // Setup inactivity timeout (30 minutes)
+  let inactivityTimer;
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+  
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      alert('Your session has expired due to inactivity.');
+      localStorage.clear();
+      window.location.href = 'specialist.html';
+    }, INACTIVITY_TIMEOUT);
+  }
+  
+  ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+    document.addEventListener(event, resetInactivityTimer, true);
+  });
+  resetInactivityTimer();
+  </script>
+</body>
+</html>

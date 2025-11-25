@@ -1,0 +1,640 @@
+<!--
+  Blood Sugar Monitoring System - Specialist Patient View Page
+  ==============================================================
+  This page provides specialists with detailed view of individual patient data.
+  
+  Features Overview:
+  - Complete patient profile with medical history
+  - Glucose readings table (last 30 days)
+  - Glucose trend chart (Chart.js visualization)
+  - AI-powered pattern analysis
+  - Dietary recommendations
+  - Alert history
+  - Communication tools (send message, dietary advice)
+  
+  Key Components:
+  1. Navigation Bar - Back to Dashboard, Logout
+  2. Patient Profile Section:
+     - Patient name, ID, photo
+     - Age, gender, blood type
+     - Contact information (email, phone)
+     - Emergency contact details
+     - Diagnosis (Type 1/2 Diabetes)
+     - Account creation date
+  
+  3. Glucose Readings Section:
+     - Readings table (last 30 days):
+       * Date & Time
+       * Glucose Level (mg/dL)
+       * Meal Type
+       * Activity (pre/post exercise)
+       * Notes
+       * Color-coded by glucose range
+     - Sort by date (newest first)
+     - Filter by meal type
+     - Filter by date range
+  
+  4. Trend Chart Section:
+     - 30-day glucose trend line chart
+     - Color-coded data points (low/normal/high)
+     - Meal type markers
+     - Average glucose line overlay
+     - Hover tooltips with full details
+  
+  5. Statistics Summary:
+     - Total readings (last 30 days)
+     - Average glucose level
+     - Minimum glucose (with date)
+     - Maximum glucose (with date)
+     - Standard deviation
+     - Time in range (% in 70-180 mg/dL)
+     - Time below range (% <70 mg/dL)
+     - Time above range (% >180 mg/dL)
+  
+  6. Pattern Analysis (AI Insights):
+     - Morning highs detection
+     - Post-meal spikes
+     - Hypoglycemia episodes
+     - Food triggers (specific foods causing spikes)
+     - Activity correlation (exercise impact)
+     - Medication adherence patterns
+  
+  7. Dietary Recommendations:
+     - Personalized meal suggestions
+     - Food substitution recommendations
+     - Meal timing optimization
+     - Portion size guidance
+     - Carbohydrate counting tips
+  
+  8. Alert History:
+     - Critical high/low glucose alerts
+     - Alert timestamp
+     - Alert resolution status
+     - Specialist response notes
+  
+  9. Communication Tools:
+     - Send Message to Patient button
+     - Send Dietary Advice button
+     - Schedule Follow-up button
+     - Request Additional Testing button
+  
+  Chart Features (Chart.js):
+  - Responsive line chart
+  - Gradient fill under line
+  - Color-coded data points:
+    * Red: <70 mg/dL (hypoglycemia)
+    * Green: 70-180 mg/dL (normal)
+    * Orange: 181-250 mg/dL (high)
+    * Red: >250 mg/dL (critical high)
+  - Legend with range indicators
+  - Zoom/pan capabilities
+  
+  Table Features:
+  - Sortable columns (click header to sort)
+  - Color-coded glucose values
+  - Expandable rows (show full notes)
+  - Export to CSV button
+  - Print-friendly view
+  
+  Security:
+  - Specialist authentication required
+  - Patient must be assigned to specialist
+  - Token-based access control
+  - Read-only view of patient data
+  - No data modification allowed
+  
+  Related Files:
+  - specialist_dashboard.html (specialist main dashboard)
+  - specialist.html (specialist login)
+  - js/demo_users.js (demo account data)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 525 lines
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Details - Online Blood Sugar Monitor</title>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <script src="js/demo_users.js"></script>  <!-- Demo account credentials -->
+  <style>
+    /* Logout button styling - red accent for prominence */
+    .logout-btn {
+      background:#cc0000;  /* Red background */
+      border:none;  /* Remove default border */
+      border-radius:5px;  /* Rounded corners */
+      padding:8px 12px;  /* Button padding */
+      cursor:pointer;  /* Pointer cursor on hover */
+      color:white;  /* White text */
+    }
+    .logout-btn:hover { background:#ff3333; }  /* Lighter red on hover */
+
+    .container { max-width:1100px; margin:20px auto; padding:0 15px; }  /* Main container */
+    h1,h2,h3,h4,p { margin-bottom:10px; }  /* Consistent heading margins */
+
+    /* Section card styling for organized content */
+    .section-card {
+      background:white;  /* White card background */
+      border-radius:8px;  /* Rounded corners */
+      box-shadow:0 3px 8px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
+      padding:20px;  /* Internal spacing */
+      margin-bottom:25px;  /* Space between cards */
+    }
+
+    /* Table styling */
+    table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.9rem;
+    }
+    th, td {
+      border:1px solid #ccc;
+      padding:8px;
+      text-align:left;
+    }
+    th {
+      background:#004080;
+      color:white;
+    }
+
+    .info-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(250px,1fr));
+      gap:10px;
+    }
+    .info-item {
+      background:#f9f9f9;
+      border:1px solid #ddd;
+      border-radius:6px;
+      padding:10px;
+    }
+
+    #comment-text {
+      width:100%;
+      padding:10px;
+      border-radius:5px;
+      border:1px solid #ccc;
+      resize:vertical;
+      min-height:80px;
+    }
+    #save-comment {
+      margin-top:10px;
+      padding:8px 15px;
+      background:#004080;
+      color:white;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+    }
+    #save-comment:hover { background:#0066cc; }
+    #comment-list {
+      list-style:none;
+      padding:0;
+      margin-top:10px;
+    }
+    #comment-list li {
+      background:#f2f4f8;
+      border-left:4px solid #004080;
+      margin-bottom:8px;
+      padding:8px;
+      border-radius:4px;
+    }
+
+    footer {
+      background:#004080;
+      color:white;
+      text-align:center;
+      padding:10px;
+      margin-top:40px;
+    }
+    .back-btn {
+      background:#999;
+      color:white;
+      padding:8px 12px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+      margin-bottom:15px;
+    }
+    .back-btn:hover { background:#777; }
+    
+    .abnormal {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .abnormal-row {
+      background-color: #ffe6e6 !important;
+      border-left: 4px solid #dc3545;
+    }
+
+    .abnormal-row:hover {
+      background-color: #ffd4d4 !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="specialist_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li style="margin-left:auto;">
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <button class="back-btn" onclick="window.location.href='specialist_dashboard.html'">
+      &larr; Back to Dashboard
+    </button>
+
+    <h1>Patient: <span id="patientName"></span></h1>
+    <p>Patient ID: <span id="patientNumber"></span></p>
+
+    <!-- PERSONAL INFO -->
+    <section class="section-card">
+      <h2>Personal Information</h2>
+      <div class="info-grid" id="personal-info">
+        <!-- filled by JS -->
+      </div>
+      <div style="margin-top:12px">
+        <strong>Assigned Specialist:</strong> <span id="assignedSpecialist">Dr. Christina Lee</span>
+      </div>
+    </section>
+
+    <!-- HEALTH DATA -->
+    <section class="section-card">
+      <h2>Health Data History</h2>
+      <table id="health-data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Blood Sugar</th>
+            <th>Heart Rate</th>
+            <th>Medications</th>
+            <th>Food Time</th>
+            <th>Food Taken / Activity</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- filled by JS -->
+        </tbody>
+      </table>
+      <p id="health-msg" style="margin-top:10px; color:#666;"></p>
+    </section>
+
+    <!-- COMMENTS -->
+    <section class="section-card">
+      <h2>Specialist Comments</h2>
+      <textarea id="comment-text" placeholder="Add a comment about this patient's readings..."></textarea>
+      <button id="save-comment">Save Comment</button>
+
+      <h3 style="margin-top:20px;">Previous Comments</h3>
+      <ul id="comment-list"></ul>
+      <p id="comment-msg" style="margin-top:10px; color:#666;"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+<script>
+  const API_BASE = 'http://127.0.0.1:5000';
+
+  // ============================
+  // CONTEXT FROM DASHBOARD
+  // ============================
+  const specialistId = localStorage.getItem('specialistId') || '3';
+  const patientNumber = localStorage.getItem('viewingPatientNumber');
+  const patientName = localStorage.getItem('viewingPatientName');
+  const patientUserId = localStorage.getItem('viewingPatientUserId'); // users.user_id
+  const patientId = localStorage.getItem('viewingPatientId');        // patients.patient_id
+
+  // If some IDs are missing (e.g., selection came from cached data), try to resolve them
+  let resolvedUserId = patientUserId;
+  let resolvedPatientId = patientId;
+  if ((!resolvedUserId || !resolvedPatientId) && patientNumber) {
+    try {
+      // ensure demo patient exists for preview
+      (function(){ try{ const key='patients'; const raw=localStorage.getItem(key); const arr=raw?JSON.parse(raw):null; const exists=Array.isArray(arr)&&arr.some(p=>p.number==='001'||p.id==='001'||p.patientId==='001'); if(!exists){ const demo={ number:'001', name:'John Doe', age:35, gender:'Male', phone:'555-1234', medical_history:'Diabetes, Hypertension', lastChecked:'Blood Sugar: 140 mg/dL', id:'001', patientId:'001' }; const out=Array.isArray(arr)?[demo,...arr]:[demo]; localStorage.setItem(key, JSON.stringify(out)); } }catch(e){} })();
+      const cached = JSON.parse(localStorage.getItem('patients') || 'null');
+      if (Array.isArray(cached)) {
+        const found = cached.find(p => String(p.number) === String(patientNumber) || String(p.patientId) === String(patientNumber));
+        if (found) {
+          resolvedUserId = resolvedUserId || found.userId || found.user_id || null;
+          resolvedPatientId = resolvedPatientId || found.patientId || found.patient_id || null;
+          // Persist for future pages
+          if (resolvedUserId) localStorage.setItem('viewingPatientUserId', String(resolvedUserId));
+          if (resolvedPatientId) localStorage.setItem('viewingPatientId', String(resolvedPatientId));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not resolve patient IDs from cache', e);
+    }
+  }
+
+  if (!patientNumber || !patientName || !resolvedUserId || !resolvedPatientId) {
+    alert('No patient selected. Redirecting to dashboard...');
+    window.location.href = 'specialist_dashboard.html';
+  }
+
+  // Use resolved ids for subsequent calls
+  const patientUserIdFinal = resolvedUserId;
+  const patientIdFinal = resolvedPatientId;
+
+  console.log('=== Patient View Context ===');
+  console.log('Patient Number:', patientNumber);
+  console.log('Patient Name:', patientName);
+  console.log('Patient User ID (for readings):', patientUserIdFinal);
+  console.log('Patient ID (for feedback):', patientIdFinal);
+  console.log('===========================');
+
+  const patientNumberSpan = document.getElementById('patientNumber');
+  const patientNameSpan = document.getElementById('patientName');
+  if (patientNumberSpan) patientNumberSpan.textContent = patientNumber;
+  if (patientNameSpan) patientNameSpan.textContent = patientName;
+
+  // ============================
+  // LOAD READINGS
+  // ============================
+  const readingsBody = document.querySelector('#health-data-table tbody');
+
+  // Helper functions to check abnormal values
+  function isAbnormalBloodSugar(value) {
+    const num = parseFloat(value);
+    return !isNaN(num) && (num < 70 || num > 130);
+  }
+
+  function isAbnormalBloodPressure(value) {
+    if (value === '-' || !value) return false;
+    const parts = String(value).split('/');
+    if (parts.length !== 2) return false;
+    const systolic = parseFloat(parts[0]);
+    const diastolic = parseFloat(parts[1]);
+    return (!isNaN(systolic) && (systolic < 90 || systolic > 130)) ||
+           (!isNaN(diastolic) && (diastolic < 60 || diastolic > 85));
+  }
+
+  function isAbnormalHeartRate(value) {
+    const num = parseFloat(value);
+    return !isNaN(num) && (num < 60 || num > 100);
+  }
+
+  function renderReadings(readings) {
+    if (!readingsBody) return;
+
+    readingsBody.innerHTML = '';
+    if (!readings || readings.length === 0) {
+      readingsBody.innerHTML =
+        '<tr><td colspan="7">No readings found for this patient.</td></tr>';
+      return;
+    }
+
+    readings.forEach(r => {
+      const tr = document.createElement('tr');
+
+      const dt = r.date_time || r.dateTime || '';
+      const datePart = dt ? String(dt).split('T')[0] : '';
+      const timePart = dt && String(dt).includes('T')
+        ? String(dt).split('T')[1].substring(0, 5)
+        : '';
+
+      // Check for abnormal values
+      const bsValue = r.value || '';
+      const hrValue = r.heart_rate || '';
+      const bsAbnormal = isAbnormalBloodSugar(bsValue);
+      const hrAbnormal = isAbnormalHeartRate(hrValue);
+      const hasAbnormal = bsAbnormal || hrAbnormal;
+
+      // Add abnormal class to row if any value is abnormal
+      if (hasAbnormal) {
+        tr.classList.add('abnormal-row');
+      }
+
+      const warningIcon = hasAbnormal ? '⚠️ ' : '';
+      const bsClass = bsAbnormal ? ' class="abnormal"' : '';
+      const hrClass = hrAbnormal ? ' class="abnormal"' : '';
+
+      tr.innerHTML = `
+        <td>${warningIcon}${datePart}</td>
+        <td>${timePart}</td>
+        <td${bsClass}>${bsValue} ${r.unit || 'mg/dL'}</td>
+        <td${hrClass}>${hrValue || '-'}</td>
+        <td>${r.medications || '-'}</td>
+        <td>${r.food_time || '-'}</td>
+        <td>${r.food_intake || '-'} / ${r.activity || '-'}</td>
+      `;
+      readingsBody.appendChild(tr);
+    });
+  }
+
+  async function loadReadings() {
+    if (!readingsBody) return;
+
+    try {
+      console.log('=== Loading Readings ===');
+      console.log('API URL:', `${API_BASE}/api/readings/${patientUserIdFinal}?days=365`);
+      console.log('Patient User ID:', patientUserIdFinal);
+      
+      if (!patientUserIdFinal) {
+        throw new Error('Patient User ID is missing');
+      }
+      
+      const res = await fetch(
+        `${API_BASE}/api/readings/${patientUserIdFinal}?days=365`
+      );
+      
+      console.log('Response status:', res.status);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Server responded ${res.status}: ${errorText}`);
+      }
+      
+      const data = await res.json();
+      console.log('Readings data received:', data);
+      console.log('Number of readings:', data.readings?.length || 0);
+      
+      renderReadings(data.readings || []);
+    } catch (err) {
+      console.error('Error loading readings:', err);
+      readingsBody.innerHTML =
+        `<tr><td colspan="7" style="color: red;">Error loading readings from server: ${err.message}</td></tr>`;
+    }
+  }
+
+  // ============================
+  // LOAD COMMENTS (FEEDBACK)
+  // ============================
+  const commentList = document.getElementById('comment-list');
+
+  function renderComments(feedback) {
+    if (!commentList) return;
+
+    commentList.innerHTML = '';
+    if (!feedback || feedback.length === 0) {
+      commentList.innerHTML = '<li>No comments yet.</li>';
+      return;
+    }
+
+    feedback.forEach(fb => {
+      const li = document.createElement('li');
+      const author = fb.specialist_name || 'Specialist';
+      const text = fb.feedback_text || '';
+      const createdRaw = fb.createdAt || fb.created_at || '';
+      
+      // Format timestamp to be more readable
+      let formattedDate = '';
+      if (createdRaw) {
+        try {
+          const date = new Date(createdRaw);
+          formattedDate = date.toLocaleString();
+        } catch (e) {
+          formattedDate = createdRaw;
+        }
+      }
+
+      li.innerHTML = `
+        <strong>${author}:</strong> ${text}<br>
+        <small style="color: #666;">${formattedDate}</small>
+      `;
+      li.style.marginBottom = '12px';
+      li.style.paddingBottom = '12px';
+      li.style.borderBottom = '1px solid #eee';
+      commentList.appendChild(li);
+    });
+  }
+
+  async function loadComments() {
+    if (!commentList) return;
+
+    try {
+        const res = await fetch(
+        `${API_BASE}/api/patient/${patientIdFinal}/feedback`
+      );
+      if (!res.ok) {
+        throw new Error(`Server responded ${res.status}`);
+      }
+      const data = await res.json();
+      renderComments(data.feedback || []);
+    } catch (err) {
+      console.error('Error loading comments:', err);
+      commentList.innerHTML = '<li>Error loading comments from server.</li>';
+    }
+  }
+
+  // Load assigned specialist from database
+  async function loadAssignedSpecialist() {
+    const el = document.getElementById('assignedSpecialist');
+    if (!el) return;
+
+    try {
+      console.log('Loading assigned specialist for patient_id:', patientIdFinal);
+      
+      const res = await fetch(`${API_BASE}/api/patient/${patientIdFinal}/specialist`);
+      
+      if (!res.ok) {
+        console.warn('Failed to load specialist, status:', res.status);
+        el.textContent = 'Not assigned';
+        return;
+      }
+      
+      const data = await res.json();
+      console.log('Specialist data:', data);
+      
+      if (data.specialist) {
+        const spec = data.specialist;
+        const fullName = `${spec.first_name} ${spec.last_name}`.trim();
+        const displayName = fullName.startsWith('Dr.') ? fullName : `Dr. ${fullName}`;
+        el.textContent = `${displayName} (${spec.email})`;
+      } else {
+        el.textContent = 'Not assigned';
+      }
+    } catch (e) {
+      console.error('Error loading assigned specialist:', e);
+      el.textContent = 'Not assigned';
+    }
+  }
+
+  // Call the function to load specialist
+  loadAssignedSpecialist();
+
+  // ============================
+  // SAVE NEW COMMENT
+  // ============================
+  const commentText = document.getElementById('comment-text');
+  const saveCommentBtn = document.getElementById('save-comment');
+
+  if (saveCommentBtn) {
+    saveCommentBtn.addEventListener('click', async () => {
+      const text = (commentText?.value || '').trim();
+      if (!text) {
+        alert('Please enter a comment before saving.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/specialist/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            specialistId: parseInt(specialistId, 10),
+            // Backend expects data.patientId to be user_id, and it maps to patient
+            patientId: parseInt(patientUserIdFinal, 10),
+            feedbackText: text,
+            readingId: null
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to save feedback');
+        }
+
+        alert('Feedback saved successfully.');
+        if (commentText) commentText.value = '';
+        loadComments();
+      } catch (err) {
+        console.error('Error saving feedback:', err);
+        alert(err.message || 'Error saving feedback.');
+      }
+    });
+  }
+
+  // ============================
+  // INITIAL LOAD
+  // ============================
+  loadReadings();
+  loadComments();
+
+  // ============================
+  // LOGOUT
+  // ============================
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Clear specialist session keys
+      localStorage.removeItem('specialistUsername');
+      localStorage.removeItem('specialistFullName');
+      localStorage.removeItem('specialistSpecialty');
+      localStorage.removeItem('specialistId');
+      try { localStorage.removeItem('bsm_token'); } catch (e) {}
+      // Match patient logout UX: inform the user and redirect to home
+      alert('You have been logged out.');
+      window.location.href = 'index.html';
+    });
+  }
+</script>
+
+</body>
+</html>

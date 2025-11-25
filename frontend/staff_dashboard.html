@@ -1,0 +1,909 @@
+<!--
+  Blood Sugar Monitoring System - Staff Dashboard
+  =================================================
+  This is the main interface for authenticated clinic staff to manage administrative tasks.
+  
+  Features Overview:
+  - Patient records management (view, search, update)
+  - Email communication (patients and specialists)
+  - Message inbox management
+  - Patient contact information updates
+  - System notifications
+  - Quick access to common tasks
+  
+  Key Components:
+  1. Navigation Bar - Home, Patients, Email, Messages, Logout
+  2. Welcome Header - Staff greeting and role display
+  3. Summary Section - Quick statistics overview
+  4. Patient Search - Search by name, ID, email, or phone
+  5. Patient Records Table:
+     - Patient name, ID, email, phone
+     - Last visit date
+     - Assigned specialist
+     - Action buttons (View, Edit, Email)
+  
+  6. Quick Actions Panel:
+     - Send bulk emails to patients
+     - Send emails to specialists
+     - View incoming messages
+     - Update patient contacts
+     - View system alerts
+  
+  7. Message Inbox:
+     - Unread message count
+     - Message list with sender, subject, timestamp
+     - Mark as read/unread
+     - Reply functionality
+  
+  Patient Management Features:
+  - Search and filter patient records
+  - View patient profiles
+  - Update contact information
+  - View patient history
+  - Access patient documents
+  - View assigned specialist
+  
+  Email Management Features:
+  - Compose emails to individual patients
+  - Send bulk emails to patient groups
+  - Email specialists for coordination
+  - Email templates for common scenarios
+  - Email history tracking
+  
+  Message Inbox Features:
+  - View messages from patients and specialists
+  - Unread message notifications
+  - Reply to messages
+  - Archive messages
+  - Search message history
+  
+  Communication Tools:
+  - Patient Email Form:
+    * Recipient selector (single or multiple)
+    * Subject line
+    * Message body (rich text)
+    * Attachment support
+  
+  - Specialist Email Form:
+    * Specialist selector
+    * Subject line
+    * Message body
+    * Priority flag
+  
+  Summary Statistics:
+  - Total patients count
+  - Active patients (last 30 days)
+  - Unread messages count
+  - Pending tasks count
+  - Recent patient registrations
+  
+  Security:
+  - Staff role verification required
+  - Token-based authentication
+  - Automatic redirect to staff.html if unauthenticated
+  - Staff token stored with "_staff" suffix
+  - Access limited to administrative functions only
+  - No access to medical analysis or treatment data
+  
+  Data Management:
+  - Real-time API integration via api.js
+  - LocalStorage for authentication state
+  - Automatic data refresh
+  - Error handling with user-friendly messages
+  
+  Related Files:
+  - staff.html (login page)
+  - staff_email_patients.html (patient email interface)
+  - staff_email_specialists.html (specialist email interface)
+  - staff_view_messages.html (inbox interface)
+  - staff_view.html (patient records view)
+  - js/api.js (API client library)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 803 lines (comprehensive staff interface)
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Staff Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <style>
+    /* Main container styling - constrained width and centered */
+    .container {
+      max-width: 1200px;  /* Maximum content width */
+      margin: 40px auto;  /* Center horizontally with vertical spacing */
+      padding: 0 20px;  /* Horizontal padding for mobile */
+    }
+
+    /* Welcome header styling */
+    .welcome-header h1 {
+      color: #004080;  /* Clinic blue for heading */
+      font-size: 2rem;  /* Large heading size */
+      margin-bottom: 10px;  /* Space below heading */
+    }
+
+    .welcome-header p {
+      color: #666;  /* Gray text for subtitle */
+      font-size: 1rem;  /* Standard font size */
+      margin-bottom: 30px;  /* Space below paragraph */
+    }
+
+    /* Summary section heading styling */
+    .summary-section h2 {
+      color: #004080;  /* Clinic blue for section heading */
+      font-size: 1.5rem;  /* Prominent section heading */
+      margin-bottom: 20px;  /* Space below heading */
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .summary-card {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .summary-card h3 {
+      color: #004080;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .summary-card .count {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #004080;
+      margin-bottom: 10px;
+    }
+
+    .summary-card p {
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .summary-card button {
+      background: #e9ecef;
+      color: #495057;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .summary-card button:hover {
+      background: #dee2e6;
+    }
+
+    .pending-section {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .pending-section h2 {
+      color: #004080;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .pending-section a {
+      color: #004080;
+      text-decoration: underline;
+      font-weight: 500;
+    }
+
+    .pending-banner {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pending-banner button {
+      background: transparent;
+      border: none;
+      color: #856404;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .patient-list-section {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .patient-list-section h2 {
+      color: #004080;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .search-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-controls input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .search-controls button {
+      background: #004080;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .search-controls button:hover {
+      background: #0066cc;
+    }
+
+    .search-controls button.secondary {
+      background: #6c757d;
+    }
+
+    .search-controls button.secondary:hover {
+      background: #5a6268;
+    }
+
+    .patient-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .patient-table thead {
+      background: #004080;
+      color: white;
+    }
+
+    .patient-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .patient-table td {
+      padding: 14px 16px;
+      font-size: 0.9rem;
+      color: #212529;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .patient-table tbody tr:hover {
+      background: #f8f9fa;
+      cursor: pointer;
+    }
+
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2);
+    }
+
+    .logout-btn:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    }
+
+    .logout-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="patient.html">Patient</a></li>
+      <li><a href="specialist.html">Specialist</a></li>
+      <li><a href="clinic.html">Clinic</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+      <li><button id="logoutBtn" class="logout-btn">Logout</button></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <div class="welcome-header">
+    <h1 id="welcomeMsg">Welcome, Staff</h1>
+    <p>Manage patients, update records, and assist with daily clinic operations.</p>
+  </div>
+
+  <!-- Staff Profile Section -->
+  <div class="summary-section" style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <img id="profileImageDisplay" src="" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid #007bff;" />
+        <h2 style="margin: 0;">👤 My Profile</h2>
+      </div>
+      <button onclick="window.location.href='edit_profile_staff.html'" id="editProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
+    </div>
+
+    <!-- Profile Display -->
+    <div id="profileDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+      <div><strong>💼 Email:</strong> <span id="profileEmail">Loading...</span></div>
+      <div><strong>📱 Phone:</strong> <span id="profilePhone">Loading...</span></div>
+      <div><strong>🎂 Birthday:</strong> <span id="profileBirthday">Loading...</span></div>
+      <div><strong>🔢 User ID:</strong> <span id="profileUserId">Loading...</span></div>
+      <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">System account identifier</div>
+      <div><strong>🆔 License ID:</strong> <span id="profileLicenseId">Loading...</span></div>
+      <div style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-left: 24px;">ℹ️ Province/State Professional License Number</div>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <div id="editProfileForm" style="display: none; margin-top: 20px;">
+      <h3 style="color: #004080; margin-bottom: 15px;">Edit Your Profile</h3>
+      <form id="profileUpdateForm" style="display: flex; flex-direction: column; gap: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">First Name *</label>
+            <input type="text" id="editFirstName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Last Name *</label>
+            <input type="text" id="editLastName" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Email *</label>
+            <input type="email" id="editEmail" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Phone</label>
+            <input type="tel" id="editPhone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Date of Birth</label>
+            <input type="date" id="editDateOfBirth" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">License ID</label>
+            <input type="text" id="editLicenseId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            <small style="color: #666; font-size: 0.8rem;">Professional license number issued by province/state</small>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">New Password</label>
+            <input type="password" id="editPassword" placeholder="Leave blank to keep current" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            <small style="color: #666;">Leave blank if you don't want to change password</small>
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Profile Image</label>
+            <input type="file" id="editProfileImage" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+            <small style="color: #666;">Upload a new profile picture (optional)</small>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">💾 Save Changes</button>
+          <button type="button" onclick="cancelEditProfile()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">❌ Cancel</button>
+        </div>
+      </form>
+      <div id="profileUpdateMsg" style="margin-top: 15px; padding: 10px; border-radius: 4px;"></div>
+    </div>
+  </div>
+
+  <!-- Today's Summary -->
+  <div class="summary-section">
+    <h2>Today's Summary</h2>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3>Total Patients</h3>
+        <div class="count" id="totalPatients">5</div>
+      </div>
+
+      <div class="summary-card">
+        <h3>Email Specialists</h3>
+        <p>Quickly contact specialists about flagged patients or urgent updates.</p>
+        <button onclick="window.location.href='staff_email_specialists.html'">Email Specialists</button>
+      </div>
+
+      <div class="summary-card">
+        <h3>Email Patients</h3>
+        <p>Send reminders, instructions, or follow-up messages to patients.</p>
+        <button onclick="window.location.href='staff_email_patients.html'">Email Patients</button>
+      </div>
+
+      <div class="summary-card">
+        <h3>Thresholds</h3>
+        <p>Manage system and per-user thresholds for blood sugar alerts.</p>
+        <button onclick="window.location.href='thresholds.html'">Open Thresholds</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Outbox -->
+  <div class="pending-section">
+    <h2>Pending Outbox <span id="unreadBadge" style="display:none;background:#dc3545;color:white;padding:4px 10px;border-radius:12px;font-size:0.85rem;margin-left:10px;font-weight:600;"></span></h2>
+    <a href="staff_view_messages.html" style="display:inline-block;margin-bottom:15px;padding:10px 20px;background:#667eea;color:white;text-decoration:none;border-radius:6px;font-weight:500;">📬 View All Contact Messages</a>
+    
+    <div id="pendingBanner" style="display: none;" class="pending-banner">
+      <span id="pendingMessage">New contact message: lee — hello</span>
+      <button onclick="dismissPending()">Dismiss</button>
+    </div>
+    
+    <p id="queuedCount">You have <strong>3</strong> queued email(s) waiting to be sent.</p>
+  </div>
+
+  <!-- Patient List -->
+  <div class="patient-list-section">
+    <h2>Patient List</h2>
+    
+    <div class="search-controls">
+      <input type="text" id="searchName" placeholder="Search by Name">
+      <input type="text" id="searchId" placeholder="Search by Patient ID">
+      <button onclick="searchPatients()">Search</button>
+      <button class="secondary" onclick="resetSearch()">Reset</button>
+    </div>
+
+    <table class="patient-table">
+      <thead>
+        <tr>
+          <th>Patient Number</th>
+          <th>Name</th>
+          <th>Last Checked</th>
+        </tr>
+      </thead>
+      <tbody id="patientTableBody">
+        <tr onclick="viewPatient(1, 'Alice Lee')">
+          <td>1</td>
+          <td>Alice Lee</td>
+          <td>-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+</footer>
+
+<script>
+  // Display staff email from localStorage
+  const welcomeMsg = document.getElementById('welcomeMsg');
+  const loggedInStaff = localStorage.getItem('loggedInStaff');
+  const staffName = localStorage.getItem('staffName') || 'Staff2';
+  
+  if (loggedInStaff) {
+    welcomeMsg.textContent = `Welcome, ${staffName}`;
+  } else {
+    // redirect to login if not logged in
+    window.location.href = 'staff.html';
+  }
+
+  // Load patient count
+  function loadPatientCount() {
+    try {
+      const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+      const count = Array.isArray(patients) ? patients.length : 0;
+      document.getElementById('totalPatients').textContent = count;
+    } catch (e) {
+      document.getElementById('totalPatients').textContent = '5';
+    }
+  }
+
+  // Load pending messages
+  function loadPendingMessages() {
+    try {
+      const pending = JSON.parse(localStorage.getItem('pending_emails') || '[]');
+      const count = Array.isArray(pending) ? pending.length : 0;
+      document.getElementById('queuedCount').innerHTML = `You have <strong>${count}</strong> queued email(s) waiting to be sent.`;
+      
+      // Check for unread contact messages
+      const contacts = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+      const unreadCount = contacts.filter(m => !m.read).length;
+      const badge = document.getElementById('unreadBadge');
+      if (unreadCount > 0) {
+        badge.textContent = `${unreadCount} New`;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+      
+      // Check for contact page notify
+      const notify = localStorage.getItem('pending_outbox_notify');
+      if (notify) {
+        const n = JSON.parse(notify);
+        document.getElementById('pendingBanner').style.display = 'flex';
+        document.getElementById('pendingMessage').textContent = `New contact message: ${n.summary}`;
+      }
+    } catch (e) {
+      console.warn('Failed to load pending messages', e);
+    }
+  }
+
+  function dismissPending() {
+    localStorage.removeItem('pending_outbox_notify');
+    document.getElementById('pendingBanner').style.display = 'none';
+  }
+
+  // Load patients into table
+  async function loadPatients() {
+    const tbody = document.getElementById('patientTableBody');
+    
+    try {
+      // Try loading from database first
+      const token = localStorage.getItem('bsm_token') || '';
+      const response = await fetch('http://127.0.0.1:5000/api/patients', {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const patients = (data.patients || []).map(p => ({
+          patientId: p.patient_id,
+          userId: p.user_id,
+          number: p.patient_id,
+          name: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+          lastChecked: p.last_date_time ? String(p.last_date_time).split('T')[0] : '-'
+        }));
+        
+        // Cache to localStorage
+        localStorage.setItem('patients', JSON.stringify(patients));
+        renderPatients(patients);
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to load patients from database, falling back to localStorage', e);
+    }
+    
+    // Fallback to localStorage
+    try {
+      let patients = JSON.parse(localStorage.getItem('patients') || '[]');
+      if (!Array.isArray(patients) && typeof patients === 'object') {
+        patients = Object.values(patients);
+      }
+      renderPatients(patients);
+    } catch (e) {
+      console.error('Failed to load patients', e);
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: red;">Error loading patients</td></tr>';
+    }
+  }
+
+  function renderPatients(patients) {
+    const tbody = document.getElementById('patientTableBody');
+    
+    if (!patients || patients.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">No patients found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = patients.map(p => {
+      const name = p.name || p.fullName || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+      const id = p.patientId || p.patient_id || p.number || p.id || '-';
+      const userId = p.userId || p.user_id || id;
+      const lastChecked = p.lastChecked || p.last_date_time || '-';
+      
+      return `
+        <tr onclick="viewPatient('${id}', '${name}', '${userId}')">
+          <td>${id}</td>
+          <td>${name}</td>
+          <td>${lastChecked}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function viewPatient(id, name, userId) {
+    localStorage.setItem('viewingPatientNumber', id);
+    localStorage.setItem('viewingPatientName', name);
+    localStorage.setItem('viewingPatientUserId', userId || id);
+    window.location.href = 'staff_view.html';
+  }
+
+  function searchPatients() {
+    const nameVal = document.getElementById('searchName').value.toLowerCase();
+    const idVal = document.getElementById('searchId').value.toLowerCase();
+    
+    try {
+      let patients = JSON.parse(localStorage.getItem('patients') || '[]');
+      if (!Array.isArray(patients) && typeof patients === 'object') {
+        patients = Object.values(patients);
+      }
+      
+      const filtered = patients.filter(p => {
+        const name = (p.name || p.fullName || `${p.first_name || ''} ${p.last_name || ''}`.trim() || '').toLowerCase();
+        const id = String(p.patientId || p.patient_id || p.number || p.id || '').toLowerCase();
+        
+        const matchName = !nameVal || name.includes(nameVal);
+        const matchId = !idVal || id.includes(idVal);
+        
+        return matchName && matchId;
+      });
+      
+      const tbody = document.getElementById('patientTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">No matching patients found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => {
+        const name = p.name || p.fullName || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+        const id = p.patientId || p.patient_id || p.number || p.id || '-';
+        const lastChecked = p.lastChecked || p.last_date_time || '-';
+        
+        return `
+          <tr onclick="viewPatient('${id}', '${name}')">
+            <td>${id}</td>
+            <td>${name}</td>
+            <td>${lastChecked}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (e) {
+      console.warn('Search failed', e);
+    }
+  }
+
+  function resetSearch() {
+    document.getElementById('searchName').value = '';
+    document.getElementById('searchId').value = '';
+    loadPatients();
+  }
+
+  // ========== Profile Edit Functions ==========
+  let currentUserData = null;
+
+  function toggleEditProfile() {
+    const profileDisplay = document.getElementById('profileDisplay');
+    const editForm = document.getElementById('editProfileForm');
+    const btn = document.getElementById('editProfileBtn');
+
+    if (editForm.style.display === 'none') {
+      // Show edit form
+      editForm.style.display = 'block';
+      profileDisplay.style.display = 'none';
+      btn.textContent = '👁️ View Profile';
+
+      // Pre-fill form with current data
+      if (currentUserData) {
+        document.getElementById('editFirstName').value = currentUserData.firstName || '';
+        document.getElementById('editLastName').value = currentUserData.lastName || '';
+        document.getElementById('editEmail').value = currentUserData.email || '';
+        document.getElementById('editPhone').value = currentUserData.phone || '';
+        document.getElementById('editDateOfBirth').value = currentUserData.dateOfBirth || '';
+        document.getElementById('editLicenseId').value = currentUserData.licenseId || '';
+      }
+    } else {
+      // Show profile display
+      editForm.style.display = 'none';
+      profileDisplay.style.display = 'grid';
+      btn.textContent = '✏️ Edit Profile';
+    }
+  }
+
+  function cancelEditProfile() {
+    document.getElementById('editProfileForm').style.display = 'none';
+    document.getElementById('profileDisplay').style.display = 'grid';
+    document.getElementById('editProfileBtn').textContent = '✏️ Edit Profile';
+    document.getElementById('profileUpdateMsg').textContent = '';
+  }
+
+  // Handle profile update form submission
+  document.getElementById('profileUpdateForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const userId = localStorage.getItem('staffUserId') || localStorage.getItem('userId');
+    if (!userId) {
+      document.getElementById('profileUpdateMsg').innerHTML = '⚠️ User ID not found';
+      document.getElementById('profileUpdateMsg').style.color = 'red';
+      return;
+    }
+
+    const updateData = {
+      firstName: document.getElementById('editFirstName').value,
+      lastName: document.getElementById('editLastName').value,
+      email: document.getElementById('editEmail').value,
+      phone: document.getElementById('editPhone').value,
+      dateOfBirth: document.getElementById('editDateOfBirth').value,
+      licenseId: document.getElementById('editLicenseId').value
+    };
+
+    const password = document.getElementById('editPassword').value;
+    if (password) {
+      if (password.length < 6) {
+        document.getElementById('profileUpdateMsg').innerHTML = '⚠️ Password must be at least 6 characters';
+        document.getElementById('profileUpdateMsg').style.color = 'red';
+        return;
+      }
+      updateData.password = password;
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        document.getElementById('profileUpdateMsg').innerHTML = '✅ Profile updated successfully!';
+        document.getElementById('profileUpdateMsg').style.color = 'green';
+        
+        // Reload profile data
+        setTimeout(() => {
+          loadStaffProfile();
+          cancelEditProfile();
+        }, 1500);
+      } else {
+        document.getElementById('profileUpdateMsg').innerHTML = `⚠️ ${result.error || 'Failed to update profile'}`;
+        document.getElementById('profileUpdateMsg').style.color = 'red';
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      document.getElementById('profileUpdateMsg').innerHTML = '⚠️ Network error. Please try again.';
+      document.getElementById('profileUpdateMsg').style.color = 'red';
+    }
+  });
+
+  // Load staff profile data
+  async function loadStaffProfile() {
+    const token = localStorage.getItem('bsm_token');
+    let userData = null;
+    
+    // Try to fetch from database using token first
+    if (token) {
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          userData = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
+      }
+    }
+    
+    // Fallback to localStorage if /api/me failed
+    if (!userData) {
+      const userId = localStorage.getItem('staffUserId') || localStorage.getItem('userId');
+      if (!userId) {
+        console.warn('No staff user ID found');
+        return;
+      }
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`);
+        userData = await response.json();
+      } catch (error) {
+        console.error('Failed to load staff profile:', error);
+        return;
+      }
+    }
+
+    try {
+      if (userData && userData.user_id) {
+        currentUserData = {
+          userId: userData.user_id,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          email: userData.email,
+          phone: userData.phone || 'Not provided',
+          dateOfBirth: userData.date_of_birth || '',
+          licenseId: userData.license_id || 'N/A'
+        };
+
+        // Update profile display
+        document.getElementById('profileEmail').textContent = currentUserData.email;
+        document.getElementById('profilePhone').textContent = currentUserData.phone;
+        document.getElementById('profileBirthday').textContent = currentUserData.dateOfBirth || 'Not set';
+        document.getElementById('profileUserId').textContent = currentUserData.userId || 'N/A';
+        document.getElementById('profileLicenseId').textContent = currentUserData.licenseId;
+        
+        // Display profile image if available
+        if (userData.profile_image) {
+          const imgElement = document.getElementById('profileImageDisplay');
+          imgElement.src = userData.profile_image;
+          imgElement.style.display = 'block';
+        }
+      } else {
+        console.error('Failed to load staff profile:', userData.error);
+      }
+    } catch (error) {
+      console.error('Error loading staff profile:', error);
+    }
+  }
+
+  // Logout functionality
+  const logoutBtn = document.getElementById('logoutBtn');
+  logoutBtn.addEventListener('click', () => {
+    // Clear all staff session data
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('staffId');
+    localStorage.removeItem('staffUserId');
+    localStorage.removeItem('loggedInStaff');
+    localStorage.removeItem('staffName');
+    alert('You have been logged out.');
+    window.location.href = 'staff.html';
+  });
+  
+  // Setup inactivity timeout (30 minutes)
+  let inactivityTimer;
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+  
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      alert('Your session has expired due to inactivity.');
+      localStorage.clear();
+      window.location.href = 'staff.html';
+    }, INACTIVITY_TIMEOUT);
+  }
+  
+  ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+    document.addEventListener(event, resetInactivityTimer, true);
+  });
+  resetInactivityTimer();
+
+  // Initialize
+  loadPatientCount();
+  loadPendingMessages();
+  loadPatients();
+  loadStaffProfile();
+
+  // Refresh every 30 seconds
+  setInterval(() => {
+    loadPatientCount();
+    loadPendingMessages();
+  }, 30000);
+</script>
+</body>
+</html>

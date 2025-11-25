@@ -1,0 +1,38 @@
+# Git ignore file - specifies files/folders that should NOT be tracked by Git
+# This prevents sensitive data and temporary files from being committed to the repository
+
+# Environment variables file (may contain sensitive data like API keys, passwords)
+.env
+
+# Python virtual environment directory
+venv/
+
+# Python compiled bytecode cache directories
+__pycache__/
+
+# Individual Python compiled files
+*.pyc
+
+# User uploaded files (patient documents, medical records, etc.)
+# These should not be committed to the repository for privacy/security
+backend/uploads/*
+# Keep the directory structure but ignore all files inside
+!backend/uploads/.gitkeep
+
+# Machine learning model files (can be large, regenerate via train_model.py)
+models/*.joblib
+
+# Development/testing files
+backend/dev-tools/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini

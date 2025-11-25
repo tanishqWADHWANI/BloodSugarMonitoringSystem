@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Management - Admin Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .dashboard-header { margin-bottom: 30px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .form-field { margin-bottom: 15px; }
+        .form-field label { display: block; margin-bottom: 6px; color: #004080; font-weight: 500; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .hint { margin-bottom: 20px; padding: 12px 16px; background: #f8f9fa; border-radius: 6px; color: #666; font-size: 0.9rem; line-height: 1.6; }
+        
+        /* Responsive navbar */
+        @media (max-width: 900px) {
+            header nav ul {
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .dashboard-header > div {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            .dashboard-header h1 {
+                font-size: 1.5rem !important;
+            }
+            .card {
+                padding: 20px;
+            }
+            .form-row {
+                grid-template-columns: 1fr !important;
+            }
+            .form-actions {
+                flex-direction: column !important;
+            }
+            .form-actions button {
+                width: 100%;
+            }
+            #detailedReportArea > div:nth-child(2) {
+                grid-template-columns: 1fr !important;
+            }
+            #trendAnalysisArea {
+                grid-template-columns: 1fr !important;
+            }
+            table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="user_management.html">Users</a></li>
+                <li><a href="patient_assignments.html">Assignments</a></li>
+                <li><a href="reports_management.html" style="color: #667eea; font-weight: 600;">Reports</a></li>
+                <li><button id="logoutBtn" class="logout-btn" style="background: #dc3545; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; color: white; font-weight: 500; font-size: 0.95rem;">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="dashboard-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h1 style="color: #004080; font-size: 2rem; margin: 0;">Monthly & Annual Reports</h1>
+                <button onclick="window.location.href='admin_dashboard.html'" style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(102,126,234,0.3);" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(102,126,234,0.4)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(102,126,234,0.3)'">
+                    ← Back to Dashboard
+                </button>
+            </div>
+            <p class="subtext" style="color: #666; font-size: 1rem;">
+                Generate comprehensive reports with patient statistics, blood sugar trends, and AI-powered insights.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2 style="color: #004080; font-size: 1.5rem; margin-bottom: 20px;">Generate Reports</h2>
+            <p class="hint">
+                Generate comprehensive reports including patient statistics, blood sugar trends, and AI-powered insights on food/activity triggers for abnormal readings.
+            </p>
+            
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 20px; margin-bottom: 20px; align-items: end;">
+                <div class="form-field">
+                    <label for="reportMonth" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Select Month</label>
+                    <input type="month" id="reportMonth" placeholder="YYYY-MM" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                </div>
+                <div class="form-field">
+                    <label for="reportYear" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Select Year</label>
+                    <input type="number" id="reportYear" min="2020" max="2030" placeholder="e.g. 2025" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                </div>
+                <div class="form-actions" style="display: flex; gap: 12px;">
+                    <button type="button" id="generateMonthlyBtn" style="background: #007bff; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Monthly Report</button>
+                    <button type="button" id="generateAnnualBtn" style="background: #28a745; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Annual Report</button>
+                </div>
+                <div>
+                    <button type="button" id="clearReportBtn" style="background: #6c757d; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Clear</button>
+                </div>
+            </div>
+
+            <div id="detailedReportArea" style="display: none;">
+                <div style="background: #e7f3ff; border-left: 4px solid #007bff; padding: 15px 20px; margin-bottom: 20px; border-radius: 6px;">
+                    <h3 id="reportTitle" style="color: #004080; font-size: 1.3rem; margin-bottom: 10px;">Report</h3>
+                    <p id="reportPeriod" style="color: #666; font-size: 0.95rem;">Period: -</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #007bff; padding-bottom: 8px;">📊 Patient Overview</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Total Active Patients: <strong id="reportTotalPatients">0</strong></li>
+                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Patients with Readings: <strong id="reportActivePatients">0</strong></li>
+                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Total Readings: <strong id="reportTotalReadings">0</strong></li>
+                            <li style="padding: 8px 0;">Average Readings per Patient: <strong id="reportAvgReadings">0</strong></li>
+                        </ul>
+                    </div>
+
+                    <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #28a745; padding-bottom: 8px;">📈 Blood Sugar Trends</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Overall Average: <strong id="reportOverallAvg">0</strong> mg/dL</li>
+                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; color: #28a745;">Normal Readings: <strong id="reportNormalCount">0</strong> (<strong id="reportNormalPct">0%</strong>)</li>
+                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; color: #ffc107;">Borderline: <strong id="reportBorderlineCount">0</strong> (<strong id="reportBorderlinePct">0%</strong>)</li>
+                            <li style="padding: 8px 0; color: #dc3545;">Abnormal: <strong id="reportAbnormalCount">0</strong> (<strong id="reportAbnormalPct">0%</strong>)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
+                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #17a2b8; padding-bottom: 8px;">📊 Detailed Trend Analysis</h4>
+                    <div id="trendAnalysisArea" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Highest Overall Reading</h5>
+                            <p style="font-size: 1.8rem; font-weight: bold; color: #dc3545; margin: 0;"><span id="trendHighestValue">0.00</span> mg/dL</p>
+                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Patient: <span id="trendHighestPatient">-</span></p>
+                        </div>
+                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Lowest Overall Reading</h5>
+                            <p style="font-size: 1.8rem; font-weight: bold; color: #28a745; margin: 0;"><span id="trendLowestValue">0.00</span> mg/dL</p>
+                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Patient: <span id="trendLowestPatient">-</span></p>
+                        </div>
+                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Most Stable Patient</h5>
+                            <p style="font-size: 1.1rem; font-weight: bold; color: #28a745; margin: 0;"><span id="trendMostStable">-</span></p>
+                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Variance: <span id="trendStableVariance">0.00</span></p>
+                        </div>
+                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Most At-Risk Patient</h5>
+                            <p style="font-size: 1.1rem; font-weight: bold; color: #dc3545; margin: 0;"><span id="trendMostAtRisk">-</span></p>
+                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Abnormal: <span id="trendRiskPct">0.00</span>%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
+                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">👥 Patient Statistics (Top 10)</h4>
+                    <div class="table-wrapper">
+                        <table id="patientStatsTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                            <thead>
+                                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                    <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Patient Name</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Readings</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Average (mg/dL)</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Highest</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Lowest</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Abnormal %</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
+                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #dc3545; padding-bottom: 8px;">⚠️ Abnormal Readings Details</h4>
+                    <div id="abnormalDetailsArea">
+                        <p style="color: #666; padding: 10px 0;">Loading abnormal readings analysis...</p>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #ffc107; padding-bottom: 8px;">🤖 AI-Powered Insights: Food & Activity Triggers</h4>
+                    <div id="aiInsightsArea">
+                        <p style="color: #666; padding: 10px 0;">AI analysis will appear here after generating a report...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+
+        // Check admin authorization
+        const token = localStorage.getItem('bsm_token');
+        if (!token || !token.includes('_admin')) {
+            alert('Access denied: Admin credentials required');
+            window.location.href = 'admin.html';
+        }
+
+        // Logout functionality
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.clear();
+                alert('You have been logged out.');
+                window.location.href = 'admin.html';
+            });
+        }
+
+        // Report generation functions
+        document.getElementById('generateMonthlyBtn')?.addEventListener('click', generateMonthlyReport);
+        document.getElementById('generateAnnualBtn')?.addEventListener('click', generateAnnualReport);
+        document.getElementById('clearReportBtn')?.addEventListener('click', clearReportInputs);
+
+        let currentDetailedReport = null;
+
+        function getMonthName(monthNum) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[monthNum - 1] || 'Unknown';
+        }
+
+        async function generateMonthlyReport() {
+            const monthInput = document.getElementById('reportMonth').value;
+            if (!monthInput) {
+                alert('Please select a month (YYYY-MM format)');
+                return;
+            }
+
+            const [year, month] = monthInput.split('-');
+            if (!year || !month) {
+                alert('Please select a valid month');
+                return;
+            }
+            
+            try {
+                const reportData = await getAdminMonthlyReport(monthInput, parseInt(year));
+                currentDetailedReport = reportData;
+                
+                displayDetailedReport(reportData, 'Monthly', `${getMonthName(parseInt(month))} ${year}`);
+            } catch (error) {
+                console.error('Error generating monthly report:', error);
+                alert('Failed to generate monthly report: ' + error.message);
+            }
+        }
+
+        async function generateAnnualReport() {
+            const year = document.getElementById('reportYear').value;
+            if (!year) {
+                alert('Please enter a year');
+                return;
+            }
+
+            try {
+                // Aggregate data for the entire year by fetching each month
+                let annualData = {
+                    patient_statistics: [],
+                    food_triggers: {},
+                    activity_triggers: {}
+                };
+
+                const patientMap = new Map();
+
+                for (let month = 1; month <= 12; month++) {
+                    const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+                    try {
+                        const monthData = await getAdminMonthlyReport(monthStr, parseInt(year));
+                        
+                        // Aggregate patient statistics
+                        (monthData.patient_statistics || []).forEach(p => {
+                            const patientId = p.user_id || p.patient_id;
+                            const patientName = p.patient_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                            
+                            if (!patientMap.has(patientId)) {
+                                patientMap.set(patientId, {
+                                    patient_id: patientId,
+                                    patient_name: patientName,
+                                    total_readings: 0,
+                                    normal_count: 0,
+                                    borderline_count: 0,
+                                    abnormal_count: 0,
+                                    values: [],
+                                    max_value: 0,
+                                    min_value: Infinity
+                                });
+                            }
+                            
+                            const existing = patientMap.get(patientId);
+                            existing.total_readings += parseInt(p.total_readings) || 0;
+                            existing.normal_count += parseInt(p.normal_count) || 0;
+                            existing.borderline_count += parseInt(p.borderline_count) || 0;
+                            existing.abnormal_count += parseInt(p.abnormal_count) || 0;
+                            
+                            // Track average values for annual averaging
+                            if (p.avg_value > 0) existing.values.push(parseFloat(p.avg_value));
+                            // Track highest max_value across all months
+                            if (p.max_value > 0 && p.max_value > existing.max_value) existing.max_value = parseFloat(p.max_value);
+                            // Track lowest min_value across all months
+                            if (p.min_value > 0 && p.min_value < existing.min_value) existing.min_value = parseFloat(p.min_value);
+                        });
+
+                        // Aggregate food triggers
+                        Object.entries(monthData.food_triggers || {}).forEach(([food, data]) => {
+                            const count = typeof data === 'number' ? data : (data.count || 0);
+                            const patients = typeof data === 'object' ? (data.patients || '') : '';
+                            
+                            if (!annualData.food_triggers[food]) {
+                                annualData.food_triggers[food] = { count: 0, patients: new Set() };
+                            }
+                            annualData.food_triggers[food].count += count;
+                            if (patients) {
+                                patients.split(', ').forEach(p => annualData.food_triggers[food].patients.add(p.trim()));
+                            }
+                        });
+
+                        // Aggregate activity triggers
+                        Object.entries(monthData.activity_triggers || {}).forEach(([activity, data]) => {
+                            const count = typeof data === 'number' ? data : (data.count || 0);
+                            const patients = typeof data === 'object' ? (data.patients || '') : '';
+                            
+                            if (!annualData.activity_triggers[activity]) {
+                                annualData.activity_triggers[activity] = { count: 0, patients: new Set() };
+                            }
+                            annualData.activity_triggers[activity].count += count;
+                            if (patients) {
+                                patients.split(', ').forEach(p => annualData.activity_triggers[activity].patients.add(p.trim()));
+                            }
+                        });
+                    } catch (e) {
+                        console.warn(`Failed to fetch data for ${monthStr}:`, e);
+                    }
+                }
+
+                // Calculate final statistics for each patient
+                annualData.patient_statistics = Array.from(patientMap.values()).map(p => {
+                    const allValues = p.values.filter(v => v > 0);
+                    return {
+                        ...p,
+                        avg_value: allValues.length > 0 ? (allValues.reduce((a, b) => a + b, 0) / allValues.length) : 0,
+                        max_value: p.max_value > 0 ? p.max_value : 0,
+                        min_value: p.min_value < Infinity ? p.min_value : 0
+                    };
+                });
+
+                // Convert trigger Sets to comma-separated strings
+                Object.keys(annualData.food_triggers).forEach(food => {
+                    const trigger = annualData.food_triggers[food];
+                    annualData.food_triggers[food] = {
+                        count: trigger.count,
+                        patients: Array.from(trigger.patients).join(', ')
+                    };
+                });
+                Object.keys(annualData.activity_triggers).forEach(activity => {
+                    const trigger = annualData.activity_triggers[activity];
+                    annualData.activity_triggers[activity] = {
+                        count: trigger.count,
+                        patients: Array.from(trigger.patients).join(', ')
+                    };
+                });
+
+                currentDetailedReport = annualData;
+                displayDetailedReport(annualData, 'Annual', year);
+            } catch (error) {
+                console.error('Error generating annual report:', error);
+                alert('Failed to generate annual report: ' + error.message);
+            }
+        }
+
+        function displayDetailedReport(data, reportType, period) {
+            const reportArea = document.getElementById('detailedReportArea');
+            reportArea.style.display = 'block';
+
+            // Update header
+            document.getElementById('reportTitle').textContent = `${reportType} Report`;
+            document.getElementById('reportPeriod').textContent = `Period: ${period}`;
+
+            const patientStats = data.patient_statistics || [];
+            const totalPatients = patientStats.length;
+            const patientsWithReadings = patientStats.filter(p => p.total_readings > 0).length;
+            
+            const totalReadings = patientStats.reduce((sum, p) => sum + (parseInt(p.total_readings) || 0), 0);
+            const totalNormal = patientStats.reduce((sum, p) => sum + (parseInt(p.normal_count) || 0), 0);
+            const totalBorderline = patientStats.reduce((sum, p) => sum + (parseInt(p.borderline_count) || 0), 0);
+            const totalAbnormal = patientStats.reduce((sum, p) => sum + (parseInt(p.abnormal_count) || 0), 0);
+
+            const allValues = patientStats.flatMap(p => 
+                [p.avg_value, p.max_value, p.min_value].filter(v => v > 0)
+            );
+            const overallAvg = allValues.length > 0 
+                ? (allValues.reduce((a, b) => a + b, 0) / allValues.length).toFixed(2)
+                : '0.00';
+
+            // Update overview stats
+            document.getElementById('reportTotalPatients').textContent = totalPatients;
+            document.getElementById('reportActivePatients').textContent = patientsWithReadings;
+            document.getElementById('reportTotalReadings').textContent = totalReadings;
+            document.getElementById('reportAvgReadings').textContent = 
+                patientsWithReadings > 0 ? (totalReadings / patientsWithReadings).toFixed(2) : '0.00';
+
+            // Update blood sugar trends
+            document.getElementById('reportOverallAvg').textContent = overallAvg;
+            document.getElementById('reportNormalCount').textContent = totalNormal;
+            document.getElementById('reportNormalPct').textContent = 
+                totalReadings > 0 ? ((totalNormal / totalReadings) * 100).toFixed(2) : '0.00';
+            document.getElementById('reportBorderlineCount').textContent = totalBorderline;
+            document.getElementById('reportBorderlinePct').textContent = 
+                totalReadings > 0 ? ((totalBorderline / totalReadings) * 100).toFixed(2) : '0.00';
+            document.getElementById('reportAbnormalCount').textContent = totalAbnormal;
+            document.getElementById('reportAbnormalPct').textContent = 
+                totalReadings > 0 ? ((totalAbnormal / totalReadings) * 100).toFixed(2) : '0.00';
+
+            // Calculate detailed trend analysis
+            let highestOverall = { value: 0, patient: '-' };
+            let lowestOverall = { value: Infinity, patient: '-' };
+            let mostStable = { patient: '-', variance: Infinity };
+            let mostAtRisk = { patient: '-', pct: 0 };
+
+            patientStats.forEach(p => {
+                if (p.total_readings > 0) {
+                    // Highest value
+                    if (p.max_value && p.max_value > highestOverall.value) {
+                        highestOverall = { value: p.max_value, patient: p.patient_name || 'Unknown' };
+                    }
+                    // Lowest value
+                    if (p.min_value && p.min_value < lowestOverall.value) {
+                        lowestOverall = { value: p.min_value, patient: p.patient_name || 'Unknown' };
+                    }
+                    // Most stable (lowest variance)
+                    const variance = Math.abs((p.max_value || 0) - (p.min_value || 0));
+                    if (variance < mostStable.variance) {
+                        mostStable = { patient: p.patient_name || 'Unknown', variance: variance };
+                    }
+                    // Most at risk (highest abnormal percentage)
+                    const abnormalPct = p.total_readings > 0 ? ((p.abnormal_count / p.total_readings) * 100) : 0;
+                    if (abnormalPct > mostAtRisk.pct) {
+                        mostAtRisk = { patient: p.patient_name || 'Unknown', pct: abnormalPct };
+                    }
+                }
+            });
+
+            document.getElementById('trendHighestValue').textContent = highestOverall.value > 0 ? highestOverall.value.toFixed(2) : '0.00';
+            document.getElementById('trendHighestPatient').textContent = highestOverall.patient;
+            document.getElementById('trendLowestValue').textContent = lowestOverall.value < Infinity ? lowestOverall.value.toFixed(2) : '0.00';
+            document.getElementById('trendLowestPatient').textContent = lowestOverall.patient;
+            document.getElementById('trendMostStable').textContent = mostStable.patient;
+            document.getElementById('trendStableVariance').textContent = mostStable.variance < Infinity ? mostStable.variance.toFixed(2) : '0.00';
+            document.getElementById('trendMostAtRisk').textContent = mostAtRisk.patient;
+            document.getElementById('trendRiskPct').textContent = mostAtRisk.pct.toFixed(2);
+
+            // Patient Statistics Table
+            renderPatientStatsTable(patientStats);
+
+            // Abnormal Details
+            renderAbnormalDetails(data.abnormal_readings || []);
+
+            // AI Insights
+            renderAIInsights({ food_triggers: data.food_triggers, activity_triggers: data.activity_triggers });
+        }
+
+        function renderPatientStatsTable(stats) {
+            const tbody = document.querySelector('#patientStatsTable tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            
+            if (stats.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #666;">No patient data available for this period.</td></tr>';
+                return;
+            }
+
+            stats.slice(0, 10).forEach(patient => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #f0f0f0';
+                
+                // Calculate abnormal percentage from data
+                const totalReadings = parseInt(patient.total_readings) || 0;
+                const abnormalCount = parseInt(patient.abnormal_count) || 0;
+                const abnormalPct = totalReadings > 0 ? ((abnormalCount / totalReadings) * 100) : 0;
+                
+                // Determine trend based on normal vs abnormal
+                const normalCount = parseInt(patient.normal_count) || 0;
+                const normalPct = totalReadings > 0 ? ((normalCount / totalReadings) * 100) : 0;
+                const trendIcon = normalPct >= 70 ? '📈' : normalPct >= 40 ? '➡️' : '📉';
+                const trendText = normalPct >= 70 ? 'improving' : normalPct >= 40 ? 'stable' : 'declining';
+                
+                row.innerHTML = `
+                    <td style="padding: 12px; text-align: left;">${patient.patient_name || 'N/A'}</td>
+                    <td style="padding: 12px; text-align: center;">${totalReadings}</td>
+                    <td style="padding: 12px; text-align: center;">${(parseFloat(patient.avg_value) || 0).toFixed(1)}</td>
+                    <td style="padding: 12px; text-align: center;">${(parseFloat(patient.max_value) || 0).toFixed(1)}</td>
+                    <td style="padding: 12px; text-align: center;">${(parseFloat(patient.min_value) || 0).toFixed(1)}</td>
+                    <td style="padding: 12px; text-align: center;">${abnormalPct.toFixed(1)}%</td>
+                    <td style="padding: 12px; text-align: center;">${trendIcon} ${trendText}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderAbnormalDetails(abnormalReadings) {
+            const container = document.getElementById('abnormalDetailsArea');
+            if (!container) return;
+
+            if (abnormalReadings.length === 0) {
+                container.innerHTML = '<p style="color: #666; padding: 10px 0;">No abnormal readings found for this period. Great news!</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <p style="margin-bottom: 15px; color: #666;">Found <strong>${abnormalReadings.length}</strong> abnormal readings in this period. Below are the details:</p>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${abnormalReadings.slice(0, 20).map(reading => `
+                        <div style="background: #fff5f5; border-left: 3px solid #dc3545; padding: 12px 15px; margin-bottom: 10px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: #004080;">${reading.patient_name || 'Unknown'}</strong>
+                                <span style="color: #dc3545; font-weight: bold; font-size: 1.1rem;">${reading.glucose_level?.toFixed(1) || '0'} mg/dL</span>
+                            </div>
+                            <div style="margin-top: 5px; font-size: 0.85rem; color: #666;">
+                                ${reading.reading_date ? new Date(reading.reading_date).toLocaleDateString() : 'Date unknown'} • 
+                                ${reading.meal_type || 'Unknown meal type'}
+                            </div>
+                            ${reading.food_consumed ? `<div style="margin-top: 5px; font-size: 0.85rem; color: #555;">Food: ${reading.food_consumed}</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderAIInsights(insights) {
+            const container = document.getElementById('aiInsightsArea');
+            if (!container) return;
+
+            const foodTriggers = insights.food_triggers || {};
+            const activityTriggers = insights.activity_triggers || {};
+
+            if (Object.keys(foodTriggers).length === 0 && Object.keys(activityTriggers).length === 0) {
+                container.innerHTML = '<p style="color: #666; padding: 10px 0;">No AI insights available for this period.</p>';
+                return;
+            }
+
+            let html = '<div style="display: grid; gap: 15px;">';
+            
+            // Food Triggers
+            const foodEntries = Object.entries(foodTriggers).sort((a, b) => {
+                const countA = typeof a[1] === 'number' ? a[1] : (a[1].count || 0);
+                const countB = typeof b[1] === 'number' ? b[1] : (b[1].count || 0);
+                return countB - countA;
+            }).slice(0, 10);
+
+            if (foodEntries.length > 0) {
+                html += `
+                    <div style="background: #fff8e1; padding: 15px; border-radius: 6px; border-left: 4px solid #ffc107;">
+                        <h5 style="color: #004080; margin-bottom: 10px;">🍽️ Common Food Triggers</h5>
+                        <ul style="margin: 0; padding-left: 20px;">
+                            ${foodEntries.map(([food, data]) => {
+                                const count = typeof data === 'number' ? data : data.count;
+                                const patients = typeof data === 'object' ? data.patients : '';
+                                return `<li style="color: #666; margin-bottom: 5px;">
+                                    <strong>${food}</strong> (${count} occurrence${count > 1 ? 's' : ''})
+                                    ${patients ? `<br><small style="color: #999;">Patients: ${patients}</small>` : ''}
+                                </li>`;
+                            }).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Activity Triggers
+            const activityEntries = Object.entries(activityTriggers).sort((a, b) => {
+                const countA = typeof a[1] === 'number' ? a[1] : (a[1].count || 0);
+                const countB = typeof b[1] === 'number' ? b[1] : (b[1].count || 0);
+                return countB - countA;
+            }).slice(0, 10);
+
+            if (activityEntries.length > 0) {
+                html += `
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 6px; border-left: 4px solid #28a745;">
+                        <h5 style="color: #004080; margin-bottom: 10px;">🏃 Activity Patterns</h5>
+                        <ul style="margin: 0; padding-left: 20px;">
+                            ${activityEntries.map(([activity, data]) => {
+                                const count = typeof data === 'number' ? data : data.count;
+                                const patients = typeof data === 'object' ? data.patients : '';
+                                return `<li style="color: #666; margin-bottom: 5px;">
+                                    <strong>${activity}</strong> (${count} occurrence${count > 1 ? 's' : ''})
+                                    ${patients ? `<br><small style="color: #999;">Patients: ${patients}</small>` : ''}
+                                </li>`;
+                            }).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function clearReportInputs() {
+            document.getElementById('detailedReportArea').style.display = 'none';
+            document.getElementById('reportMonth').value = '';
+            document.getElementById('reportYear').value = '';
+            currentDetailedReport = null;
+        }
+
+        // Set default date values
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+            
+            document.getElementById('reportMonth').value = `${currentYear}-${currentMonth}`;
+            document.getElementById('reportYear').value = currentYear;
+        });
+    </script>
+</body>
+</html>

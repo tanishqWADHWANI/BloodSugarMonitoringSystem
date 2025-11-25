@@ -1,0 +1,847 @@
+================================================================================
+              SERVER ARCHITECTURE & API DESIGN
+================================================================================
+                Blood Sugar Monitoring System
+                Technical Documentation
+================================================================================
+
+OVERVIEW
+--------
+The system uses Flask as the backend web framework to provide RESTful API 
+endpoints. The server handles authentication, data management, file uploads,
+machine learning predictions, and automated notifications.
+
+Server Framework: Flask (Python)
+Server Port: 5000
+Server Host: 127.0.0.1 (localhost)
+API Base URL: http://127.0.0.1:5000
+
+
+================================================================================
+SERVER INITIALIZATION & STARTUP
+================================================================================
+
+MAIN APPLICATION FILE: backend/app.py
+--------------------------------------
+
+1. IMPORTS & DEPENDENCIES
+--------------------------
+   from flask import Flask, request, jsonify
+   from flask_cors import CORS
+   from models import Database
+   from ml_service import MLService
+   from notification_service import NotificationService
+   from scheduler_service import SchedulerService
+   
+   Core Dependencies:
+   - Flask: Web framework and routing
+   - Flask-CORS: Cross-Origin Resource Sharing for frontend access
+   - mysql-connector-python: Database connectivity
+   - scikit-learn: Machine learning models
+   - pandas: Data analysis
+   - APScheduler: Background task scheduling
+
+
+2. APPLICATION INITIALIZATION
+------------------------------
+   app = Flask(__name__)
+   CORS(app)  # Enable CORS for all routes
+   
+   # Initialize services
+   db = Database()
+   ml_service = MLService()
+   notification_service = NotificationService()
+   scheduler = SchedulerService(db, notification_service)
+   scheduler.start()
+
+Services Initialized at Startup:
+   ✓ Database: Establishes MySQL connection
+   ✓ ML Service: Loads trained models or falls back to rules
+   ✓ Notification Service: Configures SMTP email settings
+   ✓ Scheduler Service: Starts background jobs for alerts
+
+
+3. SERVER STARTUP
+-----------------
+   if __name__ == '__main__':
+       app.run(
+           host='127.0.0.1',
+           port=5000,
+           debug=True  # Development mode with auto-reload
+       )
+
+Configuration Details:
+   - Host: 127.0.0.1 (localhost only, not exposed externally)
+   - Port: 5000 (Flask default development port)
+   - Debug Mode: Enabled for development (shows detailed errors)
+   - Auto-reload: Code changes trigger automatic restart
+
+
+================================================================================
+API ENDPOINT ARCHITECTURE
+================================================================================
+
+ENDPOINT CATEGORIES (40+ endpoints)
+-----------------------------------
+
+1. AUTHENTICATION & SESSION MANAGEMENT
+   POST   /api/login                    - User login (all roles)
+   POST   /api/auth/login               - Alternative login endpoint
+   GET    /api/me                       - Get current user info
+
+2. USER MANAGEMENT
+   POST   /api/users/register           - Patient self-registration
+   GET    /api/users/<id>               - Get user by ID
+   PUT    /api/users/<id>               - Update user profile
+   DELETE /api/users/<id>               - Delete user account
+   POST   /api/admin/users              - Admin create user
+   GET    /api/admin/users/all          - Admin view all users
+   DELETE /api/admin/users/<id>         - Admin delete user
+
+3. BLOOD SUGAR READINGS
+   POST   /api/readings                 - Add new reading
+   GET    /api/readings/<user_id>       - Get user's readings
+   PUT    /api/readings/<reading_id>    - Update reading
+   DELETE /api/readings/<reading_id>    - Delete reading
+   GET    /api/specialist/<id>/readings/search - Search patient readings
+
+4. AI INSIGHTS & ANALYTICS
+   GET    /api/insights/<user_id>       - Get AI insights
+   GET    /api/aiinsights/<user_id>     - Get saved AI insights
+   GET    /api/insights/<user_id>/trends - Get glucose trends
+   GET    /api/insights/<user_id>/patterns - Get glucose patterns
+   GET    /api/alerts/<user_id>         - Get user alerts
+
+5. SPECIALIST FEATURES
+   GET    /api/specialist/<id>/patients - Get assigned patients
+   GET    /api/specialist/<id>/dashboard - Specialist dashboard data
+   GET    /api/specialist/<id>/attention - Patients needing attention
+   GET    /api/specialist/alerts/<id>   - Specialist alerts
+   POST   /api/specialist/feedback      - Add patient feedback
+   GET    /api/patient/<id>/feedback    - Get patient feedback
+   GET    /api/patient/<id>/specialist  - Get assigned specialist
+
+6. THRESHOLD MANAGEMENT
+   GET    /api/thresholds/<user_id>     - Get user thresholds
+   POST   /api/thresholds/<user_id>     - Set user threshold
+   GET    /api/thresholds               - Get all thresholds (admin)
+   DELETE /api/thresholds/<id>          - Delete threshold
+
+7. REPORTS & ANALYTICS
+   GET    /api/reports/<user_id>        - Generate user report
+   GET    /api/admin/reports/monthly    - Monthly system report
+   GET    /api/admin/reports/annual     - Annual system report
+
+8. DIET RECOMMENDATIONS
+   GET    /api/diet/<condition>         - Get diet recommendations
+
+9. USER LISTS
+   GET    /api/patients                 - Get all patients
+   GET    /api/specialists              - Get all specialists
+
+10. HEALTH & DIAGNOSTICS
+    GET    /api/health                   - Health check endpoint
+    GET    /api/test/database            - Test database connection
+
+
+================================================================================
+REQUEST/RESPONSE FLOW
+================================================================================
+
+TYPICAL API REQUEST FLOW
+-------------------------
+
+1. CLIENT REQUEST (Frontend → Backend)
+   ┌─────────────────────────────────────────────────────┐
+   │ HTTP Request from browser                          │
+   │ Method: POST                                       │
+   │ URL: http://127.0.0.1:5000/api/readings           │
+   │ Headers:                                           │
+   │   - Content-Type: application/json                │
+   │   - Authorization: Bearer <token>                 │
+   │ Body:                                              │
+   │   {                                                │
+   │     "value": 125,                                  │
+   │     "fasting": true,                               │
+   │     "food_intake": "breakfast"                     │
+   │   }                                                │
+   └─────────────────────────────────────────────────────┘
+                          ↓
+2. FLASK ROUTING
+   ┌─────────────────────────────────────────────────────┐
+   │ Flask receives request                             │
+   │ Matches route: @app.route('/api/readings')        │
+   │ Calls handler function: add_reading()             │
+   └─────────────────────────────────────────────────────┘
+                          ↓
+3. AUTHENTICATION CHECK
+   ┌─────────────────────────────────────────────────────┐
+   │ Extract token from Authorization header            │
+   │ Validate token format and signature               │
+   │ Get user_id from token payload                    │
+   │ If invalid: Return 401 Unauthorized               │
+   └─────────────────────────────────────────────────────┘
+                          ↓
+4. BUSINESS LOGIC
+   ┌─────────────────────────────────────────────────────┐
+   │ Parse request JSON data                            │
+   │ Validate input parameters                          │
+   │ Call Database methods                              │
+   │ Call ML Service for analysis                       │
+   │ Process results                                    │
+   └─────────────────────────────────────────────────────┘
+                          ↓
+5. DATABASE OPERATIONS
+   ┌─────────────────────────────────────────────────────┐
+   │ Execute SQL queries via Database class             │
+   │ INSERT reading into readings table                 │
+   │ Check thresholds                                   │
+   │ Create alerts if needed                            │
+   │ COMMIT transaction                                 │
+   └─────────────────────────────────────────────────────┘
+                          ↓
+6. ML ANALYSIS (if applicable)
+   ┌─────────────────────────────────────────────────────┐
+   │ MLService.predict_status()                         │
+   │ Classify reading (normal/high/low/prediabetic)   │
+   │ Generate insights and recommendations             │
+   │ Store in ai_insights table                        │
+   └─────────────────────────────────────────────────────┘
+                          ↓
+7. RESPONSE GENERATION
+   ┌─────────────────────────────────────────────────────┐
+   │ Format response as JSON                            │
+   │ Add appropriate HTTP status code                   │
+   │ Include success/error messages                     │
+   │ Return to client                                   │
+   └─────────────────────────────────────────────────────┘
+                          ↓
+8. CLIENT RECEIVES RESPONSE
+   ┌─────────────────────────────────────────────────────┐
+   │ Status: 201 Created                                │
+   │ Body:                                              │
+   │   {                                                │
+   │     "success": true,                               │
+   │     "reading_id": 1234,                            │
+   │     "status": "normal",                            │
+   │     "insights": [...],                             │
+   │     "message": "Reading added successfully"        │
+   │   }                                                │
+   └─────────────────────────────────────────────────────┘
+
+
+================================================================================
+AUTHENTICATION MECHANISM
+================================================================================
+
+TOKEN-BASED AUTHENTICATION - LINE BY LINE EXPLANATION
+-----------------------------------------------------
+
+1. LOGIN PROCESS
+   User submits credentials → Server validates → Generates token
+   
+   Token Format: Simple user_id based token (Custom implementation)
+   Storage: Client stores token in localStorage
+   Usage: Sent in Authorization header for subsequent requests
+
+2. TOKEN VALIDATION - DETAILED CODE EXPLANATION
+
+```python
+def get_user_from_token():
+    """Extract user info from authorization token"""
+    
+    # LINE 1: Get 'Authorization' header from HTTP request
+    # request.headers is dictionary of all HTTP headers
+    # Example header: "Authorization: Bearer abc123token456"
+    # .get() safely retrieves value (returns None if missing)
+    auth_header = request.headers.get('Authorization')
+    
+    # LINE 2: Check if Authorization header exists
+    # if not auth_header means header is None or empty string
+    # User hasn't provided authentication → Deny access
+    if not auth_header:
+        return None  # No token = not authenticated
+    
+    # LINE 3: Begin try block for error handling
+    # Token parsing/decoding can fail if format wrong
+    try:
+        # LINE 4: Extract token from header
+        # Header format: "Bearer abc123token456"
+        # .split(' ') splits by space: ['Bearer', 'abc123token456']
+        # [1] gets second element (the actual token)
+        # Result: token = 'abc123token456'
+        token = auth_header.split(' ')[1]
+        
+        # LINE 5: Decode token to get user_id
+        # decode_token() is custom function (or JWT library)
+        # Token contains encoded user_id: 'abc123' → decodes to → 42
+        # JWT example: jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        # Returns payload: {'user_id': 42, 'exp': 1700000000}
+        user_id = decode_token(token)
+        
+        # LINE 6: Fetch user from database
+        # db.get_user() queries: SELECT * FROM users WHERE user_id = 42
+        # Returns user dict: {'user_id': 42, 'email': 'john@example.com', 
+        #                     'role': 'patient', 'first_name': 'John', ...}
+        # This proves token is valid and user exists
+        return db.get_user(user_id)
+        
+    # LINE 7: Catch ANY exception
+    # Errors: invalid token format, decode failure, database error
+    # Example: token = 'invalid' → decode fails → exception caught
+    except:
+        return None  # Any error = deny access
+```
+
+WHY TOKEN VALIDATION IS CRITICAL:
+---------------------------------
+
+Without token validation:
+❌ Anyone could access any patient's medical records
+❌ No way to identify who is making the request
+❌ Attackers could impersonate users
+
+With token validation:
+✓ Only authenticated users access protected data
+✓ Each request is tied to specific user
+✓ Tokens can expire (security)
+✓ Server doesn't store session (stateless, scalable)
+
+USAGE IN PROTECTED ENDPOINT:
+---------------------------
+
+```python
+@app.route('/api/readings', methods=['POST'])
+def add_reading():
+    # LINE 1: Validate token and get user
+    # Calls get_user_from_token() defined above
+    user = get_user_from_token()
+    
+    # LINE 2: Check if authentication succeeded
+    # If user is None, token was invalid/missing
+    if not user:
+        # LINE 3: Return 401 Unauthorized error
+        # HTTP 401 = Authentication failed
+        # jsonify() converts Python dict to JSON response
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # LINE 4: Extract user_id from authenticated user
+    # Now we know WHO is making this request
+    user_id = user['user_id']
+    
+    # LINE 5: Get data from request body
+    # request.json parses JSON to Python dict
+    data = request.json
+    value = data.get('value')
+    
+    # LINE 6: Store reading for authenticated user
+    # Associates data with correct user_id
+    db.create_reading(user_id, value, ...)
+    
+    # LINE 7: Return success response
+    return jsonify({'success': True}), 201
+```
+
+TOKEN FLOW DIAGRAM:
+------------------
+
+1. User Login:
+   POST /api/login {email, password}
+   ↓
+2. Server validates credentials:
+   SELECT * FROM users WHERE email = ? AND password_hash = ?
+   ↓
+3. Server generates token:
+   token = encode({'user_id': 42, 'exp': time + 24h})
+   ↓
+4. Server returns token:
+   {"token": "eyJhbGciOiJIUzI1NiIs..."}
+   ↓
+5. Client stores token:
+   localStorage.setItem('token', token)
+   ↓
+6. Client includes token in every request:
+   fetch('/api/readings', {
+       headers: {'Authorization': `Bearer ${token}`}
+   })
+   ↓
+7. Server validates token (get_user_from_token):
+   - Extract from header
+   - Decode to get user_id
+   - Verify user exists
+   ↓
+8. If valid → Process request
+   If invalid → Return 401 error
+
+3. PROTECTED ROUTES
+   Every protected endpoint calls get_user_from_token():
+   
+   @app.route('/api/readings', methods=['POST'])
+   def add_reading():
+       user = get_user_from_token()
+       if not user:
+           return jsonify({'error': 'Unauthorized'}), 401
+       
+       # Process request...
+
+4. ROLE-BASED ACCESS CONTROL
+   Different roles have different permissions:
+   
+   - Patient: Own data access only
+   - Specialist: Assigned patients' data
+   - Staff: All patient data (read-only)
+   - Admin: Full system access
+
+
+================================================================================
+ERROR HANDLING & LOGGING
+================================================================================
+
+STANDARDIZED ERROR RESPONSES
+-----------------------------
+
+Success Response (200-299):
+   {
+       "success": true,
+       "data": {...},
+       "message": "Operation successful"
+   }
+
+Client Error (400-499):
+   {
+       "success": false,
+       "error": "Invalid input",
+       "details": "Blood sugar value must be positive"
+   }
+
+Server Error (500-599):
+   {
+       "success": false,
+       "error": "Internal server error",
+       "message": "An unexpected error occurred"
+   }
+
+HTTP STATUS CODES USED
+----------------------
+   200 OK              - Successful GET request
+   201 Created         - Resource created successfully
+   400 Bad Request     - Invalid input data
+   401 Unauthorized    - Missing or invalid authentication
+   403 Forbidden       - Insufficient permissions
+   404 Not Found       - Resource doesn't exist
+   500 Internal Error  - Server-side error
+
+LOGGING CONFIGURATION
+---------------------
+   import logging
+   
+   logging.basicConfig(
+       level=logging.INFO,
+       format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+   )
+   
+   logger = logging.getLogger(__name__)
+
+Logged Events:
+   - Database connections/disconnections
+   - Authentication attempts
+   - API requests and responses
+   - ML model predictions
+   - Email notifications sent
+   - Scheduler job executions
+   - Errors and exceptions
+
+
+================================================================================
+FILE UPLOAD HANDLING
+================================================================================
+
+PROFILE IMAGES & MEDICAL RECORDS
+---------------------------------
+
+1. ALLOWED FILE TYPES
+   ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx'}
+   
+   def allowed_file(filename):
+       return '.' in filename and \
+              filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+2. UPLOAD DIRECTORY
+   UPLOAD_FOLDER = 'backend/uploads'
+   app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+   app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max
+
+3. UPLOAD PROCESS
+   @app.route('/api/upload/profile', methods=['POST'])
+   def upload_profile_image():
+       if 'file' not in request.files:
+           return jsonify({'error': 'No file provided'}), 400
+       
+       file = request.files['file']
+       if file and allowed_file(file.filename):
+           filename = secure_filename(file.filename)
+           filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+           file.save(filepath)
+           
+           # Store path in database
+           db.update_user(user_id, profile_image_path=filepath)
+
+4. FILE SERVING
+   Uploaded files served statically:
+   - URL: /uploads/<filename>
+   - Storage: backend/uploads/ directory
+   - Access control: User authentication required
+
+
+================================================================================
+CORS CONFIGURATION
+================================================================================
+
+CROSS-ORIGIN RESOURCE SHARING - LINE BY LINE EXPLANATION
+---------------------------------------------------------
+
+Purpose: Allow frontend (HTML files) to call backend API from different origins
+
+WHAT IS CORS?
+CORS = Cross-Origin Resource Sharing
+- Origin = Protocol + Domain + Port
+- http://127.0.0.1:5000 (backend) ≠ file:/// (frontend) = Different origins
+- Browser blocks cross-origin requests by default for security
+- CORS headers tell browser: "This cross-origin request is allowed"
+
+CODE EXPLANATION:
+```python
+# LINE 1: Import Flask to create web application
+# Flask is the web framework that handles HTTP requests
+from flask import Flask, request, jsonify
+
+# LINE 2: Import CORS extension
+# CORS = Cross-Origin Resource Sharing
+# Allows frontend from different domain/port to access API
+from flask_cors import CORS
+
+# LINE 3: Create Flask application instance
+# __name__ tells Flask the name of current module
+# Used to locate templates, static files, etc.
+app = Flask(__name__)
+
+# LINE 4: Enable CORS for ALL routes in application
+# This ONE line adds CORS headers to EVERY API response
+# Without this line, browser blocks frontend API calls
+# CORS(app) is shorthand for allowing all origins (*)
+CORS(app)
+```
+
+WHAT HAPPENS WITHOUT CORS?
+--------------------------
+Scenario: Frontend tries to call backend
+
+```javascript
+// Frontend JavaScript (index.html)
+fetch('http://127.0.0.1:5000/api/login', {
+    method: 'POST',
+    body: JSON.stringify({email, password})
+})
+```
+
+Browser Console Error:
+"Access to fetch at 'http://127.0.0.1:5000/api/login' from origin 'file://'
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header
+is present on the requested resource."
+
+Request is BLOCKED before reaching server!
+
+WHAT HAPPENS WITH CORS?
+-----------------------
+CORS(app) adds these headers to EVERY response:
+
+```http
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Max-Age: 3600
+```
+
+HEADER EXPLANATIONS:
+-------------------
+
+1. Access-Control-Allow-Origin: *
+   - Tells browser: "Allow requests from ANY origin"
+   - * = wildcard (all domains)
+   - Example: file://, http://localhost:3000, https://myapp.com all allowed
+   - Production best practice: Replace * with specific domain
+     CORS(app, origins=['https://bloodsugar-app.com'])
+
+2. Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+   - Lists HTTP methods frontend can use
+   - GET: Retrieve data (read)
+   - POST: Create new data (write)
+   - PUT: Update existing data (modify)
+   - DELETE: Remove data (delete)
+   - OPTIONS: Preflight check (browser asks permission first)
+
+3. Access-Control-Allow-Headers: Content-Type, Authorization
+   - Lists headers frontend can include in requests
+   - Content-Type: application/json (tells server data format)
+   - Authorization: Bearer <token> (for authentication)
+   - Without this, browser blocks requests with these headers
+
+4. Access-Control-Max-Age: 3600
+   - Browser caches CORS permission for 3600 seconds (1 hour)
+   - Reduces preflight OPTIONS requests
+   - Improves performance
+
+PREFLIGHT REQUEST EXPLAINED:
+---------------------------
+For POST/PUT/DELETE with JSON or custom headers, browser sends
+"preflight" OPTIONS request BEFORE the actual request:
+
+Step 1: Browser sends OPTIONS request (asks permission)
+```http
+OPTIONS /api/readings HTTP/1.1
+Host: 127.0.0.1:5000
+Origin: file://
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: Content-Type, Authorization
+```
+
+Step 2: Server responds with CORS headers (grants permission)
+```http
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: POST
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Max-Age: 3600
+```
+
+Step 3: Browser sees permission granted → Sends actual POST request
+```http
+POST /api/readings HTTP/1.1
+Host: 127.0.0.1:5000
+Content-Type: application/json
+Authorization: Bearer abc123token
+
+{"value": 125, "fasting": true}
+```
+
+Step 4: Server processes request and responds with CORS headers
+```http
+HTTP/1.1 201 Created
+Access-Control-Allow-Origin: *
+Content-Type: application/json
+
+{"success": true, "reading_id": 1234}
+```
+
+Without CORS headers in step 2 or 4 → Browser BLOCKS the request!
+
+Configuration:
+   from flask_cors import CORS
+   CORS(app)  # Enable CORS for all routes
+
+What CORS Enables:
+   ✓ Frontend on file:// protocol can access API
+   ✓ Future deployment on different domains
+   ✓ Mobile app API access
+   ✓ Third-party integrations
+
+Headers Added:
+   Access-Control-Allow-Origin: *
+   Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+   Access-Control-Allow-Headers: Content-Type, Authorization
+
+
+================================================================================
+BACKGROUND SERVICES
+================================================================================
+
+SCHEDULER SERVICE
+-----------------
+Runs automated tasks in the background without blocking API requests.
+
+Scheduled Jobs:
+   1. Check Notifications (Hourly)
+      - Scan all patients for abnormal readings
+      - Send email alerts if thresholds breached
+      - Notify assigned specialists
+
+   2. Future Jobs (Expandable)
+      - Daily summary reports
+      - Weekly trend analysis
+      - Database cleanup
+      - Backup operations
+
+Implementation:
+   from apscheduler.schedulers.background import BackgroundScheduler
+   
+   scheduler = BackgroundScheduler()
+   scheduler.add_job(
+       func=check_all_notifications,
+       trigger='interval',
+       hours=1
+   )
+   scheduler.start()
+
+
+================================================================================
+PERFORMANCE CONSIDERATIONS
+================================================================================
+
+OPTIMIZATION STRATEGIES
+-----------------------
+
+1. Database Query Optimization
+   - Use indexed columns in WHERE clauses
+   - Fetch only required columns (not SELECT *)
+   - Batch operations when possible
+   - Connection reuse via class instance
+
+2. Caching Strategy
+   - User session data cached in memory
+   - ML model loaded once at startup
+   - Frequent queries cached temporarily
+
+3. Asynchronous Operations
+   - Email sending done in background
+   - ML analysis doesn't block response
+   - Scheduler runs independently
+
+4. Response Time Targets
+   - Authentication: < 100ms
+   - Simple queries: < 200ms
+   - ML predictions: < 500ms
+   - Report generation: < 2s
+
+
+================================================================================
+SECURITY MEASURES
+================================================================================
+
+APPLICATION SECURITY
+--------------------
+
+1. Input Validation
+   - All user inputs sanitized
+   - Type checking on parameters
+   - SQL injection prevention (parameterized queries)
+   - File upload restrictions
+
+2. Authentication Security
+   - Password hashing (SHA-256)
+   - Token-based session management
+   - Session expiration (recommended)
+   - HTTPS enforcement (production)
+
+3. Authorization
+   - Role-based access control
+   - User can only access own data
+   - Specialist limited to assigned patients
+   - Admin has audit trail
+
+4. Data Protection
+   - Sensitive data not logged
+   - Database credentials in environment variables
+   - No credentials in source code
+   - Medical records access controlled
+
+
+================================================================================
+DEPLOYMENT CONSIDERATIONS
+================================================================================
+
+DEVELOPMENT VS PRODUCTION
+--------------------------
+
+Current (Development):
+   - Debug mode enabled
+   - Host: 127.0.0.1 (localhost only)
+   - Port: 5000
+   - Single-threaded
+   - Development database
+
+Production Recommendations:
+   - Use production WSGI server (Gunicorn/uWSGI)
+   - Deploy behind reverse proxy (Nginx)
+   - HTTPS/SSL certificates
+   - Environment-based configuration
+   - Database connection pooling
+   - Load balancing
+   - Monitoring and logging
+   - Automated backups
+
+Production Startup Example:
+   gunicorn -w 4 -b 0.0.0.0:8000 app:app
+
+
+================================================================================
+API DOCUMENTATION EXAMPLE
+================================================================================
+
+ENDPOINT: Add Blood Sugar Reading
+----------------------------------
+
+URL: POST /api/readings
+
+Headers:
+   Content-Type: application/json
+   Authorization: Bearer <token>
+
+Request Body:
+   {
+       "value": 125,
+       "unit": "mg/dL",
+       "fasting": true,
+       "food_intake": "Oatmeal with berries",
+       "activity": "Morning walk - 30 mins",
+       "symptoms": "None",
+       "notes": "Feeling good today"
+   }
+
+Response (201 Created):
+   {
+       "success": true,
+       "reading_id": 1234,
+       "status": "normal",
+       "insights": [
+           {
+               "type": "success",
+               "message": "Blood sugar is normal (125 mg/dL). Keep it up!",
+               "priority": "low"
+           }
+       ],
+       "message": "Reading added successfully"
+   }
+
+Error Response (401 Unauthorized):
+   {
+       "success": false,
+       "error": "Unauthorized",
+       "message": "Invalid or missing authentication token"
+   }
+
+
+================================================================================
+CONCLUSION
+================================================================================
+
+The Flask server architecture provides a robust, scalable REST API for the
+Blood Sugar Monitoring System. With 40+ endpoints, comprehensive error 
+handling, background task scheduling, and integrated ML analysis, it serves
+as the central hub for all application functionality.
+
+Key Strengths:
+   ✓ RESTful API design
+   ✓ Token-based authentication
+   ✓ Role-based access control
+   ✓ Integrated ML service
+   ✓ Background task scheduling
+   ✓ Comprehensive error handling
+   ✓ File upload support
+   ✓ Email notification system
+   ✓ CORS enabled for frontend
+   ✓ Production-ready architecture
+
+The server operates on port 5000 (NOT to be confused with database port 3306)
+and communicates with the MySQL database on port 3306 for all data operations.
+
+================================================================================

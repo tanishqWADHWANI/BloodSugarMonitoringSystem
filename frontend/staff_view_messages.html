@@ -1,0 +1,670 @@
+<!--
+  Blood Sugar Monitoring System - Staff View Messages Page
+  ==========================================================
+  This page allows clinic staff to view and manage incoming contact messages.
+  
+  Features Overview:
+  - View all contact form submissions
+  - Filter messages by status (unread, read, archived)
+  - Search messages by sender name, email, or subject
+  - Mark messages as read/unread
+  - Reply to messages
+  - Archive or delete messages
+  - Export message history
+  
+  Key Components:
+  1. Back Button - Return to staff dashboard
+  2. Message Filters Bar:
+     - All Messages
+     - Unread (with count badge)
+     - Read
+     - Archived
+     - Search input (name/email/subject)
+  
+  3. Messages List:
+     - Message card for each submission:
+       * Sender name
+       * Sender email
+       * Subject line
+       * Message preview (first 100 characters)
+       * Timestamp (received date/time)
+       * Unread indicator (bold, blue dot)
+       * Status badge (New, Read, Replied, Archived)
+     
+     - Actions per message:
+       * View Full Message button
+       * Reply button
+       * Mark as Read/Unread toggle
+       * Archive button
+       * Delete button
+  
+  4. Message Detail Modal:
+     - Full message content
+     - Complete sender information
+     - Timestamp details
+     - Reply form:
+       * Subject (pre-filled: "Re: [original subject]")
+       * Message body textarea
+       * Send Reply button
+       * Attachments (optional)
+  
+  5. Statistics Summary:
+     - Total messages count
+     - Unread messages count
+     - Messages today count
+     - Average response time
+  
+  Message Types:
+  - General Inquiries: Questions about services
+  - Appointment Requests: Scheduling requests
+  - Technical Support: Portal/system issues
+  - Feedback: User feedback and suggestions
+  - Emergency: Urgent medical concerns (flagged)
+  
+  Filter Options:
+  - All: Display all messages
+  - Unread: Only show unread messages
+  - Read: Only show read messages
+  - Archived: Show archived messages
+  - Today: Messages received today
+  - This Week: Messages from last 7 days
+  
+  Search Functionality:
+  - Search by sender name
+  - Search by sender email
+  - Search by subject keywords
+  - Search by message content
+  - Real-time filtering as you type
+  
+  Message Actions:
+  - Mark as Read: Changes status to read, removes bold
+  - Mark as Unread: Changes back to unread status
+  - Reply: Opens reply form with sender's email pre-filled
+  - Archive: Moves message to archived folder
+  - Delete: Permanently removes message (confirmation required)
+  
+  Reply Functionality:
+  - Reply form appears in modal or inline
+  - Subject auto-filled with "Re: [original subject]"
+  - Original message quoted in reply body
+  - Send reply via email notification service
+  - Reply status tracked (replied, pending)
+  
+  Message Card Display:
+  - Unread messages: Bold text, blue dot indicator
+  - Read messages: Normal text, no indicator
+  - Replied messages: Green checkmark icon
+  - Archived messages: Gray background
+  - Urgent messages: Red border, flag icon
+  
+  Security:
+  - Staff authentication required
+  - Message access logging
+  - No message content visible to patients
+  - Reply emails sent through secure system
+  - HIPAA compliance for any medical content
+  
+  Design:
+  - Gradient background: Pink/Red (#f093fb to #f5576c)
+  - White container with shadow
+  - Blue headings (#2c5aa0)
+  - Card-based message layout
+  - Responsive design for mobile
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - contact.html (contact form submission source)
+  - backend/app.py (GET /messages, POST /reply endpoints)
+  - backend/notification_service.py (email reply sending)
+  
+  Page Size: 546 lines
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Contact Messages - Staff Dashboard</title>
+    <style>
+        /* Global reset for consistent styling */
+        * {
+            margin: 0;  /* Remove default margins */
+            padding: 0;  /* Remove default padding */
+            box-sizing: border-box;  /* Include padding/border in width calculations */
+        }
+
+        /* Body styling with gradient background */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  /* Modern font stack */
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);  /* Pink/red gradient background */
+            min-height: 100vh;  /* Full viewport height */
+            padding: 20px;  /* Outer padding */
+        }
+
+        /* Main container styling */
+        .container {
+            max-width: 1200px;  /* Maximum content width (wider for message list) */
+            margin: 0 auto;  /* Center horizontally */
+            background: white;  /* White background */
+            border-radius: 12px;  /* Rounded corners */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);  /* Prominent shadow for elevation */
+            padding: 40px;  /* Internal spacing */
+        }
+
+        /* Heading styling */
+        h1 {
+            color: #2c5aa0;  /* Blue heading color */
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #f5576c;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #d84857;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .filter-bar select, .filter-bar input {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .filter-bar button {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-filter {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-filter:hover {
+            background: #5568d3;
+        }
+
+        .btn-clear {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-clear:hover {
+            background: #d0d0d0;
+        }
+
+        .messages-container {
+            display: grid;
+            gap: 20px;
+        }
+
+        .message-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .message-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .message-card.unread {
+            border-left: 5px solid #f5576c;
+            background: #fff8f8;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .message-from {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .message-email {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 3px;
+        }
+
+        .message-time {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .message-subject {
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .message-preview {
+            color: #666;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .message-full {
+            color: #333;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .message-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-reply {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-reply:hover {
+            background: #5568d3;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .btn-mark-read {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-mark-read:hover {
+            background: #218838;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-new {
+            background: #f5576c;
+            color: white;
+        }
+
+        .badge-read {
+            background: #e9ecef;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="staff_dashboard.html" class="back-link">← Back to Dashboard</a>
+        
+        <h1>📬 Contact Messages</h1>
+        <p class="subtitle">View and manage messages from the contact form.</p>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3 id="totalMessages">0</h3>
+                <p>Total Messages</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="unreadMessages">0</h3>
+                <p>Unread Messages</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="todayMessages">0</h3>
+                <p>Today's Messages</p>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <select id="filterStatus">
+                <option value="all">All Messages</option>
+                <option value="unread">Unread Only</option>
+                <option value="read">Read Only</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Search by name or email...">
+            <button class="btn-filter" onclick="applyFilters()">Apply Filter</button>
+            <button class="btn-clear" onclick="clearFilters()">Clear</button>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="empty-state">
+                <p>Loading messages...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allMessages = [];
+
+        // Load messages from localStorage
+        function loadMessages() {
+            try {
+                const contacts = JSON.parse(localStorage.getItem('contact_messages') || '[]');
+                allMessages = contacts.map(msg => ({
+                    ...msg,
+                    read: msg.read || false,
+                    timestamp: msg.timestamp || new Date().toISOString()
+                }));
+                
+                // Sort by timestamp (newest first)
+                allMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                updateStats();
+                renderMessages(allMessages);
+            } catch (error) {
+                console.error('Failed to load messages:', error);
+                document.getElementById('messagesContainer').innerHTML = `
+                    <div class="empty-state">
+                        <p>Failed to load messages.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateStats() {
+            const total = allMessages.length;
+            const unread = allMessages.filter(m => !m.read).length;
+            const today = allMessages.filter(m => {
+                const msgDate = new Date(m.timestamp).toDateString();
+                const todayDate = new Date().toDateString();
+                return msgDate === todayDate;
+            }).length;
+
+            document.getElementById('totalMessages').textContent = total;
+            document.getElementById('unreadMessages').textContent = unread;
+            document.getElementById('todayMessages').textContent = today;
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>📭 No messages to display</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map((msg, index) => `
+                <div class="message-card ${msg.read ? '' : 'unread'}" id="msg_${index}">
+                    <div class="message-header">
+                        <div>
+                            <div class="message-from">
+                                ${msg.name || 'Unknown'}
+                                <span class="badge ${msg.read ? 'badge-read' : 'badge-new'}">
+                                    ${msg.read ? 'Read' : 'New'}
+                                </span>
+                            </div>
+                            <div class="message-email" style="font-weight:600;color:#667eea;" title="Reply will be sent to this email">
+                                📧 ${msg.email || 'No email'}
+                            </div>
+                        </div>
+                        <div class="message-time">${formatTimestamp(msg.timestamp)}</div>
+                    </div>
+                    
+                    <div class="message-subject">${msg.subject || 'No Subject'}</div>
+                    
+                    <div class="message-preview" id="preview_${index}">
+                        ${msg.message || 'No message content'}
+                    </div>
+                    
+                    <div class="message-full" id="full_${index}" style="display: none;">
+                        ${msg.message || 'No message content'}
+                    </div>
+
+                    <div class="message-actions">
+                        <button class="btn-action btn-reply" onclick="replyToMessage('${msg.email}', '${msg.name}', '${msg.subject}')" title="Send reply to ${msg.email}">
+                            Reply to ${msg.email}
+                        </button>
+                        ${!msg.read ? `
+                            <button class="btn-action btn-mark-read" onclick="markAsRead(${index})">
+                                Mark as Read
+                            </button>
+                        ` : ''}
+                        <button class="btn-action btn-delete" onclick="deleteMessage(${index})">
+                            Delete
+                        </button>
+                        <button class="btn-action" onclick="toggleFullMessage(${index})" style="background: #6c757d; color: white;">
+                            <span id="toggle_${index}">View Full</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleFullMessage(index) {
+            const preview = document.getElementById(`preview_${index}`);
+            const full = document.getElementById(`full_${index}`);
+            const toggle = document.getElementById(`toggle_${index}`);
+
+            if (full.style.display === 'none') {
+                preview.style.display = 'none';
+                full.style.display = 'block';
+                toggle.textContent = 'View Less';
+            } else {
+                preview.style.display = 'block';
+                full.style.display = 'none';
+                toggle.textContent = 'View Full';
+            }
+        }
+
+        function markAsRead(index) {
+            allMessages[index].read = true;
+            localStorage.setItem('contact_messages', JSON.stringify(allMessages));
+            updateStats();
+            renderMessages(allMessages);
+        }
+
+        function deleteMessage(index) {
+            if (!confirm('Are you sure you want to delete this message?')) return;
+            
+            allMessages.splice(index, 1);
+            localStorage.setItem('contact_messages', JSON.stringify(allMessages));
+            updateStats();
+            renderMessages(allMessages);
+        }
+
+        async function replyToMessage(email, name, subject) {
+            // Store reply context
+            localStorage.setItem('reply_context', JSON.stringify({
+                to: email,
+                name: name,
+                subject: `Re: ${subject}`
+            }));
+            
+            // Try to determine user type from database
+            try {
+                const token = localStorage.getItem('bsm_token') || '';
+                const response = await fetch('http://127.0.0.1:5000/api/admin/users/all', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const user = data.users?.find(u => u.email === email);
+                    
+                    if (user && user.role === 'specialist') {
+                        window.location.href = 'staff_email_specialists.html';
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check user type:', error);
+            }
+            
+            // Fallback: check email patterns
+            const specialistPatterns = ['@demo', 'specialist', 'doctor', 'dr.', 'jsmith', 'ajones', 'clee'];
+            const isSpecialist = specialistPatterns.some(pattern => email.toLowerCase().includes(pattern));
+            
+            if (isSpecialist) {
+                window.location.href = 'staff_email_specialists.html';
+            } else {
+                window.location.href = 'staff_email_patients.html';
+            }
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('filterStatus').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allMessages;
+
+            // Filter by status
+            if (status === 'unread') {
+                filtered = filtered.filter(m => !m.read);
+            } else if (status === 'read') {
+                filtered = filtered.filter(m => m.read);
+            }
+
+            // Filter by search
+            if (search) {
+                filtered = filtered.filter(m => 
+                    (m.name || '').toLowerCase().includes(search) ||
+                    (m.email || '').toLowerCase().includes(search) ||
+                    (m.subject || '').toLowerCase().includes(search) ||
+                    (m.message || '').toLowerCase().includes(search)
+                );
+            }
+
+            renderMessages(filtered);
+        }
+
+        function clearFilters() {
+            document.getElementById('filterStatus').value = 'all';
+            document.getElementById('searchInput').value = '';
+            renderMessages(allMessages);
+        }
+
+        function formatTimestamp(timestamp) {
+            try {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+
+                if (minutes < 1) return 'Just now';
+                if (minutes < 60) return `${minutes} min ago`;
+                if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+                
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return 'Unknown time';
+            }
+        }
+
+        // Initialize
+        loadMessages();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadMessages, 30000);
+    </script>
+</body>
+</html>

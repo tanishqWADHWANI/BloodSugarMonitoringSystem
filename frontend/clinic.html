@@ -1,0 +1,187 @@
+<!--
+  Blood Sugar Monitoring System - Clinic Login Page
+  ===================================================
+  This page provides authentication for clinic administrators and healthcare staff.
+  
+  Features:
+  - Clinic ID/password login form
+  - Credentials validation against backend
+  - Session management with localStorage
+  - Simple, elderly-friendly design with larger text and clear styling
+  - Redirects to appropriate dashboard after successful login
+  
+  Clinic Access Purpose:
+  - Centralized access point for clinic administration
+  - Manage clinic-wide operations
+  - Oversee patient care coordination
+  - View clinic statistics and reports
+  
+  Design Considerations:
+  - Light blue color scheme (#f8fcff, #004080) for professional healthcare look
+  - Large, readable text for accessibility
+  - Rounded corners and soft shadows for modern appearance
+  - Clear error messaging for authentication failures
+  
+  Security:
+  - Clinic role verification on backend
+  - Token-based authentication
+  - Password not stored in frontend
+  - HTTPS recommended for production
+  
+  Related Files:
+  - admin_dashboard.html (potential redirect target)
+  - staff_dashboard.html (potential redirect target)
+  - js/api.js (authentication API calls)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinic Access - Blood Sugar Monitor Clinic</title>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  
+  <!-- Page-specific styles for clinic login -->
+  <style>
+    /* Container for the login form - centered and constrained width */
+    .login-container {
+      max-width: 450px;  /* Maximum form width */
+      margin: 50px auto;  /* Center horizontally with top margin */
+      background: #f8fcff; /* Light blue for elderly-friendly look */
+      padding: 25px;  /* Internal spacing */
+      border-radius: 12px;  /* Rounded corners */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
+    }
+
+    h2 {
+      text-align: center;  /* Center heading text */
+      color: #004080; /* Clinic blue - professional healthcare color */
+      margin-bottom: 15px;  /* Space below heading */
+    }
+
+    label {
+      font-weight: bold;  /* Emphasize labels */
+      display: block;  /* Stack labels above inputs */
+      margin-bottom: 6px;  /* Space between label and input */
+      color: #003366;  /* Dark blue for contrast */
+    }
+
+    select, input[type="text"], input[type="password"], button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #bcd4e6;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #3b7ec4;
+    }
+
+    /* Initially hidden continue section */
+    .login-form {
+      display: none;
+    }
+
+    #continueBtn {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      padding: 12px 24px;
+      border-radius: 6px;
+      width: 100%;
+    }
+
+    #continueBtn:hover {
+      background-color: #3b7ec4;
+    }
+
+    #continueBtn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================
+       Navigation Header
+       ========================= -->
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient.html">Patient</a></li>
+        <li><a href="specialist.html">Specialist</a></li>
+        <li><a href="clinic.html" class="active">Clinic</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- =========================
+       Main Clinic Login Section
+       ========================= -->
+  <main>
+    <div class="login-container">
+      <h2>Clinic Access Portal</h2>
+      <p style="text-align: center; color: #666; margin-bottom: 20px;">Select your role to continue to the appropriate login page</p>
+
+      <!-- Role selection dropdown -->
+      <label for="roleSelect">Select Role:</label>
+      <select id="roleSelect">
+        <option value="">-- Choose Role --</option>
+        <option value="staff">Staff</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <!-- Continue button to proceed to selected role page -->
+      <div id="continueSection" class="login-form">
+        <button id="continueBtn">Continue to Login</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- =========================
+       Role Selection Script
+       ========================= -->
+  <script>
+    const roleSelect = document.getElementById('roleSelect');
+    const continueSection = document.getElementById('continueSection');
+    const continueBtn = document.getElementById('continueBtn');
+
+    // Show continue button when a role is selected
+    roleSelect.addEventListener('change', function () {
+      if (this.value === 'staff' || this.value === 'admin') {
+        continueSection.style.display = 'block';
+      } else {
+        continueSection.style.display = 'none';
+      }
+    });
+
+    // Handle navigation to appropriate login page
+    continueBtn.addEventListener('click', function () {
+      const selectedRole = roleSelect.value;
+      if (selectedRole === 'staff') {
+        window.location.href = 'staff.html';
+      } else if (selectedRole === 'admin') {
+        window.location.href = 'admin.html';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check LocalStorage Token</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .info { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #c8e6c9; }
+        .error { background: #ffcdd2; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 LocalStorage Token Inspector</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="location.reload()">Refresh</button>
+    <button onclick="localStorage.clear(); location.reload()">Clear All & Refresh</button>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(title, content, className = 'info') {
+            const div = document.createElement('div');
+            div.className = className;
+            div.innerHTML = `<h3>${title}</h3><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+        
+        // Check token
+        const token = localStorage.getItem('bsm_token');
+        if (token) {
+            addResult('✅ Token Found', `Token: ${token}\nLength: ${token.length} characters`, 'success');
+            
+            // Parse token
+            const parts = token.split('_');
+            if (parts[0] === 'token' && parts.length >= 3) {
+                addResult('Token Parsed', `Format: token_{user_id}_{role}\nUser ID: ${parts[1]}\nRole: ${parts[2]}`, 'success');
+            } else {
+                addResult('⚠️ Invalid Token Format', `Expected: token_XXX_role\nGot: ${token}`, 'error');
+            }
+        } else {
+            addResult('❌ No Token Found', 'bsm_token is not set in localStorage', 'error');
+        }
+        
+        // Check all localStorage keys
+        const allKeys = Object.keys(localStorage);
+        if (allKeys.length > 0) {
+            let allData = '';
+            allKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                allData += `${key}: ${value}\n`;
+            });
+            addResult('All LocalStorage Data', allData, 'info');
+        } else {
+            addResult('LocalStorage Empty', 'No data in localStorage', 'info');
+        }
+        
+        // Check specialist-specific keys
+        const specialistKeys = ['specialistId', 'specialistUserId', 'userId', 'specialistUsername', 'specialistFullName'];
+        let specialistData = '';
+        specialistKeys.forEach(key => {
+            const value = localStorage.getItem(key);
+            specialistData += `${key}: ${value || 'NOT SET'}\n`;
+        });
+        addResult('Specialist Keys', specialistData, 'info');
+    </script>
+</body>
+</html>

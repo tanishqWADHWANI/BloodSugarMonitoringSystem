@@ -1,0 +1,44 @@
+# Python Dependencies for Blood Sugar Monitoring System
+# Install all packages using: pip install -r requirements.txt
+
+# ===== Web Framework =====
+# Flask: Lightweight web framework for building the REST API backend
+Flask==3.0.0
+
+# Flask-CORS: Enables Cross-Origin Resource Sharing (allows frontend to communicate with backend)
+flask-cors==4.0.0
+
+# ===== Database =====
+# MySQL Connector: Python driver for connecting to MySQL/MariaDB database
+mysql-connector-python==8.2.0
+
+# ===== Machine Learning =====
+# Scikit-learn: ML library for blood sugar prediction models
+scikit-learn==1.3.2
+
+# Joblib: For saving and loading trained ML models
+joblib==1.3.2
+
+# Pandas: Data manipulation and analysis (used for processing blood sugar datasets)
+pandas==2.1.4
+
+# NumPy: Numerical computing library (required by scikit-learn and pandas)
+numpy==1.26.2
+
+# ===== Configuration =====
+# Python-dotenv: Loads environment variables from .env file
+python-dotenv==1.0.0
+
+# ===== Task Scheduling =====
+# APScheduler: Background task scheduler for automated notifications and alerts
+APScheduler==3.10.4
+
+# ===== Email =====
+# Email functionality uses Python's built-in smtplib module
+# No external package installation required
+
+# ===== Utilities =====
+# Python-dateutil: Extended date/time handling utilities
+python-dateutil==2.8.2
+
+

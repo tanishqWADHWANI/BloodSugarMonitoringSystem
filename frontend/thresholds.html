@@ -1,0 +1,392 @@
+<!--
+  Blood Sugar Monitoring System - Glucose Thresholds Configuration
+  ==================================================================
+  This page allows clinic staff to configure glucose alert thresholds for patients.
+  
+  Features Overview:
+  - Configure low glucose threshold (hypoglycemia)
+  - Configure high glucose threshold (hyperglycemia)
+  - Set custom thresholds per patient or system-wide defaults
+  - View current threshold settings
+  - Test threshold alerts
+  
+  Key Components:
+  1. Navigation Bar - Home, Patient, Specialist, Clinic (active), Contact
+  2. Page Header with Back Button
+  3. Threshold Configuration Form:
+     - Low Glucose Threshold (mg/dL)
+     - High Glucose Threshold (mg/dL)
+     - Apply to: Dropdown (System-wide / Specific Patient)
+     - Patient Selector (if specific patient selected)
+     - Save button
+  
+  4. Current Settings Display:
+     - System-wide default thresholds
+     - Patient-specific overrides list
+     - Last modified date and by whom
+  
+  5. Threshold Guidelines:
+     - Normal range: 70-180 mg/dL (general)
+     - Fasting normal: 70-100 mg/dL
+     - Post-meal normal: 70-140 mg/dL (2 hours after eating)
+     - Critical low: <70 mg/dL (hypoglycemia)
+     - Critical high: >180 mg/dL (hyperglycemia)
+  
+  Threshold Types:
+  - System Default: Applied to all patients unless overridden
+  - Patient-Specific: Custom thresholds for individual patients
+  - Meal Type-Specific: Different thresholds for fasting vs post-meal
+  
+  Alert Behavior:
+  - Readings below low threshold trigger critical low alert
+  - Readings above high threshold trigger critical high alert
+  - Alerts sent to patient dashboard, assigned specialist, and clinic staff
+  - Email notifications for critical alerts
+  
+  Medical Considerations:
+  - Elderly patients may need higher thresholds
+  - Type 1 vs Type 2 diabetes may require different ranges
+  - Pregnancy requires stricter thresholds
+  - Athletes may have different normal ranges
+  
+  Form Validation:
+  - Low threshold must be positive number
+  - High threshold must be greater than low threshold
+  - Recommended range validation (e.g., low 60-80, high 140-200)
+  - Confirmation for non-standard thresholds
+  
+  Security:
+  - Staff/Admin role required
+  - Token-based authentication
+  - Audit log for threshold changes
+  - Medical justification recommended for custom thresholds
+  
+  Related Files:
+  - patient_dashboard.html (displays alerts based on thresholds)
+  - backend/ml_service.py (uses thresholds for predictions)
+  - backend/notification_service.py (sends threshold breach alerts)
+  - js/api.js (getThresholds, updateThresholds API calls)
+  
+  Page Size: 320 lines
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clinic Staff – Thresholds</title>
+    <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+    <link rel="stylesheet" href="css/dasshboard.css" />  <!-- Dashboard-specific styles -->
+</head>
+
+<body>
+    <!-- HEADER - Top navigation bar -->
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>  <!-- Homepage -->
+                <li><a href="patient.html">Patient</a></li>  <!-- Patient login -->
+                <li><a href="specialist.html">Specialist</a></li>  <!-- Specialist login -->
+                <li><a href="clinic.html" class="active">Clinic</a></li>  <!-- Current page -->
+                <li><a href="contact.html">Contact Us</a></li>  <!-- Contact page -->
+            </ul>
+        </nav>
+    </header>
+
+    <!-- MAIN - Main content area -->
+    <main class="container">
+        <section class="dashboard-header">
+            <!-- Page header with title and back button -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h1>Clinic Staff – Manage Thresholds</h1>  <!-- Page title -->
+                <button onclick="history.back()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">← Back to Dashboard</button>  <!-- Back navigation -->
+            </div>
+            <p class="subtext">
+                Define blood sugar thresholds used to categorize readings into
+                <strong>Normal</strong>, <strong>Borderline</strong>, and <strong>Abnormal</strong>.
+                You can set <em>System Default</em> thresholds (apply to everyone) or add a
+                <em>Patient Override</em> for a specific patient.
+            </p>
+        </section>
+
+        <!-- ADD / EDIT FORM -->
+        <section class="card">
+            <h2 style="color: #004080; font-size: 1.5rem; margin-bottom: 10px;">Add Threshold</h2>
+            <div style="background: #e7f3ff; border-left: 4px solid #007bff; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px;">
+                <strong style="color: #004080;">📋 Note:</strong> To set a threshold for a <strong>specific patient</strong>, select <strong>"PatientOverride"</strong> in the Scope field. 
+                This will reveal a <strong>Patient dropdown</strong> where you can choose which patient this threshold applies to.
+            </div>
+            <form id="thresholdForm" class="form-grid">
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                    <div class="form-field">
+                        <label for="thStatus" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Status</label>
+                        <select id="thStatus" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: white;">
+                            <option value="Normal">Normal (max)</option>
+                            <option value="Borderline">Borderline (max)</option>
+                            <option value="AbnormalLow">AbnormalLow (min)</option>
+                            <option value="AbnormalHigh">AbnormalHigh (max)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="thValue" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Value (mg/dL)</label>
+                        <input type="number" id="thValue" min="20" max="600" step="1" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="thScope" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Scope</label>
+                        <select id="thScope" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: white;">
+                            <option value="SystemDefault">SystemDefault</option>
+                            <option value="PatientOverride">PatientOverride</option>
+                        </select>
+                        <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Select PatientOverride to set for specific patient</small>
+                    </div>
+
+                    <div class="form-field" id="patientIdWrap" style="display:none">
+                        <label for="thPatientId" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Patient <span style="color: #dc3545;">*</span></label>
+                        <select id="thPatientId" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: white;">
+                            <option value="">Loading patients...</option>
+                        </select>
+                        <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;">Choose patient for this threshold</small>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="display: flex; gap: 12px; margin-top: 20px;">
+                    <button type="submit" style="background: #007bff; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Add Threshold</button>
+                    <button type="button" id="resetDefaultsBtn" class="secondary" style="background: #e9ecef; color: #495057; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Reset to Defaults</button>
+                </div>
+            </form>
+
+            <p class="hint" style="margin-top: 20px; padding: 12px 16px; background: #f8f9fa; border-radius: 6px; color: #666; font-size: 0.9rem; line-height: 1.6;">
+                <strong>Meaning:</strong> We use these to compute status on patient pages:
+                if value &lt; <em>AbnormalLow</em> or &gt; <em>Borderline</em> → <b>Abnormal</b>;
+                else if value ≤ <em>Normal</em> → <b>Normal</b>; otherwise → <b>Borderline</b>.
+                (Patient overrides take precedence over system defaults.)
+            </p>
+        </section>
+
+        <!-- TABLE -->
+        <section class="card">
+            <h2>Current Thresholds</h2>
+            <div class="table-wrapper">
+                <table id="thresholdsTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">ID</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Status</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Value</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Scope</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Patient</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody><!-- rows injected by JS --></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- LOGIC -->
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+
+        // ====== Elements ======
+        const form = document.getElementById('thresholdForm');
+        const tbody = document.querySelector('#thresholdsTable tbody');
+        const statusEl = document.getElementById('thStatus');
+        const valueEl = document.getElementById('thValue');
+        const scopeEl = document.getElementById('thScope');
+        const patientWrap = document.getElementById('patientIdWrap');
+        const patientIdEl = document.getElementById('thPatientId');
+        const resetBtn = document.getElementById('resetDefaultsBtn');
+
+        // Show/Hide patient ID when scope changes
+        scopeEl.addEventListener('change', () => {
+            patientWrap.style.display = scopeEl.value === 'PatientOverride' ? 'block' : 'none';
+        });
+
+        // ====== Load patients ======
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users/all`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Filter only patients
+                const patients = data.users.filter(u => u.role === 'patient');
+                
+                // Populate dropdown
+                patientIdEl.innerHTML = '<option value="">Select a patient...</option>' +
+                    patients.map(p => 
+                        `<option value="${p.user_id}">${p.first_name} ${p.last_name} (ID: ${p.user_id})</option>`
+                    ).join('');
+            } catch (error) {
+                console.error('Error loading patients:', error);
+            }
+        }
+
+        // ====== Load from backend ======
+        async function loadThresholds() {
+            try {
+                const response = await fetch(`${API_BASE}/api/thresholds`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const data = await response.json();
+                renderThresholds(data.thresholds || []);
+            } catch (error) {
+                console.error('Error loading thresholds:', error);
+                alert('Failed to load thresholds: ' + error.message);
+            }
+        }
+
+        // ====== Render ======
+        function renderThresholds(thresholds) {
+            tbody.innerHTML = thresholds.map(t => `
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.threshold_id}</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.status}</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.min_value || '-'} - ${t.max_value || '-'} mg/dL</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.user_id ? 'Patient Override' : 'System'}</td>
+                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${t.patient_name || '-'}</td>
+                    <td style="padding: 14px 16px;">
+                        <button type="button" class="del-btn" data-id="${t.threshold_id}" style="background: #dc3545; color: white; padding: 6px 14px; border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer; font-weight: 500;">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ====== Add/Update threshold ======
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const isOverride = scopeEl.value === 'PatientOverride';
+            const patientId = isOverride ? Number(patientIdEl.value) : 0;
+
+            if (isOverride && !patientId) {
+                alert('Please enter a patient ID for override');
+                return;
+            }
+
+            // Convert status to match backend enum
+            const statusMap = {
+                'Normal': 'normal',
+                'Borderline': 'borderline',
+                'AbnormalLow': 'abnormal',
+                'AbnormalHigh': 'abnormal'
+            };
+
+            const value = Number(valueEl.value);
+            const status = statusMap[statusEl.value];
+
+            // Determine min/max based on status
+            let minValue = null, maxValue = null;
+            if (statusEl.value === 'Normal') {
+                maxValue = value; // Normal max is the value
+            } else if (statusEl.value === 'Borderline') {
+                maxValue = value; // Borderline max
+            } else if (statusEl.value === 'AbnormalLow') {
+                minValue = value; // Abnormal low minimum
+            } else if (statusEl.value === 'AbnormalHigh') {
+                maxValue = value; // Abnormal high maximum
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/thresholds/${patientId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: status,
+                        minValue: minValue,
+                        maxValue: maxValue
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                alert('Threshold saved successfully');
+                form.reset();
+                patientWrap.style.display = 'none';
+                loadThresholds();
+            } catch (error) {
+                console.error('Error saving threshold:', error);
+                alert('Failed to save threshold: ' + error.message);
+            }
+        });
+
+        // ====== Delete (event delegation) ======
+        tbody.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button.del-btn');
+            if (!btn) return;
+
+            if (!confirm('Are you sure you want to delete this threshold?')) return;
+
+            const id = Number(btn.dataset.id);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/thresholds/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                alert('Threshold deleted successfully');
+                loadThresholds();
+            } catch (error) {
+                console.error('Error deleting threshold:', error);
+                alert('Failed to delete threshold: ' + error.message);
+            }
+        });
+
+        // ====== Reset to defaults ======
+        resetBtn.addEventListener('click', async () => {
+            if (!confirm('This will set default thresholds for user_id=0 (system defaults). Continue?')) return;
+
+            const defaults = [
+                { status: 'normal', minValue: 70, maxValue: 130 },
+                { status: 'borderline', minValue: null, maxValue: 180 },
+                { status: 'abnormal', minValue: 70, maxValue: null }
+            ];
+
+            try {
+                for (const def of defaults) {
+                    const response = await fetch(`${API_BASE}/api/thresholds/0`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(def)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                }
+
+                alert('Default thresholds reset successfully');
+                loadThresholds();
+            } catch (error) {
+                console.error('Error resetting defaults:', error);
+                alert('Failed to reset defaults: ' + error.message);
+            }
+        });
+
+        // Init
+        loadThresholds();
+        loadPatients();
+    </script>
+</body>
+
+</html>

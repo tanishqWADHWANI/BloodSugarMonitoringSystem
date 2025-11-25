@@ -1,0 +1,166 @@
+<!--
+  Blood Sugar Monitoring System - Staff Login Page
+  ==================================================
+  This page provides authentication for clinic staff members.
+  
+  Features:
+  - Staff email/password login form
+  - Credentials validation against backend
+  - Session management with localStorage
+  - Redirects to staff_dashboard.html after successful login
+  
+  Staff Capabilities (after login):
+  - View and search patient records
+  - Send emails to patients and specialists
+  - View incoming messages/feedback
+  - Update patient contact information
+  - Assist with administrative tasks
+  
+  Security:
+  - Staff role verification on backend
+  - Token-based authentication
+  - Staff token stored with "_staff" suffix for role identification
+  - HTTPS recommended for production
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - staff_email_patients.html (patient email management)
+  - staff_email_specialists.html (specialist communication)
+  - staff_view_messages.html (inbox management)
+  - js/api.js (authentication API calls)
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Staff Login</title>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
+</head>
+
+<body>
+  <!-- Top navigation bar -->
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>  <!-- Homepage -->
+        <li><a href="patient.html">Patient</a></li>  <!-- Patient login -->
+        <li><a href="specialist.html">Specialist</a></li>  <!-- Specialist login -->
+        <li><a href="clinic.html">Clinic</a></li>  <!-- Clinic info -->
+        <li><a href="staff.html" class="active">Staff</a></li>  <!-- Current page -->
+        <li><a href="contact.html">Contact Us</a></li>  <!-- Contact page -->
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="login-section">
+      <h2>Staff Login</h2>  <!-- Page title -->
+      <form id="staffLoginForm" class="form-grid">  <!-- Login form -->
+        <div class="form-field">
+          <label for="staffEmail">Username or Email</label>  <!-- Email input label -->
+          <input id="staffEmail" name="email" type="text" placeholder="staff@x.com" required />
+        </div>
+        <div class="form-field">
+          <label for="staffPassword">Password</label>
+          <input id="staffPassword" name="password" type="password" placeholder="••••••••" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit">Login</button>
+        </div>
+      </form>
+      
+      <!-- Demo Credentials -->
+      <div style="background:#e8f4f8;border:2px solid #004080;border-radius:8px;padding:15px;margin-top:20px;">
+        <h4 style="color:#004080;margin:0 0 10px 0;">🔐 Demo Staff Login</h4>
+        <div style="font-size:0.9rem;line-height:1.8;">
+          <strong>Email:</strong> staff@clinic.com<br>
+          <strong>Password:</strong> demo123
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Staff Panel</h2>
+      <p class="subtext">Access patient records, manage appointments, and update data as permitted.</p>
+      <ul>
+        <li>After logging in, you’ll be redirected to <code>staff_dashboard.html</code>.</li>
+        <li>View and update patient records.</li>
+        <li>Manage daily tasks and schedules.</li>
+        <li>Access reports and notifications relevant to your role.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Clear any existing session on page load
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('staffId');
+    localStorage.removeItem('staffUserId');
+    localStorage.removeItem('loggedInStaff');
+    localStorage.removeItem('staffName');
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const form   = document.getElementById('staffLoginForm');
+      const email  = document.getElementById('staffEmail');
+      const pass   = document.getElementById('staffPassword');
+      const msgBox = document.getElementById('loginMsg');
+
+      if (!form) return;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (msgBox) msgBox.textContent = '';
+
+        try {
+          const emailVal = (email.value || '').trim();
+          const passVal  = (pass.value || '').trim();
+
+          if (!emailVal || !passVal) {
+            throw new Error('Enter email and password.');
+          }
+
+          // This calls /api/login via api.js and also writes authUser to localStorage
+          const response = await loginUser(emailVal, passVal, 'staff');
+          
+          if (response && response.user && response.user.role === 'staff') {
+            const user = response.user;
+            
+            // Store staff info from database
+            localStorage.setItem('loggedInStaff', emailVal);
+            localStorage.setItem('staffName', user.first_name || user.firstName || 'Staff');
+            localStorage.setItem('staffId', String(user.user_id || user.id || ''));
+            localStorage.setItem('staffUserId', String(user.user_id || user.id || ''));
+            localStorage.setItem('userId', String(user.user_id || user.id || ''));
+            
+            // Store token if available
+            if (response.token || response.access_token) {
+              localStorage.setItem('bsm_token', response.token || response.access_token);
+            }
+
+            const target = `staff_dashboard.html?user_id=${encodeURIComponent(user.user_id || user.id)}`;
+            window.location.href = target;
+          } else {
+            throw new Error('Invalid role or user data received from server.');
+          }
+        } catch (err) {
+          console.error(err);
+          if (msgBox) {
+            msgBox.textContent = err.message || 'Login failed. Check your credentials.';
+          } else {
+            alert(err.message || 'Login failed');
+          }
+        }
+      });
+    });
+</script>
+</body>
+
+</html>

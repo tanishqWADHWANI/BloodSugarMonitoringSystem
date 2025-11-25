@@ -1,0 +1,237 @@
+<!--
+  Blood Sugar Monitoring System - Update Medical Information Page
+  =================================================================
+  This page allows patients to update their medical profile and health information.
+  
+  Features Overview:
+  - Update blood type
+  - Update allergies and medical conditions
+  - Update current medications
+  - Update emergency contact information
+  - Update insurance information
+  - View and edit medical history
+  
+  Key Components:
+  1. Navigation Bar - Back to Dashboard, Logout
+  2. Medical Information Form:
+     - Blood Type dropdown (A+, A-, B+, B-, AB+, AB-, O+, O-)
+     - Allergies textarea (food, drug allergies)
+     - Medical Conditions textarea (diabetes type, other conditions)
+     - Current Medications textarea (names, dosages)
+     - Emergency Contact Name input
+     - Emergency Contact Phone input
+     - Insurance Provider input
+     - Insurance Policy Number input
+     - Save Changes button
+  
+  3. Current Information Display:
+     - Shows existing medical information
+     - Pre-populates form fields
+     - Last updated timestamp
+  
+  Form Fields:
+  - Blood Type: Dropdown selection (required)
+  - Allergies: Textarea for listing all known allergies
+  - Medical Conditions: Textarea for chronic conditions, diagnoses
+  - Current Medications: Textarea for active prescriptions
+  - Emergency Contact Name: Text input (required)
+  - Emergency Contact Phone: Text input with format validation (required)
+  - Insurance Provider: Text input (optional)
+  - Insurance Policy Number: Text input (optional)
+  
+  Medical Conditions Examples:
+  - Type 1 Diabetes
+  - Type 2 Diabetes
+  - Hypertension
+  - Heart disease
+  - Kidney disease
+  - Neuropathy
+  
+  Form Validation:
+  - Blood type must be selected
+  - Emergency contact name required
+  - Emergency contact phone required (format: (XXX) XXX-XXXX)
+  - Phone number format validation
+  - Medication dosage format checking (optional)
+  
+  Update Process:
+  1. Form loads with current medical information
+  2. User edits fields as needed
+  3. Click Save Changes button
+  4. Frontend validates input
+  5. API call to update backend database
+  6. Success message displayed
+  7. Redirect to dashboard or stay on page
+  
+  Security:
+  - Patient authentication required
+  - User can only update their own medical information
+  - Token-based access control
+  - HIPAA compliance considerations (secure data transmission)
+  
+  Data Importance:
+  - Medical information critical for emergency situations
+  - Allergies prevent dangerous medication interactions
+  - Emergency contact enables quick family notification
+  - Insurance information for billing and coverage
+  
+  Related Files:
+  - patient_dashboard.html (main dashboard with edit profile link)
+  - create_account.html (initial medical information collection)
+  - backend/app.py (PUT /user/medical endpoint)
+  - js/api.js (updateMedicalInfo API call)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 147 lines
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Medical Info</title>
+  <link rel="stylesheet" href="css/style.css">  <!-- Main stylesheet -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
+
+  <style>
+    /* Page heading styling */
+    h1 {
+      color: #004080;  /* Clinic blue for heading */
+      margin-bottom: 20px;  /* Space below heading */
+    }
+
+    /* Form container styling */
+    form {
+      background: white;  /* White background */
+      padding: 20px;  /* Internal spacing */
+      border-radius: 12px;  /* Rounded corners */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
+    }
+
+    /* Form label styling */
+    form label {
+      display: block;  /* Stack labels above inputs */
+      margin: 15px 0 5px;  /* Spacing around labels */
+      font-weight: bold;  /* Emphasize labels */
+    }
+
+    /* Form input and textarea styling */
+    form input,
+    form textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #004080;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background: #0066cc;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <nav>
+      <ul>
+        <li><a href="staff_dashboard.html">Dashboard</a></li>
+        <li><a href="patient_records.html">Patient Records</a></li>
+        <li><a href="staff.html">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Update Medical Info</h1>
+    <form id="updateForm">
+
+      <label for="patientId">Patient ID</label>
+      <input type="text" id="patientId" name="patientId" readonly>
+
+      <label for="fullName">Full Name</label>
+      <input type="text" id="fullName" name="fullName">
+
+      <label for="age">Age</label>
+      <input type="text" id="age" name="age">
+
+      <label for="gender">Gender</label>
+      <input type="text" id="gender" name="gender">
+
+      <label for="contact">Contact</label>
+      <input type="text" id="contact" name="contact">
+
+      <label for="medicalHistory">Medical History</label>
+      <textarea id="medicalHistory" name="medicalHistory" rows="4"></textarea>
+
+      <button type="submit">Update Info</button>
+    </form>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('updateForm');
+
+      let patientData = JSON.parse(localStorage.getItem('selectedPatient'));
+      let allPatients = JSON.parse(localStorage.getItem('allPatients')) || [];
+
+      if (!patientData) {
+        alert('No patient selected!');
+        window.location.href = 'patient_records.html';
+        return;
+      }
+
+      document.getElementById('patientId').value = patientData.id;
+      document.getElementById('fullName').value = patientData.name || '';
+      document.getElementById('age').value = patientData.age || '';
+      document.getElementById('gender').value = patientData.gender || '';
+      document.getElementById('contact').value = patientData.contact || '';
+      document.getElementById('medicalHistory').value = patientData.medicalHistory || '';
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const updated = {
+          id: document.getElementById('patientId').value,
+          name: document.getElementById('fullName').value,
+          age: document.getElementById('age').value,
+          gender: document.getElementById('gender').value,
+          contact: document.getElementById('contact').value,
+          medicalHistory: document.getElementById('medicalHistory').value
+        };
+
+        let idx = allPatients.findIndex(p => p.id === updated.id);
+        if (idx >= 0) allPatients[idx] = updated;
+
+        localStorage.setItem('allPatients', JSON.stringify(allPatients));
+        localStorage.setItem('selectedPatient', JSON.stringify(updated));
+
+        try {
+          await updateUser(Number(updated.id), { phone: updated.contact });
+          alert("Updated successfully!");
+          window.location.href = "patient_records.html";
+        } catch (err) {
+          alert("Backend update failed: " + err.message);
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GlucoCare – App (Patient • Specialist • Staff • Admin)</title>
+
+    <!-- Fonts & Charts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Styles -->
+    <style>
+        :root {
+            --bg: #0b1220;
+            --surface: #0f172a;
+            --card: #111827;
+            --text: #edf2f7;
+            --muted: #94a3b8;
+            --brand: #22c55e;
+            --brand-600: #16a34a;
+            --ring: rgba(34, 197, 94, .4);
+            --danger: #ef4444;
+            --warn: #f59e0b;
+            --ok: #10b981;
+            --border: rgba(255, 255, 255, .08)
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            font: 16px/1.6 Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+            background:
+                radial-gradient(50% 50% at 50% 25%, rgba(255, 255, 255, .07), transparent 60%), var(--bg);
+            color: var(--text)
+        }
+
+        a {
+            color: inherit
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: saturate(180%) blur(12px);
+            background: color-mix(in srgb, var(--bg) 85%, transparent);
+            border-bottom: 1px solid var(--border)
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px
+        }
+
+        .brand {
+            font-weight: 700
+        }
+
+        .btn {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: var(--brand);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 24px -10px var(--ring)
+        }
+
+        .btn:hover {
+            background: var(--brand-600)
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 12px
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px
+        }
+
+        .g-2 {
+            grid-template-columns: 1fr 1fr
+        }
+
+        .g-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr))
+        }
+
+        @media (max-width:900px) {
+
+            .g-2,
+            .g-3 {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .card {
+            background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 95%, transparent), var(--surface));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 12px 30px -18px rgba(0, 0, 0, .6)
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--muted)
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--surface) 92%, transparent);
+            color: var(--text);
+            outline: none
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            box-shadow: 0 0 0 4px var(--ring);
+            border-color: var(--brand)
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 10px 12px
+        }
+
+        thead th {
+            font-size: 14px;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border)
+        }
+
+        tbody tr {
+            background: var(--card);
+            border: 1px solid var(--border)
+        }
+
+        tbody tr td:first-child {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px
+        }
+
+        tbody tr td:last-child {
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid var(--border)
+        }
+
+        .pill.ok {
+            background: color-mix(in srgb, var(--ok) 12%, transparent)
+        }
+
+        .pill.warn {
+            background: color-mix(in srgb, var(--warn) 12%, transparent)
+        }
+
+        .pill.danger {
+            background: color-mix(in srgb, var(--danger) 12%, transparent)
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        footer {
+            padding: 24px;
+            color: var(--muted)
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <div class="brand">🩺 GlucoCare – App</div>
+            <div class="row">
+                <!-- Dev shortcuts to switch roles instantly -->
+                <button id="devPatient" class="btn-ghost">Patient</button>
+                <button id="devSpecialist" class="btn-ghost">Specialist</button>
+                <button id="devStaff" class="btn-ghost">Staff</button>
+                <button id="devAdmin" class="btn-ghost">Admin</button>
+                <button id="logoutBtn" class="btn-ghost hidden">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- ===== AUTH (only shown if no token) ===== -->
+        <section id="authView" class="grid g-2">
+            <div class="card">
+                <h2>Login</h2>
+                <form id="loginForm" class="grid" style="gap:12px">
+                    <div class="field"><label>Email</label><input id="loginEmail" type="email" required /></div>
+                    <div class="field"><label>Password</label><input id="loginPassword" type="password" required />
+                    </div>
+                    <div class="row"><button class="btn" type="submit">Sign In</button></div>
+                    <p id="loginMsg" class="muted" aria-live="polite"></p>
+                </form>
+            </div>
+            <div class="card">
+                <h2>Patient Registration</h2>
+                <form id="registerForm" class="grid" style="gap:12px">
+                    <div class="grid g-2">
+                        <div class="field"><label>First name</label><input id="firstName" required /></div>
+                        <div class="field"><label>Last name</label><input id="lastName" required /></div>
+                    </div>
+                    <div class="field"><label>Email</label><input id="regEmail" type="email" required /></div>
+                    <div class="field"><label>Password</label><input id="regPassword" type="password" required /></div>
+                    <div class="grid g-3">
+                        <div class="field"><label>Date of Birth</label><input id="dob" type="date" required /></div>
+                        <div class="field"><label>Phone</label><input id="phone" type="tel" required /></div>
+                        <div class="field"><label>Profile Image URL</label><input id="profileImage" type="url" /></div>
+                    </div>
+                    <div class="row"><button class="btn" type="submit">Create Account</button></div>
+                    <p id="registerMsg" class="muted" aria-live="polite"></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- ===== PATIENT ===== -->
+        <section id="patientView" class="hidden">
+            <h2>Patient Dashboard</h2>
+            <div class="grid g-2">
+                <div class="card">
+                    <h3>Add Reading</h3>
+                    <form id="readingForm" class="grid" style="gap:12px">
+                        <div class="grid g-3">
+                            <div class="field"><label>Value</label><input id="value" type="number" step="0.1" min="20"
+                                    max="600" required /></div>
+                            <div class="field"><label>Unit</label><select id="unit">
+                                    <option>mg/dL</option>
+                                    <option>mmol/L</option>
+                                </select></div>
+                            <div class="field"><label>Date & Time</label><input id="dateTime" type="datetime-local"
+                                    required /></div>
+                        </div>
+                        <div class="grid g-2">
+                            <div class="field"><label>Event</label>
+                                <select id="event">
+                                    <option>fasting</option>
+                                    <option>pre-meal</option>
+                                    <option>post-meal</option>
+                                    <option>exercise</option>
+                                    <option>stress</option>
+                                    <option>illness</option>
+                                    <option>bedtime</option>
+                                </select>
+                            </div>
+                            <div class="field"><label>Note</label><input id="note"
+                                    placeholder="e.g., white rice, 30-min walk" /></div>
+                        </div>
+                        <div class="row"><button class="btn">Save</button><span id="saveMsg" class="muted"></span></div>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>AI Suggestions</h3>
+                    <ul id="insightsList" class="muted" style="margin:0; padding-left:18px"></ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="row" style="justify-content:space-between">
+                    <h3>My Readings</h3>
+                    <button id="reloadBtn" class="btn-ghost">Reload</button>
+                </div>
+                <div style="overflow:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                                <th>Event</th>
+                                <th>Note</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="readingsTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Trend</h3><canvas id="trendChart" height="110"></canvas>
+            </div>
+        </section>
+
+        <!-- ===== SPECIALIST ===== -->
+        <section id="specialistView" class="hidden">
+            <h2>Specialist Dashboard</h2>
+            <div class="card">
+                <div class="row" style="justify-content:space-between">
+                    <div class="field" style="min-width:260px"><label>Search patients</label><input id="spSearch"
+                            placeholder="name or ID" /></div>
+                    <button id="spReload" class="btn-ghost">Reload</button>
+                </div>
+                <div style="overflow:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Last Reading</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="spPatientsTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card hidden" id="spDetail">
+                <div class="row" style="justify-content:space-between">
+                    <h3 id="spDetailTitle">Patient Detail</h3>
+                    <button id="spClose" class="btn-ghost">Close</button>
+                </div>
+                <div class="grid g-2">
+                    <div class="card">
+                        <h4>Recent Readings</h4>
+                        <div style="overflow:auto">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Value</th>
+                                        <th>Status</th>
+                                        <th>Event</th>
+                                        <th>Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="spReadingsTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h4>Feedback</h4>
+                        <form id="spFeedbackForm" class="grid" style="gap:12px">
+                            <textarea id="spFeedback" rows="6" placeholder="Your recommendation..."></textarea>
+                            <div class="row"><button class="btn">Add Feedback</button><span id="spMsg"
+                                    class="muted"></span></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== STAFF (THRESHOLDS) ===== -->
+        <section id="staffView" class="hidden">
+            <h2>Clinic Staff – Thresholds</h2>
+            <div class="grid g-2">
+                <div class="card">
+                    <h3>Add / Update Threshold</h3>
+                    <form id="thForm" class="grid" style="gap:12px">
+                        <div class="grid g-3">
+                            <div class="field"><label>Status</label>
+                                <select id="thStatus">
+                                    <option>Normal</option>
+                                    <option>Borderline</option>
+                                    <option>AbnormalLow</option>
+                                    <option>AbnormalHigh</option>
+                                </select>
+                            </div>
+                            <div class="field"><label>Boundary Value</label><input id="thValue" type="number" step="0.1"
+                                    required /></div>
+                            <div class="field"><label>Scope</label><select id="thScope">
+                                    <option>SystemDefault</option>
+                                    <option>PatientOverride</option>
+                                </select></div>
+                        </div>
+                        <div class="field" id="thPatientField" style="display:none"><label>Patient ID (for
+                                override)</label><input id="thPatientId" type="number" /></div>
+                        <div class="row"><button class="btn">Save Threshold</button><span id="thMsg"
+                                class="muted"></span></div>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Thresholds List</h3>
+                    <div style="overflow:auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Status</th>
+                                    <th>Value</th>
+                                    <th>Scope</th>
+                                    <th>Patient</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="thTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== ADMIN (USERS) ===== -->
+        <section id="adminView" class="hidden">
+            <h2>Administrator – User Management</h2>
+            <div class="grid g-2">
+                <div class="card">
+                    <h3>Add User</h3>
+                    <form id="adForm" class="grid" style="gap:12px">
+                        <div class="grid g-3">
+                            <div class="field"><label>First Name</label><input id="adFirst" required /></div>
+                            <div class="field"><label>Last Name</label><input id="adLast" required /></div>
+                            <div class="field"><label>Email</label><input id="adEmail" type="email" required /></div>
+                        </div>
+                        <div class="grid g-3">
+                            <div class="field"><label>Phone</label><input id="adPhone" required /></div>
+                            <div class="field"><label>DOB</label><input id="adDob" type="date" required /></div>
+                            <div class="field"><label>Role</label><select id="adRole">
+                                    <option>Patient</option>
+                                    <option>Specialist</option>
+                                    <option>Staff</option>
+                                    <option>Admin</option>
+                                </select></div>
+                        </div>
+                        <div class="row"><button class="btn">Create</button><span id="adMsg" class="muted"></span></div>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Users</h3>
+                    <div style="overflow:auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="adUsersTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="container">
+        <p class="muted">SPA demo. Replace mock data with Flask API calls.</p>
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        // ---------- Theme (optional light mode toggle if you want later) ----------
+
+        // ---------- View Router ----------
+        const views = { auth: 'authView', patient: 'patientView', specialist: 'specialistView', staff: 'staffView', admin: 'adminView' };
+        const logoutBtn = document.getElementById('logoutBtn');
+        function show(view) {
+            Object.values(views).forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(views[view]).classList.remove('hidden');
+        }
+        function routeByRole(role) {
+            if (role === 'Patient') show('patient');
+            else if (role === 'Specialist') show('specialist');
+            else if (role === 'Staff') show('staff');
+            else if (role === 'Admin') show('admin');
+            else show('auth');
+        }
+
+        // If landing page set localStorage, use that:
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (token && role) { logoutBtn.classList.remove('hidden'); routeByRole(role); initAll(); }
+        else { show('auth'); }
+
+        logoutBtn.addEventListener('click', () => { localStorage.clear(); location.reload(); });
+
+        // ---------- Auth (demo) ----------
+        const loginForm = document.getElementById('loginForm');
+        const loginMsg = document.getElementById('loginMsg');
+        loginForm && loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const roleMap = { patient: 'Patient', specialist: 'Specialist', staff: 'Staff', admin: 'Admin' };
+            const picked = roleMap[email.split('@')[0].toLowerCase()] || 'Patient';
+            localStorage.setItem('token', 'demo'); localStorage.setItem('role', picked); localStorage.setItem('userId', '1');
+            loginMsg.textContent = 'Success';
+            logoutBtn.classList.remove('hidden'); routeByRole(picked); initAll();
+        });
+
+        const registerForm = document.getElementById('registerForm');
+        const registerMsg = document.getElementById('registerMsg');
+        registerForm && registerForm.addEventListener('submit', (e) => { e.preventDefault(); registerMsg.textContent = 'Registered! You can log in.'; });
+
+        // ---------- Patient ----------
+        const readingForm = document.getElementById('readingForm');
+        const saveMsg = document.getElementById('saveMsg');
+        const readingsTbody = document.getElementById('readingsTbody');
+        const reloadBtn = document.getElementById('reloadBtn');
+        const insightsList = document.getElementById('insightsList');
+        let chart, chartData = { labels: [], values: [] };
+
+        function pill(status) {
+            const s = (status || '').toLowerCase();
+            if (s.includes('normal')) return '<span class="pill ok">Normal</span>';
+            if (s.includes('border')) return '<span class="pill warn">Borderline</span>';
+            return '<span class="pill danger">Abnormal</span>';
+        }
+
+        function renderPatientRows(rows) {
+            readingsTbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${new Date(r.dateTime).toLocaleString()}</td>
+          <td>${r.value} ${r.unit}</td>
+          <td>${pill(r.status)}</td>
+          <td>${r.event || ''}</td>
+          <td>${r.note || ''}</td>
+          <td><button class="btn-ghost" data-id="${r.id}">Delete</button></td>
+        </tr>`).join('');
+        }
+
+        function renderTrend() {
+            const ctx = document.getElementById('trendChart');
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: chartData.labels, datasets: [{ label: 'Blood Sugar', data: chartData.values }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        async function loadReadings() {
+            // Replace with: const rows = await (await fetch('/api/readings')).json();
+            const rows = [
+                { id: 1, dateTime: new Date(Date.now() - 86400000 * 2).toISOString(), value: 95, unit: 'mg/dL', status: 'Normal', event: 'fasting', note: '' },
+                { id: 2, dateTime: new Date(Date.now() - 86400000).toISOString(), value: 165, unit: 'mg/dL', status: 'Abnormal High', event: 'post-meal', note: 'white rice' },
+                { id: 3, dateTime: new Date().toISOString(), value: 130, unit: 'mg/dL', status: 'Borderline', event: 'stress', note: 'exam' }
+            ];
+            renderPatientRows(rows);
+            chartData.labels = rows.map(r => new Date(r.dateTime).toLocaleDateString());
+            chartData.values = rows.map(r => r.value);
+            renderTrend();
+        }
+
+        async function loadInsights() {
+            // Replace with: const items = await (await fetch('/api/insights')).json();
+            const items = [
+                { text: 'Your sugar often spikes ~1–2h after white rice. Consider smaller portions or swapping to brown rice.' },
+                { text: 'Stress days correlate with higher readings. Try a 10-min walk after study sessions.' }
+            ];
+            insightsList.innerHTML = items.map(i => `<li>${i.text}</li>`).join('');
+        }
+
+        readingForm && readingForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); saveMsg.textContent = 'Saving...';
+            const payload = {
+                value: Number(document.getElementById('value').value),
+                unit: document.getElementById('unit').value,
+                dateTime: new Date(document.getElementById('dateTime').value).toISOString(),
+                event: document.getElementById('event').value,
+                note: document.getElementById('note').value.trim()
+            };
+            try {
+                // await fetch('/api/readings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                saveMsg.textContent = 'Saved!';
+                await loadReadings();
+                readingForm.reset();
+            } catch (err) { saveMsg.textContent = 'Save failed'; }
+        });
+
+        reloadBtn && reloadBtn.addEventListener('click', loadReadings);
+
+        // ---------- Specialist ----------
+        const spPatientsTbody = document.getElementById('spPatientsTbody');
+        const spSearch = document.getElementById('spSearch');
+        const spReload = document.getElementById('spReload');
+        const spDetail = document.getElementById('spDetail');
+        const spDetailTitle = document.getElementById('spDetailTitle');
+        const spClose = document.getElementById('spClose');
+        const spReadingsTbody = document.getElementById('spReadingsTbody');
+        const spFeedbackForm = document.getElementById('spFeedbackForm');
+        const spMsg = document.getElementById('spMsg');
+        let spPatients = [];
+
+        function mockPatients() {
+            return [
+                { id: 101, name: 'Alice Lee', last: { value: 160, status: 'Abnormal High', dateTime: new Date().toISOString() } },
+                { id: 102, name: 'Bob Khan', last: { value: 120, status: 'Borderline', dateTime: new Date().toISOString() } },
+                { id: 103, name: 'Chris Wu', last: { value: 95, status: 'Normal', dateTime: new Date().toISOString() } }
+            ];
+        }
+
+        function renderSpTable(list) {
+            spPatientsTbody.innerHTML = list.map(p => `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.last.value}</td>
+          <td>${pill(p.last.status)}</td>
+          <td><button class="btn" data-id="${p.id}" data-name="${p.name}">View</button></td>
+        </tr>`).join('');
+        }
+        function filterSp() {
+            const q = (spSearch.value || '').toLowerCase();
+            renderSpTable(spPatients.filter(p => p.name.toLowerCase().includes(q) || String(p.id).includes(q)));
+        }
+        spReload && spReload.addEventListener('click', () => { spPatients = mockPatients(); filterSp(); });
+        spSearch && spSearch.addEventListener('input', filterSp);
+
+        spPatientsTbody && spPatientsTbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-id]'); if (!btn) return;
+            const id = Number(btn.dataset.id), name = btn.dataset.name;
+            spDetailTitle.textContent = `${name} (#${id})`;
+            spDetail.classList.remove('hidden');
+            // Replace with GET /api/patients/:id/readings
+            spReadingsTbody.innerHTML = `
+        <tr><td>${new Date().toLocaleString()}</td><td>165 mg/dL</td><td>${pill('Abnormal High')}</td><td>post-meal</td><td>white rice</td></tr>
+        <tr><td>${new Date(Date.now() - 86400000).toLocaleString()}</td><td>120 mg/dL</td><td>${pill('Borderline')}</td><td>stress</td><td>exam</td></tr>`;
+        });
+        spClose && spClose.addEventListener('click', () => spDetail.classList.add('hidden'));
+        spFeedbackForm && spFeedbackForm.addEventListener('submit', (e) => { e.preventDefault(); spMsg.textContent = 'Saved feedback.'; spFeedbackForm.reset(); /* POST /api/feedback */ });
+
+        // ---------- Staff / Thresholds ----------
+        const thForm = document.getElementById('thForm');
+        const thTbody = document.getElementById('thTbody');
+        const thMsg = document.getElementById('thMsg');
+        const thScope = document.getElementById('thScope');
+        const thPatientField = document.getElementById('thPatientField');
+        thScope && thScope.addEventListener('change', () => { thPatientField.style.display = (thScope.value === 'PatientOverride') ? 'block' : 'none'; });
+
+        let thRows = [{ id: 1, status: 'Normal', value: 70, scope: 'SystemDefault', patient: null },
+        { id: 2, status: 'Borderline', value: 130, scope: 'SystemDefault', patient: null },
+        { id: 3, status: 'AbnormalHigh', value: 180, scope: 'SystemDefault', patient: null }];
+
+        function renderTh() {
+            thTbody.innerHTML = thRows.map(t => `
+        <tr>
+          <td>${t.id}</td><td>${t.status}</td><td>${t.value}</td><td>${t.scope}</td><td>${t.patient ?? ''}</td>
+          <td><button class="btn-ghost" data-del="${t.id}">Delete</button></td>
+        </tr>`).join('');
+        }
+        thForm && thForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const rec = {
+                id: Date.now(),
+                status: document.getElementById('thStatus').value,
+                value: Number(document.getElementById('thValue').value),
+                scope: thScope.value,
+                patient: (thScope.value === 'PatientOverride' ? Number(document.getElementById('thPatientId').value || 0) : null)
+            };
+            thRows.push(rec); renderTh(); thMsg.textContent = 'Saved'; thForm.reset(); /* POST /api/thresholds */
+        });
+        thTbody && thTbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-del]'); if (!btn) return;
+            const id = Number(btn.dataset.del); thRows = thRows.filter(t => t.id !== id); renderTh(); /* DELETE /api/thresholds/:id */
+        });
+
+        // ---------- Admin / Users ----------
+        const adForm = document.getElementById('adForm');
+        const adUsersTbody = document.getElementById('adUsersTbody');
+        const adMsg = document.getElementById('adMsg');
+        let users = [{ id: 1, name: 'Alice Lee', email: 'alice@example.com', role: 'Patient', status: 'Active' },
+        { id: 2, name: 'Dr. Smith', email: 'smith@example.com', role: 'Specialist', status: 'Active' },
+        { id: 3, name: 'Sam Staff', email: 'sam@example.com', role: 'Staff', status: 'Active' },
+        { id: 4, name: 'Admin One', email: 'admin@example.com', role: 'Admin', status: 'Active' }];
+
+        function renderUsers() {
+            adUsersTbody.innerHTML = users.map(u => `
+        <tr>
+          <td>${u.id}</td><td>${u.name}</td><td>${u.email}</td><td>${u.role}</td><td>${u.status}</td>
+          <td><button class="btn-ghost" data-deact="${u.id}">Deactivate</button></td>
+        </tr>`).join('');
+        }
+        adForm && adForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const rec = {
+                id: Date.now(),
+                name: `${document.getElementById('adFirst').value} ${document.getElementById('adLast').value}`,
+                email: document.getElementById('adEmail').value,
+                role: document.getElementById('adRole').value,
+                status: 'Active'
+            };
+            users.push(rec); renderUsers(); adMsg.textContent = 'User created'; adForm.reset(); /* POST /api/users */
+        });
+        adUsersTbody && adUsersTbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-deact]'); if (!btn) return;
+            const id = Number(btn.dataset.deact); users = users.map(u => u.id === id ? { ...u, status: 'Inactive' } : u); renderUsers(); /* PATCH /api/users/:id */
+        });
+
+        // ---------- Dev role buttons ----------
+        ['Patient', 'Specialist', 'Staff', 'Admin'].forEach(r => {
+            const b = document.getElementById('dev' + r);
+            if (b) b.addEventListener('click', () => {
+                localStorage.setItem('token', 'demo'); localStorage.setItem('role', r); localStorage.setItem('userId', '1');
+                routeByRole(r); initAll(); logoutBtn.classList.remove('hidden');
+            });
+        });
+
+        // ---------- Init helpers ----------
+        function initPatient() { const dt = document.getElementById('dateTime'); if (dt) dt.value = new Date().toISOString().slice(0, 16); loadReadings(); loadInsights(); }
+        function initSpecialist() { spPatients = mockPatients(); filterSp(); }
+        function initStaff() { renderTh(); }
+        function initAdmin() { renderUsers(); }
+        function initAll() {
+            if (!document.getElementById('patientView').classList.contains('hidden')) initPatient();
+            if (!document.getElementById('specialistView').classList.contains('hidden')) initSpecialist();
+            if (!document.getElementById('staffView').classList.contains('hidden')) initStaff();
+            if (!document.getElementById('adminView').classList.contains('hidden')) initAdmin();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>User Management - Admin</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dasshboard.css" />
+    <script src="js/api.js"></script>
+    <script src="js/demo_users.js"></script>
+    <style>
+        /* Responsive improvements */
+        @media (max-width: 900px) {
+            header nav ul {
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .dashboard-header > div {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            .dashboard-header h1 {
+                font-size: 1.5rem !important;
+            }
+            .card > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            .card > div:first-child > div {
+                flex-direction: column !important;
+                width: 100%;
+                gap: 10px;
+            }
+            #searchInput {
+                width: 100% !important;
+            }
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            table {
+                min-width: 800px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="user_management.html" style="color: #667eea; font-weight: 600;">Users</a></li>
+                <li><a href="patient_assignments.html">Assignments</a></li>
+                <li><a href="reports_management.html">Reports</a></li>
+                <li><button id="logoutBtn" class="logout-btn" style="background: #dc3545; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; color: white; font-weight: 500; font-size: 0.95rem;">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="dashboard-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h1 style="color: #004080; font-size: 2rem; margin: 0;">User Management</h1>
+                <button onclick="window.location.href='admin_dashboard.html'" style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(102,126,234,0.3);" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(102,126,234,0.4)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(102,126,234,0.3)'">
+                    ← Back to Dashboard
+                </button>
+            </div>
+            <p class="subtext" style="color: #666; font-size: 1rem;">
+                View and manage all system users across different roles.
+            </p>
+        </section>
+
+        <section class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">All Users</h2>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <!-- Search Input -->
+                    <input type="text" id="searchInput" placeholder="🔍 Search by name, email, or ID..." style="padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; width: 300px; transition: border-color 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#ddd'" />
+                    
+                    <!-- Role Filter -->
+                    <select id="roleFilter" style="padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; cursor: pointer; background: white; transition: border-color 0.3s;" onchange="filterUsers()" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#ddd'">
+                        <option value="">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="staff">Staff</option>
+                        <option value="specialist">Specialist</option>
+                        <option value="patient">Patient</option>
+                    </select>
+                    
+                    <!-- Clear Filter Button -->
+                    <button id="clearFilterBtn" onclick="clearFilters()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem; transition: all 0.3s ease;" onmouseenter="this.style.background='#5a6268'" onmouseleave="this.style.background='#6c757d'">
+                        Clear Filters
+                    </button>
+                    
+                    <!-- User Count Badge -->
+                    <div id="userCountBadge" style="background: #e7f3ff; color: #004080; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                        <span id="displayedCount">0</span> / <span id="totalCount">0</span> users
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="usersTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">ID</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Name</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Login (Email)</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Password</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Phone</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">DOB</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Role</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Status</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- User Details Modal -->
+    <div id="userDetailsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #004080;">User Details</h2>
+                <button onclick="closeUserDetailsModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <div id="userDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Create/Edit User Modal -->
+    <div id="userFormModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 id="userFormTitle" style="margin: 0; color: #004080;">Create User</h2>
+                <button onclick="closeUserFormModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <form id="userForm" style="display: flex; flex-direction: column; gap: 20px;">
+                <input type="hidden" id="editUserId" value="">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">First Name *</label>
+                        <input type="text" id="firstName" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">Last Name *</label>
+                        <input type="text" id="lastName" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">Email *</label>
+                    <input type="email" id="email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">Phone</label>
+                        <input type="tel" id="phone" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">Date of Birth</label>
+                        <input type="date" id="dob" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">Role *</label>
+                    <select id="role" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                        <option value="">Select Role</option>
+                        <option value="patient">Patient</option>
+                        <option value="specialist">Specialist</option>
+                        <option value="staff">Staff</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                <div id="passwordSection">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #333;">Password <span id="passwordRequired">*</span></label>
+                    <input type="password" id="password" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 4px;" id="passwordHint">Leave empty to keep current password</small>
+                </div>
+
+                <div id="roleSpecificFields"></div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                    <button type="button" onclick="closeUserFormModal()" style="background: #6c757d; color: white; padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem;">Cancel</button>
+                    <button type="submit" style="background: #28a745; color: white; padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem;">
+                        <span id="submitBtnText">Create User</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+        let allUsers = [];
+
+        // Check admin authorization
+        const token = localStorage.getItem('bsm_token');
+        if (!token || !token.includes('_admin')) {
+            alert('Access denied: Admin credentials required');
+            window.location.href = 'admin.html';
+        }
+
+        // Logout functionality
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.clear();
+                alert('You have been logged out.');
+                window.location.href = 'admin.html';
+            });
+        }
+
+        async function fetchUsersFromAPI() {
+            try {
+                const token = localStorage.getItem('bsm_token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const response = await fetch(`${API_BASE}/api/admin/users/all`, { headers });
+                
+                if (!response.ok) {
+                    console.error('Failed to fetch users:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                allUsers = data.users || [];
+                updateUserCounts();
+                renderUsers();
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        }
+
+        function updateUserCounts() {
+            const totalCount = allUsers.length;
+            const filteredUsers = getFilteredUsers();
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('displayedCount').textContent = filteredUsers.length;
+        }
+
+        function getFilteredUsers() {
+            const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            const roleFilter = (document.getElementById('roleFilter')?.value || '').toLowerCase();
+
+            return allUsers.filter(user => {
+                // Search filter
+                const matchesSearch = !searchTerm || 
+                    user.user_id?.toString().includes(searchTerm) ||
+                    `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm) ||
+                    user.email?.toLowerCase().includes(searchTerm) ||
+                    user.phone?.includes(searchTerm);
+
+                // Role filter
+                const matchesRole = !roleFilter || user.role?.toLowerCase() === roleFilter;
+
+                return matchesSearch && matchesRole;
+            });
+        }
+
+        function clearFilters() {
+            // Reset search input
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            
+            // Reset role filter
+            const roleFilter = document.getElementById('roleFilter');
+            if (roleFilter) roleFilter.value = '';
+            
+            // Refresh the display
+            filterUsers();
+        }
+
+        function filterUsers() {
+            updateUserCounts();
+            renderUsers();
+        }
+
+        function renderUsers() {
+            const tbody = document.querySelector('#usersTable tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            
+            const usersToDisplay = getFilteredUsers();
+            
+            if (usersToDisplay.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" style="padding: 40px; text-align: center; color: #666; font-size: 1rem;">
+                            ${allUsers.length === 0 ? 'No users found.' : 'No users match your search criteria.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            usersToDisplay.forEach(u => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #f0f0f0';
+                row.style.transition = 'background 0.2s';
+                row.addEventListener('mouseenter', () => row.style.background = '#f8f9fa');
+                row.addEventListener('mouseleave', () => row.style.background = 'transparent');
+
+                const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'N/A';
+                const dob = u.date_of_birth || '';
+                const status = u.status || 'Active';
+                const statusColor = status.toLowerCase() === 'active' ? '#28a745' : '#6c757d';
+                
+                // Get password based on role and known demo accounts
+                let displayPassword = '••••••••';
+                const knownPasswords = {
+                    'admin@clinic.com': 'admin123',
+                    'staff@clinic.com': 'demo123',
+                    'staff2@test.com': 'staff123',
+                    'patient1@test.com': 'patient123',
+                    'admindemo@test.com': 'demo123',
+                    'tanishq@gmail.com': 'tanishq123',
+                    'specialist@test.com': 'specialist123',
+                    'bob@x.com': 'bob123',
+                    'mahito@x.com': 'mahito123'
+                };
+                
+                if (knownPasswords[u.email]) {
+                    displayPassword = knownPasswords[u.email];
+                } else {
+                    // Pattern-based password for demo users
+                    if (u.email && u.email.includes('@email.com')) {
+                        displayPassword = 'demo123';
+                    } else if (u.email && u.email.includes('@x.com')) {
+                        const firstName = u.first_name?.toLowerCase() || 'user';
+                        displayPassword = firstName + '123';
+                    }
+                }
+
+                row.innerHTML = `
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${u.user_id}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057; font-weight: 500;">${name}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${u.email || 'N/A'}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057; font-family: monospace; background: #f8f9fa; border-radius: 4px;">${displayPassword}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${u.phone || ''}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${dob}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem;">
+                        <span style="background: #e7f3ff; color: #004080; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">${u.role || 'N/A'}</span>
+                    </td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem;">
+                        <span style="color: ${statusColor}; font-weight: 500;">${status}</span>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                        <button class="view-btn" data-id="${u.user_id}" style="background: #17a2b8; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; margin-right: 6px;">View</button>
+                        <button class="edit-btn" data-id="${u.user_id}" style="background: #ffc107; color: #333; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; margin-right: 6px;">Edit</button>
+                        <button class="delete-btn" data-id="${u.user_id}" style="background: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function handleDeleteUser(e) {
+            if (!e.target.classList.contains('delete-btn')) return;
+
+            const userId = e.target.getAttribute('data-id');
+            if (!userId) return;
+
+            const user = allUsers.find(u => u.user_id == userId);
+            const userName = user ? `${user.first_name} ${user.last_name}` : `ID ${userId}`;
+
+            if (!confirm(`Are you sure you want to delete user "${userName}"?\n\nThis action cannot be undone.`)) return;
+
+            try {
+                const token = localStorage.getItem('bsm_token');
+                const headers = token ? { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                } : {};
+                const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+                    method: 'DELETE',
+                    headers
+                });
+
+                if (response.ok) {
+                    alert('User deleted successfully');
+                    await fetchUsersFromAPI();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to delete user: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user');
+            }
+        }
+
+        async function handleViewUser(e) {
+            if (!e.target.classList.contains('view-btn')) return;
+
+            const userId = e.target.getAttribute('data-id');
+            const user = allUsers.find(u => u.user_id == userId);
+            
+            if (!user) return;
+
+            const detailsContent = document.getElementById('userDetailsContent');
+            detailsContent.innerHTML = `
+                <div style="display: grid; gap: 15px;">
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">User ID:</strong> ${user.user_id}
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">Full Name:</strong> ${user.first_name} ${user.last_name}
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">Email:</strong> ${user.email || 'N/A'}
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">Phone:</strong> ${user.phone || 'N/A'}
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">Date of Birth:</strong> ${user.date_of_birth || 'N/A'}
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">Role:</strong> <span style="background: #e7f3ff; color: #004080; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">${user.role}</span>
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">Status:</strong> <span style="color: ${user.status?.toLowerCase() === 'active' ? '#28a745' : '#6c757d'}; font-weight: 500;">${user.status || 'Active'}</span>
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <strong style="color: #004080;">Created:</strong> ${user.created_at || 'N/A'}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('userDetailsModal').style.display = 'flex';
+        }
+
+        function closeUserDetailsModal() {
+            document.getElementById('userDetailsModal').style.display = 'none';
+        }
+
+        async function handleEditUser(e) {
+            if (!e.target.classList.contains('edit-btn')) return;
+
+            const userId = e.target.getAttribute('data-id');
+            const user = allUsers.find(u => u.user_id == userId);
+            
+            if (!user) return;
+
+            // Populate form
+            document.getElementById('editUserId').value = user.user_id;
+            document.getElementById('firstName').value = user.first_name || '';
+            document.getElementById('lastName').value = user.last_name || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('dob').value = user.date_of_birth || '';
+            document.getElementById('role').value = user.role || '';
+            document.getElementById('password').value = '';
+            document.getElementById('password').removeAttribute('required');
+            
+            // Update modal title and button
+            document.getElementById('userFormTitle').textContent = 'Edit User';
+            document.getElementById('submitBtnText').textContent = 'Update User';
+            document.getElementById('passwordRequired').style.display = 'none';
+            document.getElementById('passwordHint').style.display = 'block';
+            
+            // Show modal
+            document.getElementById('userFormModal').style.display = 'flex';
+        }
+
+        function openCreateUserModal() {
+            // Reset form
+            document.getElementById('userForm').reset();
+            document.getElementById('editUserId').value = '';
+            document.getElementById('password').setAttribute('required', 'required');
+            
+            // Update modal title and button
+            document.getElementById('userFormTitle').textContent = 'Create User';
+            document.getElementById('submitBtnText').textContent = 'Create User';
+            document.getElementById('passwordRequired').style.display = 'inline';
+            document.getElementById('passwordHint').style.display = 'none';
+            
+            // Show modal
+            document.getElementById('userFormModal').style.display = 'flex';
+        }
+
+        function closeUserFormModal() {
+            document.getElementById('userFormModal').style.display = 'none';
+        }
+
+        async function handleUserFormSubmit(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('editUserId').value;
+            const isEdit = !!userId;
+            
+            const userData = {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                date_of_birth: document.getElementById('dob').value,
+                role: document.getElementById('role').value,
+            };
+            
+            const password = document.getElementById('password').value;
+            if (password) {
+                userData.password = password;
+            }
+            
+            try {
+                const token = localStorage.getItem('bsm_token');
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                };
+                
+                const url = isEdit 
+                    ? `${API_BASE}/api/users/${userId}`
+                    : `${API_BASE}/api/users`;
+                    
+                const method = isEdit ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers,
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    alert(isEdit ? 'User updated successfully' : 'User created successfully');
+                    closeUserFormModal();
+                    await fetchUsersFromAPI();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to ${isEdit ? 'update' : 'create'} user: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error saving user:', error);
+                alert('Error saving user');
+            }
+        }
+
+        // Event delegation for action buttons
+        const usersTableBody = document.querySelector('#usersTable tbody');
+        if (usersTableBody) {
+            usersTableBody.addEventListener('click', (e) => {
+                handleDeleteUser(e);
+                handleViewUser(e);
+                handleEditUser(e);
+            });
+        }
+
+        // Form submission
+        const userForm = document.getElementById('userForm');
+        if (userForm) {
+            userForm.addEventListener('submit', handleUserFormSubmit);
+        }
+
+        // Close modals on outside click
+        document.getElementById('userDetailsModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'userDetailsModal') closeUserDetailsModal();
+        });
+        
+        document.getElementById('userFormModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'userFormModal') closeUserFormModal();
+        });
+
+        // Search with debounce
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(filterUsers, 300);
+            });
+        }
+
+        // Role filter
+        const roleFilter = document.getElementById('roleFilter');
+        if (roleFilter) {
+            roleFilter.addEventListener('change', filterUsers);
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchUsersFromAPI();
+        });
+    </script>
+</body>
+
+</html>

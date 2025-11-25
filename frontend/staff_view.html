@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>View Patient Info</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  
+  h1 { color: #004080; margin-bottom: 20px; }
+  .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .card h2 { margin-top: 0; color: #004080; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
+  th { background: #004080; color: white; }
+  .btn { display: inline-block; margin: 10px 10px 0 0; padding: 10px 15px; background: #004080; color: white; border-radius: 8px; text-decoration: none; }
+  .btn:hover { background: #0066cc; }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <ul>
+      <li><a href="staff_dashboard.html">Dashboard</a></li>
+      <li><a href="patient_records.html">Patient Records</a></li>
+      <li><a href="staff.html">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="container">
+  <h1>Patient Information</h1>
+
+  <div class="card">
+    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+      <img id="patientProfileImage" src="" alt="Patient Profile" 
+           style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid #004080;" />
+      <div id="defaultAvatar" 
+           style="width: 100px; height: 100px; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #666;">
+        👤
+      </div>
+      <h2>Patient Details</h2>
+    </div>
+    <table id="patientDetailsTable">
+      <tr>
+        <th>Patient Number</th>
+        <td id="patientNumber">001</td>
+      </tr>
+      <tr>
+        <th>Full Name</th>
+        <td id="patientName">John Doe</td>
+      </tr>
+      <tr>
+        <th>Age</th>
+        <td id="patientAge">45</td>
+      </tr>
+      <tr>
+        <th>Gender</th>
+        <td id="patientGender">Male</td>
+      </tr>
+      <tr>
+        <th>Contact</th>
+        <td id="patientContact">+1 234 567 890</td>
+      </tr>
+      <tr>
+        <th>Assigned Specialist</th>
+        <td id="assignedSpecialist">Loading...</td>
+      </tr>
+      <tr>
+        <th>Medical History</th>
+        <td id="medicalHistory">Type 2 Diabetes, Hypertension</td>
+      </tr>
+      <tr>
+        <th>Last Test Results</th>
+        <td id="lastResults">Blood Sugar: 130 mg/dL, BP: 140/90 mmHg</td>
+      </tr>
+    </table>
+
+    <div style="margin-top:20px;">
+      <a class="btn" href="update_medical.html">Update Medical Info</a>
+      <a class="btn" href="upload_test.html">Upload Test Results</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+<p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+</footer>
+
+<script>
+  // Load patient information
+  async function loadPatientInfo() {
+    const patientNumber = localStorage.getItem('viewingPatientNumber');
+    const patientName = localStorage.getItem('viewingPatientName');
+    const patientUserId = localStorage.getItem('viewingPatientUserId') || patientNumber;
+    
+    // Display basic info
+    if (patientNumber) {
+      document.getElementById('patientNumber').textContent = patientNumber;
+    }
+    if (patientName) {
+      document.getElementById('patientName').textContent = patientName;
+    }
+    
+    // Load full patient data from API to get profile image
+    try {
+      const token = localStorage.getItem('bsm_token') || '';
+      
+      // Use user_id for API call (not patient_id)
+      let userData = null;
+      let userResponse = await fetch(`http://127.0.0.1:5000/api/users/${patientUserId}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (userResponse.ok) {
+        userData = await userResponse.json();
+      }
+      
+      if (userData) {
+        // Display profile image if available
+        const imgElement = document.getElementById('patientProfileImage');
+        const defaultAvatar = document.getElementById('defaultAvatar');
+        
+        if (userData.profile_image && userData.profile_image.trim() !== '') {
+          imgElement.src = userData.profile_image;
+          imgElement.style.display = 'block';
+          defaultAvatar.style.display = 'none';
+          
+          imgElement.onerror = function() {
+            this.style.display = 'none';
+            defaultAvatar.style.display = 'flex';
+          };
+        } else {
+          imgElement.style.display = 'none';
+          defaultAvatar.style.display = 'flex';
+        }
+        
+        // Update other fields if available
+        if (userData.phone) {
+          document.getElementById('patientContact').textContent = userData.phone;
+        }
+        if (userData.date_of_birth) {
+          // Calculate age from date of birth
+          const dob = new Date(userData.date_of_birth);
+          const age = new Date().getFullYear() - dob.getFullYear();
+          document.getElementById('patientAge').textContent = age;
+        }
+        if (userData.gender) {
+          document.getElementById('patientGender').textContent = userData.gender;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load patient data:', error);
+      document.getElementById('defaultAvatar').style.display = 'flex';
+    }
+    
+    // Load specialist assignment from database
+    try {
+      const token = localStorage.getItem('bsm_token') || '';
+      const response = await fetch(`http://127.0.0.1:5000/api/patient/${patientNumber}/specialist`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const specialistCell = document.getElementById('assignedSpecialist');
+        
+        if (data.specialist) {
+          const spec = data.specialist;
+          const fullName = `${spec.first_name} ${spec.last_name}`.trim();
+          const displayName = fullName.startsWith('Dr.') ? fullName : `Dr. ${fullName}`;
+          specialistCell.innerHTML = `
+            <strong>${displayName}</strong><br>
+            <small style="color:#666;">${spec.email}</small>
+          `;
+        } else {
+          specialistCell.innerHTML = '<em style="color:#999;">Not assigned yet</em>';
+        }
+      } else {
+        document.getElementById('assignedSpecialist').innerHTML = '<em style="color:#999;">Not assigned yet</em>';
+      }
+    } catch (error) {
+      console.error('Failed to load specialist:', error);
+      document.getElementById('assignedSpecialist').innerHTML = '<em style="color:#999;">Unable to load</em>';
+    }
+    
+    // Try to load additional patient data from localStorage cache
+    try {
+      const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+      const patient = patients.find(p => 
+        String(p.patientId || p.patient_id || p.number) === String(patientNumber)
+      );
+      
+      if (patient) {
+        if (patient.age) document.getElementById('patientAge').textContent = patient.age;
+        if (patient.gender) document.getElementById('patientGender').textContent = patient.gender;
+        if (patient.phone || patient.contact) {
+          document.getElementById('patientContact').textContent = patient.phone || patient.contact;
+        }
+        if (patient.medicalHistory) {
+          document.getElementById('medicalHistory').textContent = patient.medicalHistory;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load cached patient data:', e);
+    }
+  }
+  
+  // Load on page load
+  loadPatientInfo();
+</script>
+
+</body>
+</html>

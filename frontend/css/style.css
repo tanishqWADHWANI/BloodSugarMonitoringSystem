@@ -1,0 +1,284 @@
+/*
+  Blood Sugar Monitoring System - Main Stylesheet
+  =================================================
+  This is the primary stylesheet used across all frontend pages.
+  
+  Purpose:
+  - Define consistent branding and color scheme
+  - Provide reusable component styles (buttons, cards, forms)
+  - Ensure responsive design for mobile, tablet, and desktop
+  - Create elderly-friendly design with high contrast and large text
+  
+  Color Palette:
+  - Primary Blue: #004080 (headings, buttons, navigation)
+  - Light Blue Background: #f0f8ff (page background, elderly-friendly)
+  - White: #ffffff (cards, content areas)
+  - Text: #333333 (body text, high contrast)
+  - Success Green: #10b981 (success messages, positive indicators)
+  - Error Red: #dc3545 (error messages, critical alerts)
+  - Warning Orange: #ff8800 (warnings, moderate alerts)
+  
+  Design Principles:
+  - High contrast for readability (accessibility)
+  - Large text sizes for elderly users
+  - Clear navigation with prominent buttons
+  - Card-based layout for organized content
+  - Responsive design (mobile-first approach)
+  
+  Sections:
+  1. Body & General Styles - Global typography and layout
+  2. Header - Full-width header with background image
+  3. Navigation - Top navigation bar with links
+  4. Main Content - Content area styling
+  5. Forms - Input fields, buttons, form layouts
+  6. Tables - Data table styling
+  7. Cards - Card component styling
+  8. Buttons - Button variants (primary, secondary, danger)
+  9. Alerts - Alert/notification styling
+  10. Footer - Footer styling
+  
+  Responsive Breakpoints:
+  - Mobile: <768px
+  - Tablet: 768px - 1024px
+  - Desktop: >1024px
+  
+  File Size: 165 lines
+  Used By: All frontend HTML pages
+*/
+
+/* ===========================
+   Body & General Styles
+   Sets global typography, background color, and layout constraints
+=========================== */
+body {
+  font-family: Arial, sans-serif;  /* Simple, readable font for all users */
+  background-color: #f0f8ff; /* light blue background for elderly-friendly feel */
+  color: #333;  /* Dark gray text for high contrast readability */
+  line-height: 1.0;  /* Line height for text spacing */
+  padding: 10px;  /* Outer padding around page content */
+  max-width: 1100px;  /* Maximum content width for readability on large screens */
+  margin: auto;  /* Center content horizontally */
+}
+
+/* Headings styling - consistent color and spacing */
+h1, h2 {
+  color: #004080;  /* Primary blue for headings */
+  margin-top: 10px;  /* Space above headings */
+}
+
+/* Full-width Header with image background
+   Creates branded header with background image and overlay for text readability */
+header {
+  width: 100%; /* make header span full width */
+  background: url('../pics/header.png') no-repeat center center;  /* Background image centered */
+  background-size: 70%;  /* Scale background image to 70% */
+  position: relative;  /* Enable absolute positioning for overlay */
+  padding: 0;  /* No internal padding */
+  border-radius: 2px 0;  /* Slight rounded corners */
+  margin: 0; /* no gaps at the top */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
+  color: #fff;  /* White text for contrast against background */
+  height: 250px; /* height of header image */
+  display: flex;  /* Flexbox for centering content */
+  align-items: center;  /* Vertically center content */
+  justify-content: center;  /* Horizontally center content */
+  overflow: hidden;  /* Hide overflow content */
+}
+
+
+/* Overlay for readability - semi-transparent overlay on header background */
+header::before {
+  content: '';  /* Required for pseudo-element */
+  position: absolute;  /* Position over header */
+  top: 0;  /* Align to top */
+  left: 0;  /* Align to left */
+  width: 100%;  /* Full width */
+  height: 100%;  /* Full height */
+  background-color: rgba(0, 0, 10, 0.11); /* whiter and more opaque overlay - improves text readability */
+  z-index: 2;  /* Place above background image but below text */
+}
+
+
+/* Navigation - Top navigation bar with horizontal link layout */
+header nav {
+	background-color: rgba(225, 227, 240, 0.88); /* light blue box */
+  width: 100%;
+  padding: 10px 0;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: center;
+  z-index: 3;
+  position: relative;
+  z-index: 2; /* above overlay */
+  margin-top: 200px; /* ensure nav is below header */
+}
+
+header nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 25px;
+}
+
+header nav ul li a {
+  /*color: rgba(2, 17, 94, 0.07); /* fully opaque white */
+  color: #004080;
+  font-weight: bold;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 32px;
+  /*text-shadow: 1px 1px 2px rgba(57, 81, 235, 0.65); /* subtle shadow for readability */
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+header nav ul li a:hover {
+  background-color: rgba(50, 61, 137, 0.88);
+  color: #e0f0ff;
+}
+
+/* ===========================
+   Main Container
+=========================== */
+.container {
+  background: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
+
+/* ===========================
+   Login Section
+=========================== */
+.login-section {
+  margin-bottom: 40px;
+  padding: 30px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #f1f8ff; /* light blue card for login */
+}
+
+.login-section h2 {
+  margin-top: 0;
+}
+
+.login-section label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.login-section input[type="text"],
+.login-section input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.login-section input[type="submit"] {
+  margin-top: 15px;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+}
+
+.login-section input[type="submit"]:hover {
+  background-color: #005fa3;
+}
+
+/* ===========================
+   Health Information Section
+=========================== */
+.health-info {
+  margin-bottom: 30px;
+}
+
+.health-info h2 {
+  margin-top: 0;
+}
+
+.health-info ul {
+  padding-left: 20px;
+}
+
+.health-info li {
+  margin-bottom: 8px;
+}
+
+/* ===========================
+   Responsive Design - Mobile & Small Screens
+=========================== */
+@media (max-width: 900px) {
+  header {
+    height: auto;
+    min-height: 180px;
+    background-size: 60%;
+  }
+  
+  header nav {
+    margin-top: 120px;
+    padding: 8px 0;
+  }
+  
+  header nav ul {
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  
+  header nav ul li a {
+    font-size: 18px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  header {
+    min-height: 140px;
+    background-size: 50%;
+  }
+  
+  header nav {
+    margin-top: 80px;
+    padding: 6px 0;
+  }
+  
+  header nav ul {
+    gap: 8px;
+    padding: 0 5px;
+  }
+  
+  header nav ul li a {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+  
+  body {
+    padding: 5px;
+  }
+  
+  .container {
+    padding: 15px;
+  }
+  
+  /* Table responsive */
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  
+  table th, table td {
+    min-width: 100px;
+    font-size: 0.85rem !important;
+    padding: 8px 10px !important;
+  }
+}

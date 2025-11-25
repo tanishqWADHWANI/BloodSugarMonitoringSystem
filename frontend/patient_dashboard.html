@@ -1,0 +1,1712 @@
+<!--
+  Blood Sugar Monitoring System - Patient Dashboard
+  ===================================================
+  This is the main interface for authenticated patients to manage their health data.
+  
+  Features Overview:
+  - User profile display with photo and greeting
+  - Blood glucose readings management (add, edit, delete, search)
+  - Interactive charts (line chart for trends, bar chart for daily patterns)
+  - AI-powered insights and recommendations
+  - Alert notifications for critical readings
+  - Pattern analysis (weekly, monthly trends)
+  - Dietary recommendations based on readings
+  - Document upload functionality
+  - Medical records view
+  - Specialist information display
+  
+  Key Components:
+  1. Navigation Bar - Dashboard, Medical Records, Reports, Upload Docs, Thresholds, Logout
+  2. Profile Section - User name, photo, role badge, welcome message
+  3. Add Reading Form - Glucose value, meal type, timestamp, activity, notes
+  4. Readings Table - Sortable, searchable, with edit/delete actions
+  5. Charts Section - Line chart (7-day trends), Bar chart (daily patterns)
+  6. AI Insights - Personalized health recommendations
+  7. Alerts Panel - Critical reading notifications
+  8. Patterns Analysis - Weekly/monthly statistics
+  9. Diet Recommendations - Personalized meal suggestions
+  10. Specialist Info - Assigned specialist contact details
+  
+  Data Management:
+  - Real-time CRUD operations for glucose readings
+  - Automatic chart updates after data changes
+  - LocalStorage authentication (user ID, token, role)
+  - API integration via api.js
+  
+  Charts (Chart.js):
+  - 7-day glucose trend line chart (color-coded by glucose range)
+  - Daily pattern bar chart (meal-based grouping)
+  - Responsive canvas sizing
+  - Gradient backgrounds for visual appeal
+  
+  AI Features:
+  - Pattern detection (morning highs, post-meal spikes)
+  - Food trigger analysis
+  - Activity recommendations
+  - Personalized insights based on historical data
+  
+  Alerts:
+  - Critical high/low glucose notifications
+  - Color-coded severity (red = critical, orange = warning)
+  - Dismissible with API synchronization
+  
+  Security:
+  - Token-based authentication required
+  - Role verification (patient role only)
+  - Automatic redirect to login if unauthenticated
+  - User ID validation on all API calls
+  
+  Related Files:
+  - patient.html (login page)
+  - patient_history.html (detailed historical view)
+  - upload_documents.html (document management)
+  - thresholds.html (glucose threshold configuration)
+  - view_reports.html (comprehensive reports)
+  - update_medical.html (medical profile updates)
+  - js/api.js (API client library)
+  - css/style.css, css/dasshboard.css (stylesheets)
+  
+  External Dependencies:
+  - Chart.js v3.x (data visualization)
+  - Font Awesome (icons)
+  
+  Page Size: 1641 lines (complex dashboard with extensive functionality)
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="css/dasshboard.css" />  <!-- Dashboard-specific styles -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
+  <style>
+    /* Modern Card Design - Container for dashboard cards */
+    .container {
+      max-width: 1200px;  /* Maximum content width for readability */
+      margin: 40px auto;  /* Center horizontally with vertical spacing */
+      padding: 0 20px;  /* Horizontal padding for mobile */
+    }
+
+    .card {
+      background: white;  /* White card background */
+      padding: 30px;  /* Internal spacing */
+      margin-bottom: 30px;  /* Space between cards */
+      border-radius: 12px;  /* Rounded corners */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
+    }
+
+    .card h2 {
+      color: #004080;  /* Clinic blue for headings */
+      font-size: 1.6rem;  /* Prominent heading size */
+      margin-bottom: 10px;  /* Space below heading */
+    }
+
+    .card p.description {
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #f0f7ff;
+      border-left: 4px solid #004080;
+      border-radius: 4px;
+    }
+
+    /* Form Grid Layout */
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-field label {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-field label .icon {
+      font-size: 1.1rem;
+    }
+
+    .form-field input,
+    .form-field textarea {
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: border-color 0.3s;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: #004080;
+      box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
+    }
+
+    .form-field small {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .form-field .help-text {
+      background: #fffbea;
+      border-left: 3px solid #ffc107;
+      padding: 8px 12px;
+      margin-top: 4px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #856404;
+    }
+
+    /* Info Badges */
+    .info-badge {
+      display: inline-block;
+      background: #e8f4f8;
+      color: #004080;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .required-star {
+      color: #dc3545;
+      margin-left: 2px;
+    }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .section-header .icon {
+      font-size: 1.5rem;
+      color: #004080;
+    }
+
+    .section-header h3 {
+      color: #004080;
+      font-size: 1.2rem;
+      margin: 0;
+    }
+
+    /* Form Actions */
+    .form-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .form-actions button[type="submit"] {
+      background: #004080;
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .form-actions button[type="submit"]:hover {
+      background: #003366;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 64, 128, 0.2);
+    }
+
+    .form-actions button[type="button"] {
+      background: #e0e0e0;
+      color: #333;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .form-actions button[type="button"]:hover {
+      background: #d0d0d0;
+    }
+
+    /* Table Styles */
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th {
+      background: #004080;
+      color: white;
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .abnormal {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .abnormal-row {
+      background-color: #ffe6e6 !important;
+      border-left: 4px solid #dc3545;
+    }
+
+    .abnormal-row:hover {
+      background-color: #ffd4d4 !important;
+    }
+
+    .edit-btn,
+    .del-btn {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-right: 6px;
+    }
+
+    .edit-btn {
+      background: #28a745;
+      color: white;
+    }
+
+    .edit-btn:hover {
+      background: #218838;
+    }
+
+    .del-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .del-btn:hover {
+      background: #c82333;
+    }
+
+    /* Dashboard Header */
+    .dashboard-header {
+      margin-bottom: 30px;
+    }
+
+    .dashboard-header h1 {
+      color: #004080;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .dashboard-header p {
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    /* Navigation & Logout button */
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    nav ul li {
+      margin-right: 15px;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #333;
+      padding: 6px 8px;
+    }
+
+    nav ul li a.active {
+      font-weight: bold;
+      border-bottom: 2px solid #333;
+    }
+
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .logout-btn:hover {
+      background: #c82333;
+    }
+
+    /* Status Indicators */
+    .status-normal {
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .status-borderline {
+      color: #ffc107;
+      font-weight: 600;
+    }
+
+    .status-abnormal {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    /* Patient Info Grid */
+    .patient-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .info-item {
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #004080;
+    }
+
+    .info-label {
+      display: block;
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .info-value {
+      display: block;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Alerts Container */
+    .alerts-container {
+      margin-top: 15px;
+    }
+
+    .alert-item {
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .alert-item.critical {
+      border-left-color: #dc3545;
+      background: #fff5f5;
+    }
+
+    .alert-item.warning {
+      border-left-color: #ffc107;
+      background: #fffbf0;
+    }
+
+    .alert-item.info {
+      border-left-color: #17a2b8;
+      background: #f0f9ff;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      font-size: 1rem;
+    }
+
+    .alert-message {
+      color: #666;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .alert-time {
+      font-size: 0.8rem;
+      color: #999;
+      margin-top: 8px;
+    }
+
+    /* Insights Container */
+    .insights-container {
+      margin-top: 15px;
+    }
+
+    .insight-item {
+      padding: 18px;
+      margin-bottom: 15px;
+      background: #f0f7ff;
+      border-radius: 8px;
+      border-left: 4px solid #004080;
+    }
+
+    .insight-title {
+      font-weight: 600;
+      color: #004080;
+      margin-bottom: 8px;
+      font-size: 1.05rem;
+    }
+
+    .insight-text {
+      color: #555;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* Diet & Trends */
+    .diet-trends-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+
+    .diet-section h3 {
+      color: #004080;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+
+    .diet-list, .tips-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .diet-list li, .tips-list li {
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #28a745;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .tips-list li {
+      border-left-color: #ffc107;
+    }
+
+    /* Messages Container */
+    .messages-container {
+      margin-top: 15px;
+    }
+
+    .message-item {
+      padding: 18px;
+      margin-bottom: 15px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .message-from {
+      font-weight: 600;
+      color: #004080;
+      font-size: 1rem;
+    }
+
+    .message-date {
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .message-body {
+      color: #555;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .loading-text, .info-text {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="patient_dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="patient_history.html">History</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li style="margin-left:auto;"><button id="logoutBtn" class="logout-btn">Logout</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="dashboard-header">
+      <h1 id="greeting">📊 Patient Dashboard</h1>
+      <p id="specialistLine" class="subtext">Track your daily health readings, medications, food intake, and physical activities. Maintaining accurate records helps your specialist monitor health trends and provide better care.</p>
+    </section>
+
+    <!-- Patient Information Card -->
+    <section class="card" id="patientInfoCard">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img id="profileImageDisplay" src="" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; display: none; border: 3px solid #007bff;" />
+          <h2>👤 Patient Information</h2>
+        </div>
+        <button onclick="window.location.href='edit_profile_patient.html'" id="editProfileBtn" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Edit Profile</button>
+      </div>
+      <div class="patient-info-grid" id="patientInfoDisplay">
+        <div class="info-item">
+          <span class="info-label">📧 Email:</span>
+          <span class="info-value" id="patientEmail">Loading...</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">📱 Phone:</span>
+          <span class="info-value" id="patientPhone">Loading...</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">🎂 Birthday:</span>
+          <span class="info-value" id="patientBirthday">Loading...</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">🆔 Patient ID:</span>
+          <span class="info-value" id="patientIdDisplay">Loading...</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">🏥 Health Care Number:</span>
+          <span class="info-value" id="patientHealthCareNumber">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Edit Profile Form (Hidden by default) -->
+      <div id="editProfileForm" style="display: none; margin-top: 20px;">
+        <h3 style="color: #004080; margin-bottom: 15px;">Edit Your Profile</h3>
+        <form id="profileUpdateForm" class="form-grid">
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editFirstName">First Name *</label>
+              <input type="text" id="editFirstName" required />
+            </div>
+            <div class="form-field">
+              <label for="editLastName">Last Name *</label>
+              <input type="text" id="editLastName" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editEmail">Email *</label>
+              <input type="email" id="editEmail" required />
+            </div>
+            <div class="form-field">
+              <label for="editPhone">Phone</label>
+              <input type="tel" id="editPhone" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editDateOfBirth">Date of Birth *</label>
+              <input type="date" id="editDateOfBirth" required />
+            </div>
+            <div class="form-field">
+              <label for="editHealthCareNumber">Health Care Number *</label>
+              <input type="text" id="editHealthCareNumber" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="editPassword">New Password (leave blank to keep current)</label>
+              <input type="password" id="editPassword" placeholder="Enter new password" />
+            </div>
+            <div class="form-field">
+              <label for="editProfileImage">Profile Image</label>
+              <input type="file" id="editProfileImage" accept="image/*" />
+              <small style="color: #666;">Upload a new profile picture (optional)</small>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">💾 Save Changes</button>
+            <button type="button" onclick="cancelEditProfile()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">❌ Cancel</button>
+          </div>
+        </form>
+        <div id="profileUpdateMsg" style="margin-top: 15px; padding: 10px; border-radius: 4px;"></div>
+      </div>
+    </section>
+
+    <!-- AI Personalized Insights Card -->
+    <section class="card" id="aiInsightsCard">
+      <h2>🤖 AI Personalized Insights & Recommendations</h2>
+      <p class="description">Smart analysis of your patterns with personalized suggestions based on your food, activities, and symptoms.</p>
+      <div id="personalizedInsightsContainer" class="insights-container">
+        <p class="loading-text">Analyzing your patterns...</p>
+      </div>
+    </section>
+
+    <!-- Diet Recommendations & Trends Card -->
+    <section class="card" id="dietTrendsCard">
+      <h2>🍎 Diet Recommendations & Prevention Tips</h2>
+      <p class="description">Personalized nutrition advice to maintain healthy blood sugar levels and prevent abnormal readings.</p>
+      <div id="dietTrendsContainer" class="diet-trends-container">
+        <div class="diet-section">
+          <h3>🥗 What to Eat</h3>
+          <ul id="dietRecommendations" class="diet-list">
+            <li class="loading-text">Loading recommendations...</li>
+          </ul>
+        </div>
+        <div class="diet-section">
+          <h3>⚠️ Prevention Tips</h3>
+          <ul id="preventionTips" class="tips-list">
+            <li>Avoid refined carbohydrates and sugary drinks</li>
+            <li>Eat regular, balanced meals throughout the day</li>
+            <li>Include fiber-rich foods in every meal</li>
+            <li>Stay hydrated with water instead of sugary beverages</li>
+            <li>Monitor portion sizes and practice mindful eating</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Specialist Messages Card -->
+    <section class="card" id="specialistMessagesCard">
+      <h2>💬 Messages from Your Specialist</h2>
+      <div id="messagesContainer" class="messages-container">
+        <p class="info-text">No messages at this time. Your specialist will send messages here when they review your health data.</p>
+      </div>
+    </section>
+
+    <!-- Health Entry Form -->
+    <section class="card">
+      <h2>📝 Add Daily Health Entry</h2>
+      <p class="description">
+        <strong>📌 Important:</strong> Record your readings at consistent times each day for accurate trend analysis. Include all relevant information to help your healthcare team make informed decisions about your treatment plan.
+      </p>
+
+      <form id="healthForm" class="form-grid">
+        <!-- Date & Time Section -->
+        <div class="section-header">
+          <span class="icon">🕐</span>
+          <h3>Date & Time</h3>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="date">
+              <span class="icon">📅</span>
+              Date <span class="required-star">*</span>
+            </label>
+            <input type="date" id="date" name="date" required />
+            <small>When did you take this measurement?</small>
+          </div>
+          <div class="form-field">
+            <label for="time">
+              <span class="icon">⏰</span>
+              Time <span class="required-star">*</span>
+            </label>
+            <input type="time" id="time" name="time" required />
+            <small>Exact time helps identify patterns throughout the day.</small>
+          </div>
+        </div>
+
+        <!-- Vital Signs Section -->
+        <div class="section-header">
+          <span class="icon">🩺</span>
+          <h3>Vital Signs</h3>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="bloodSugar">
+              <span class="icon">🩸</span>
+              Blood Sugar (mg/dL) <span class="required-star">*</span>
+              <span class="info-badge">Primary Metric</span>
+            </label>
+            <input type="number" id="bloodSugar" name="bloodSugar" min="20" max="600" required />
+            <div class="help-text">
+              <strong>Normal Ranges:</strong> Fasting: 70-99 mg/dL | After meals: &lt;140 mg/dL
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="bloodPressure">
+              <span class="icon">💓</span>
+              Blood Pressure (mmHg)
+            </label>
+            <input type="text" id="bloodPressure" name="bloodPressure" placeholder="120/80" />
+            <small>Format: systolic/diastolic (e.g., 120/80). Normal: &lt;120/80 mmHg</small>
+          </div>
+          <div class="form-field">
+            <label for="heartRate">
+              <span class="icon">❤️</span>
+              Heart Rate (bpm)
+            </label>
+            <input type="number" id="heartRate" name="heartRate" min="40" max="200" placeholder="72" />
+            <small>Resting heart rate. Normal range: 60-100 bpm</small>
+          </div>
+        </div>
+
+        <!-- Medications Section -->
+        <div class="section-header">
+          <span class="icon">💊</span>
+          <h3>Medications</h3>
+        </div>
+        <div class="form-row">
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label for="medications">
+              <span class="icon">💊</span>
+              Medications Taken Today
+            </label>
+            <input type="text" id="medications" name="medications" placeholder="e.g., Metformin 500mg (morning), Insulin 10 units (dinner)" />
+            <small>List all medications with dosages and timing. This helps track medication effectiveness.</small>
+          </div>
+        </div>
+
+        <!-- Food & Nutrition Section -->
+        <div class="section-header">
+          <span class="icon">🍽️</span>
+          <h3>Food & Nutrition</h3>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="foodTime">
+              <span class="icon">⏰</span>
+              Meal Time
+            </label>
+            <input type="time" id="foodTime" name="foodTime" />
+            <small>When did you eat? Track timing to correlate with blood sugar.</small>
+          </div>
+          <div class="form-field" style="grid-column: span 2;">
+            <label for="foodTaken">
+              <span class="icon">🥗</span>
+              Food Consumed
+            </label>
+            <input type="text" id="foodTaken" name="foodTaken" placeholder="e.g., 1 cup brown rice, 150g grilled chicken, mixed vegetables" />
+            <small>Be specific about portions and types of food. This helps identify how different foods affect your levels.</small>
+          </div>
+        </div>
+
+        <!-- Activity & Notes Section -->
+        <div class="section-header">
+          <span class="icon">🏃</span>
+          <h3>Physical Activity & Notes</h3>
+        </div>
+        <div class="form-row">
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label for="activity">
+              <span class="icon">📝</span>
+              Activity, Symptoms, or Special Notes
+            </label>
+            <textarea id="activity" name="activity" rows="4" placeholder="Examples:
+• Exercise: 30-minute walk after dinner
+• Symptoms: Felt dizzy, slightly nauseous
+• Special events: Ate at restaurant, attended party
+• Stress level: High stress day at work
+• Sleep quality: Only slept 4 hours"></textarea>
+            <small>Include any exercise, symptoms, unusual events, stress levels, or sleep quality. All these factors can affect your blood sugar.</small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">💾 Save Entry</button>
+          <button type="button" onclick="document.getElementById('healthForm').reset()">🔄 Clear Form</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:5000';
+    const currentPatient = (localStorage.getItem('loggedInPatient') || 'patient').toLowerCase();
+    const LS_KEY = 'health_' + currentPatient;
+
+    // Helper function to escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Load entries (kept for backward compatibility)
+    function loadEntries() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    // Save entries (kept for backward compatibility)
+    function saveEntries(entries) {
+      localStorage.setItem(LS_KEY, JSON.stringify(entries));
+    }
+
+    const form = document.getElementById('healthForm');
+
+    // Handle form submit - Save new health entry
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const entry = {
+        date: form.date.value,
+        time: form.time.value,
+        bloodSugar: form.bloodSugar.value,
+        bloodPressure: form.bloodPressure.value,
+        heartRate: form.heartRate.value,
+        medications: form.medications.value,
+        foodTime: form.foodTime.value,
+        foodTaken: form.foodTaken.value,
+        activity: form.activity.value
+      };
+
+      // Save to localStorage first (backward compatibility)
+      const rows = loadEntries();
+      rows.push(entry);
+      saveEntries(rows);
+      
+      // Save to database
+      try {
+        const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+        if (userId) {
+          const timestamp = `${entry.date} ${entry.time}:00`;
+          await addReading({
+            userId: userId,
+            value: parseFloat(entry.bloodSugar),
+            date_time: timestamp,
+            fasting: false,
+            foodIntake: entry.foodTaken || '',
+            activity: entry.activity || '',
+            symptomsNotes: entry.medications || '',
+            unit: 'mg/dL'
+          });
+          console.log('✓ Entry saved to database');
+          alert('Your health entry has been saved successfully! View it in your Health History page.');
+        } else {
+          alert('Entry saved locally. Please log in to sync with the database.');
+        }
+      } catch (dbError) {
+        console.warn('Failed to save to database:', dbError);
+        alert('Entry saved locally but could not sync to database. Please check your connection.');
+      }
+
+      form.reset();
+    });
+
+    // Greeting
+    const greetEl = document.getElementById('greeting');
+    if (greetEl) {
+      greetEl.textContent = 'Welcome, ' + currentPatient.charAt(0).toUpperCase() + currentPatient.slice(1);
+    }
+
+    // Load specialist assignment from database
+    async function loadSpecialistAssignment() {
+      try {
+        const patientId = localStorage.getItem('patientId');
+        const token = localStorage.getItem('bsm_token') || '';
+        
+        console.log('Loading specialist assignment for patient_id:', patientId);
+        
+        if (!patientId) {
+          document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
+          return;
+        }
+
+        const response = await fetch(`${API_BASE}/api/patient/${patientId}/specialist`, {
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        console.log('Specialist assignment response status:', response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Specialist assignment data:', data);
+          
+          if (data.specialist) {
+            const spec = data.specialist;
+            const firstName = spec.first_name || '';
+            const lastName = spec.last_name || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+            // Don't add Dr. prefix if name already starts with Dr.
+            const displayName = fullName.startsWith('Dr.') ? fullName : `Dr. ${fullName}`;
+            document.getElementById('specialistLine').textContent = 
+              `Your specialist: ${displayName} (${spec.email}). They monitor your health trends and provide care guidance.`;
+          } else {
+            document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
+          }
+        } else {
+          console.warn('Failed to load specialist, status:', response.status);
+          document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
+        }
+      } catch (error) {
+        console.error('Failed to load specialist:', error);
+        document.getElementById('specialistLine').textContent = 'Your specialist: not assigned yet. Please contact clinic staff.';
+      }
+    }
+
+    // Create demo health history for Alice if no entries exist
+    async function initializeDemoData() {
+      const patientEmail = (localStorage.getItem('patientEmail') || '').toLowerCase();
+      const currentPatient = (localStorage.getItem('loggedInPatient') || '').toLowerCase();
+      
+      console.log('Checking for demo data initialization...');
+      console.log('patientEmail:', patientEmail);
+      console.log('loggedInPatient:', currentPatient);
+      
+      // Check if this is Alice by email or username
+      const isAlice = patientEmail.includes('alice') || currentPatient.includes('alice');
+                      
+      console.log('Is Alice?', isAlice);
+      
+      if (isAlice) {
+        const existingData = loadEntries();
+        console.log('Existing localStorage entries:', existingData.length);
+        
+        // Check if data exists in database
+        const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+        let dbHasData = false;
+        
+        if (userId) {
+          try {
+            const dbReadings = await getReadings(userId);
+            dbHasData = dbReadings && dbReadings.length > 0;
+            console.log('Database entries:', dbReadings ? dbReadings.length : 0);
+          } catch (e) {
+            console.log('Could not check database:', e);
+          }
+        }
+        
+        if (existingData.length === 0 && !dbHasData) {
+          const today = new Date();
+          const demoEntries = [
+            {
+              date: new Date(today.getTime() - 7*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:30',
+              bloodSugar: '95',
+              bloodPressure: '118/76',
+              heartRate: '72',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:45',
+              foodTaken: '1 cup oatmeal, 1 apple, green tea',
+              activity: 'Fasting blood sugar reading before breakfast. Feeling good, slept 7 hours.'
+            },
+            {
+              date: new Date(today.getTime() - 6*24*60*60*1000).toISOString().split('T')[0],
+              time: '07:15',
+              bloodSugar: '102',
+              bloodPressure: '120/78',
+              heartRate: '68',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '07:30',
+              foodTaken: 'Scrambled eggs (2), whole wheat toast, orange juice',
+              activity: 'Slightly elevated reading. Stressed about work presentation.'
+            },
+            {
+              date: new Date(today.getTime() - 5*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:00',
+              bloodSugar: '88',
+              bloodPressure: '115/75',
+              heartRate: '70',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:15',
+              foodTaken: 'Greek yogurt with berries, granola',
+              activity: '30-minute morning walk. Feeling energetic.'
+            },
+            {
+              date: new Date(today.getTime() - 4*24*60*60*1000).toISOString().split('T')[0],
+              time: '13:30',
+              bloodSugar: '145',
+              bloodPressure: '122/80',
+              heartRate: '78',
+              medications: 'Metformin 500mg (lunch)',
+              foodTime: '12:15',
+              foodTaken: 'Large pasta serving at restaurant, garlic bread, soda',
+              activity: 'Post-meal reading. Ate more carbs than usual at lunch meeting.'
+            },
+            {
+              date: new Date(today.getTime() - 3*24*60*60*1000).toISOString().split('T')[0],
+              time: '22:00',
+              bloodSugar: '185',
+              bloodPressure: '138/88',
+              heartRate: '88',
+              medications: 'Forgot evening Metformin dose',
+              foodTime: '19:30',
+              foodTaken: 'Pizza (3 slices), ice cream dessert, cola',
+              activity: '⚠️ ALERT: High blood sugar! Forgot medication + high carb dinner. Feeling thirsty and slightly dizzy. Stress from work deadline.'
+            },
+            {
+              date: new Date(today.getTime() - 2*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:00',
+              bloodSugar: '152',
+              bloodPressure: '132/84',
+              heartRate: '79',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:20',
+              foodTaken: 'Light breakfast - yogurt, fruit',
+              activity: 'Fasting reading still elevated from yesterday evening spike. Monitoring closely.'
+            },
+            {
+              date: new Date(today.getTime() - 1*24*60*60*1000).toISOString().split('T')[0],
+              time: '08:15',
+              bloodSugar: '105',
+              bloodPressure: '128/82',
+              heartRate: '75',
+              medications: 'Metformin 500mg (morning), extra dose at bedtime',
+              foodTime: '08:30',
+              foodTaken: 'Low-carb breakfast: eggs, avocado, vegetables',
+              activity: 'Reading coming down. Increased medication per doctor advice. Light exercise - 20 min walk.'
+            },
+            {
+              date: today.toISOString().split('T')[0],
+              time: '08:00',
+              bloodSugar: '98',
+              bloodPressure: '120/78',
+              heartRate: '72',
+              medications: 'Metformin 500mg (morning)',
+              foodTime: '08:20',
+              foodTaken: 'Steel-cut oats, blueberries, almonds, cinnamon',
+              activity: 'Much better! Back to normal range. Maintaining strict diet and medication schedule. Slept 8 hours.'
+            }
+          ];
+          saveEntries(demoEntries);
+          
+          // Save to database immediately
+          if (userId) {
+            console.log('Saving demo entries to database...');
+            try {
+              for (const entry of demoEntries) {
+                const timestamp = `${entry.date} ${entry.time}:00`;
+                await addReading({
+                  userId: userId,
+                  value: parseFloat(entry.bloodSugar),
+                  date_time: timestamp,
+                  fasting: false,
+                  foodIntake: entry.foodTaken || '',
+                  activity: entry.activity || '',
+                  symptomsNotes: entry.medications || '',
+                  unit: 'mg/dL'
+                });
+              }
+              console.log('✓ Demo health history created and saved to database - 8 entries');
+            } catch (dbError) {
+              console.error('Failed to save demo data to database:', dbError);
+            }
+          }
+          
+          console.log('⚠️ Abnormal reading (185 mg/dL):', demoEntries[4]);
+        } else {
+          console.log('Alice already has data:', existingData.length + ' localStorage entries, dbHasData:', dbHasData);
+        }
+      } else {
+        console.log('Not Alice - demo data will not be created');
+      }
+    }
+
+    // Load patient information
+    // Profile Edit Functions
+    let currentUserData = null;
+
+    function toggleEditProfile() {
+      const form = document.getElementById('editProfileForm');
+      const display = document.getElementById('patientInfoDisplay');
+      const btn = document.getElementById('editProfileBtn');
+      
+      if (form.style.display === 'none') {
+        // Populate form with current data
+        if (currentUserData) {
+          document.getElementById('editFirstName').value = currentUserData.first_name || '';
+          document.getElementById('editLastName').value = currentUserData.last_name || '';
+          document.getElementById('editEmail').value = currentUserData.email || '';
+          document.getElementById('editPhone').value = currentUserData.phone || '';
+          document.getElementById('editDateOfBirth').value = currentUserData.date_of_birth || '';
+          document.getElementById('editHealthCareNumber').value = currentUserData.health_care_number || '';
+        }
+        form.style.display = 'block';
+        display.style.display = 'none';
+        btn.textContent = '👁️ View Profile';
+      } else {
+        form.style.display = 'none';
+        display.style.display = 'grid';
+        btn.textContent = '✏️ Edit Profile';
+      }
+    }
+
+    function cancelEditProfile() {
+      document.getElementById('editProfileForm').style.display = 'none';
+      document.getElementById('patientInfoDisplay').style.display = 'grid';
+      document.getElementById('editProfileBtn').textContent = '✏️ Edit Profile';
+      document.getElementById('profileUpdateMsg').textContent = '';
+    }
+
+    // Handle profile update form submission
+    document.getElementById('profileUpdateForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const msgEl = document.getElementById('profileUpdateMsg');
+      msgEl.style.color = 'blue';
+      msgEl.style.background = '#e7f3ff';
+      msgEl.style.padding = '10px';
+      msgEl.textContent = 'Updating profile...';
+      
+      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+      
+      const payload = {
+        firstName: document.getElementById('editFirstName').value.trim(),
+        lastName: document.getElementById('editLastName').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        dateOfBirth: document.getElementById('editDateOfBirth').value,
+        healthCareNumber: document.getElementById('editHealthCareNumber').value.trim()
+      };
+      
+      // Only include password if entered
+      const password = document.getElementById('editPassword').value.trim();
+      if (password) {
+        if (password.length < 6) {
+          msgEl.style.color = 'red';
+          msgEl.style.background = '#ffe7e7';
+          msgEl.textContent = 'Password must be at least 6 characters long.';
+          return;
+        }
+        payload.password = password;
+      }
+      
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          msgEl.style.color = 'green';
+          msgEl.style.background = '#e7ffe7';
+          msgEl.textContent = '✅ Profile updated successfully!';
+          
+          // Reload patient info
+          await loadPatientInfo();
+          
+          // Close form after 2 seconds
+          setTimeout(() => {
+            cancelEditProfile();
+          }, 2000);
+        } else {
+          throw new Error(data.error || 'Update failed');
+        }
+      } catch (error) {
+        msgEl.style.color = 'red';
+        msgEl.style.background = '#ffe7e7';
+        msgEl.textContent = '❌ Error: ' + error.message;
+      }
+    });
+
+    async function loadPatientInfo() {
+      const token = localStorage.getItem('bsm_token');
+      let user = null;
+      
+      // Try to fetch from database using token first
+      if (token) {
+        try {
+          console.log('Fetching patient info from /api/me');
+          const response = await fetch(`http://127.0.0.1:5000/api/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            user = await response.json();
+            console.log('Patient info from /api/me:', user);
+          }
+        } catch (error) {
+          console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
+        }
+      }
+      
+      // Fallback to localStorage if /api/me failed
+      if (!user) {
+        const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+        if (!userId) {
+          console.error('No userId found in localStorage');
+          return;
+        }
+        try {
+          const url = `http://127.0.0.1:5000/api/users/${userId}`;
+          console.log('Fetching patient info from:', url);
+          const response = await fetch(url);
+          console.log('Patient info response status:', response.status);
+          user = await response.json();
+          console.log('Patient info received:', user);
+        } catch (error) {
+          console.error('Failed to load patient info:', error);
+          return;
+        }
+      }
+
+      try {
+        if (user && user.user_id) {
+          currentUserData = user; // Store for edit form
+          document.getElementById('patientEmail').textContent = user.email || 'Not provided';
+          document.getElementById('patientPhone').textContent = user.phone || 'Not provided';
+          document.getElementById('patientBirthday').textContent = user.date_of_birth || 'Not provided';
+          document.getElementById('patientIdDisplay').textContent = user.user_id || userId;
+          document.getElementById('patientHealthCareNumber').textContent = user.health_care_number || 'Not provided';
+          document.getElementById('greeting').textContent = `📊 Welcome, ${user.first_name || 'Patient'}!`;
+          
+          // Display profile image if available
+          const imgElement = document.getElementById('profileImageDisplay');
+          console.log('Profile image data:', user.profile_image ? `${user.profile_image.substring(0, 50)}... (length: ${user.profile_image.length})` : 'No image');
+          
+          if (user.profile_image && user.profile_image.trim() !== '') {
+            console.log('Setting profile image source');
+            imgElement.src = user.profile_image;
+            imgElement.style.display = 'block';
+            imgElement.onload = function() {
+              console.log('Profile image loaded successfully');
+            };
+            imgElement.onerror = function() {
+              console.error('Failed to load profile image - invalid data');
+              this.style.display = 'none';
+            };
+          } else {
+            console.log('No profile image to display');
+            imgElement.style.display = 'none';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading patient info:', error);
+        document.getElementById('patientEmail').textContent = 'Unable to load';
+        document.getElementById('patientPhone').textContent = 'Unable to load';
+        document.getElementById('patientBirthday').textContent = 'Unable to load';
+        document.getElementById('patientIdDisplay').textContent = userId || 'Unknown';
+      }
+    }
+
+    // Load diet recommendations
+    async function loadDietRecommendations() {
+      const container = document.getElementById('dietRecommendations');
+      try {
+        const response = await fetch('http://127.0.0.1:5000/api/diet/diabetes?mealType=all');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.recommendations && data.recommendations.length > 0) {
+            container.innerHTML = data.recommendations.slice(0, 8).map(rec => {
+              const food = rec.food_name || rec.name || 'Healthy food';
+              const benefit = rec.benefits || rec.description || 'Good for blood sugar control';
+              return `<li><strong>${food}:</strong> ${benefit}</li>`;
+            }).join('');
+          } else {
+            container.innerHTML = `
+              <li><strong>Leafy greens:</strong> Spinach, kale, and lettuce are low in carbs</li>
+              <li><strong>Whole grains:</strong> Brown rice, quinoa, and oats provide steady energy</li>
+              <li><strong>Lean proteins:</strong> Chicken, fish, tofu help stabilize blood sugar</li>
+              <li><strong>Nuts and seeds:</strong> Almonds, chia seeds provide healthy fats</li>
+              <li><strong>Berries:</strong> Blueberries, strawberries are low-glycemic fruits</li>
+              <li><strong>Legumes:</strong> Lentils, chickpeas are high in fiber</li>
+            `;
+          }
+        } else {
+          container.innerHTML = `
+            <li><strong>Leafy greens:</strong> Spinach, kale, and lettuce are low in carbs</li>
+            <li><strong>Whole grains:</strong> Brown rice, quinoa, and oats provide steady energy</li>
+            <li><strong>Lean proteins:</strong> Chicken, fish, tofu help stabilize blood sugar</li>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading diet recommendations:', error);
+        container.innerHTML = '<li>Unable to load recommendations. Please check your connection.</li>';
+      }
+    }
+
+    // Initialize all dashboard sections
+    async function initializeDashboard() {
+      await initializeDemoData();
+      await Promise.all([
+        loadPatientInfo(),
+        loadPersonalizedInsights(),
+        loadDietRecommendations(),
+        loadSpecialistMessages()
+      ]);
+      loadSpecialistAssignment();
+    }
+
+    // Load personalized AI insights
+    async function loadPersonalizedInsights() {
+      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+      if (!userId) {
+        console.warn('No userId found for personalized insights');
+        return;
+      }
+      
+      const container = document.getElementById('personalizedInsightsContainer');
+      if (!container) {
+        console.error('personalizedInsightsContainer not found');
+        return;
+      }
+      
+      try {
+        console.log('Fetching personalized insights for user:', userId);
+        const response = await fetch(`http://127.0.0.1:5000/api/insights/${userId}?days=30`);
+        console.log('Insights API response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Insights data received:', data);
+          const insights = data.insights || {};
+          
+          if (insights.personalized_recommendations && insights.personalized_recommendations.length > 0) {
+            const recommendations = insights.personalized_recommendations;
+            const correlations = insights.correlations || {};
+            
+            let html = '';
+            
+            // Display recommendations by priority
+            const highPriority = recommendations.filter(r => r.priority === 'high');
+            const mediumPriority = recommendations.filter(r => r.priority === 'medium');
+            const lowPriority = recommendations.filter(r => r.priority === 'low');
+            
+            if (highPriority.length > 0) {
+              html += '<div style="margin-bottom: 20px;"><h3 style="color: #dc3545; font-size: 1.1rem; margin-bottom: 10px;">🚨 High Priority</h3>';
+              highPriority.forEach(rec => {
+                html += createRecommendationCard(rec, '#dc3545');
+              });
+              html += '</div>';
+            }
+            
+            if (mediumPriority.length > 0) {
+              html += '<div style="margin-bottom: 20px;"><h3 style="color: #ffc107; font-size: 1.1rem; margin-bottom: 10px;">⚠️ Medium Priority</h3>';
+              mediumPriority.forEach(rec => {
+                html += createRecommendationCard(rec, '#ffc107');
+              });
+              html += '</div>';
+            }
+            
+            if (lowPriority.length > 0) {
+              html += '<div style="margin-bottom: 20px;"><h3 style="color: #28a745; font-size: 1.1rem; margin-bottom: 10px;">✅ General Guidance</h3>';
+              lowPriority.forEach(rec => {
+                html += createRecommendationCard(rec, '#28a745');
+              });
+              html += '</div>';
+            }
+            
+            // Add correlation details if available
+            if (correlations.food_triggers && correlations.food_triggers.length > 0) {
+              html += createCorrelationSection('🍽️ Food Impact Analysis', correlations.food_triggers, 'food');
+            }
+            
+            if (correlations.activity_impacts && correlations.activity_impacts.length > 0) {
+              html += createCorrelationSection('🏃 Activity Impact Analysis', correlations.activity_impacts, 'activity');
+            }
+            
+            if (correlations.time_patterns && Object.keys(correlations.time_patterns).length > 0) {
+              html += createTimePatternsSection(correlations.time_patterns);
+            }
+            
+            container.innerHTML = html;
+          } else {
+            console.log('No personalized recommendations found');
+            container.innerHTML = '<p class="info-text">📊 Keep logging your readings with food, activities, and symptoms to get personalized insights!</p>';
+          }
+        } else {
+          const errorText = await response.text();
+          console.error('API error:', response.status, errorText);
+          
+          if (response.status === 404) {
+            container.innerHTML = '<p class="info-text">📊 No readings found. Start logging your blood sugar readings to get personalized insights!</p>';
+          } else {
+            container.innerHTML = `<p class="info-text">Unable to load insights (Error ${response.status}). Please try refreshing the page.</p>`;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading personalized insights:', error);
+        container.innerHTML = '<p class="info-text">Unable to connect to server. Please check your connection.</p>';
+      }
+    }
+    
+    function createRecommendationCard(rec, color) {
+      const detailsHtml = rec.details ? `
+        <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 0.9rem;">
+          ${JSON.stringify(rec.details, null, 2).replace(/[{}"]/g, '').replace(/,/g, '<br>').replace(/:/g, ': ')}
+        </div>
+      ` : '';
+      
+      return `
+        <div class="insight-item" style="padding: 15px; margin-bottom: 12px; background: white; border-left: 4px solid ${color}; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h4 style="color: ${color}; margin: 0 0 8px 0; font-size: 1rem;">${rec.title}</h4>
+          <p style="margin: 0; color: #333; line-height: 1.6;">${rec.message}</p>
+          ${detailsHtml}
+        </div>
+      `;
+    }
+    
+    function createCorrelationSection(title, items, type) {
+      let html = `
+        <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+          <h3 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px;">${title}</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;">
+      `;
+      
+      items.slice(0, 6).forEach(item => {
+        if (type === 'food') {
+          const strength = item.correlation_strength || 0;
+          const barColor = strength > 60 ? '#dc3545' : strength > 40 ? '#ffc107' : '#28a745';
+          html += `
+            <div style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+              <div style="font-weight: 600; color: #333; margin-bottom: 5px;">${item.food}</div>
+              <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">
+                ${item.abnormal_count}/${item.total_count} times abnormal
+              </div>
+              <div style="background: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="width: ${strength}%; height: 100%; background: ${barColor};"></div>
+              </div>
+              <div style="font-size: 0.75rem; color: #666; margin-top: 4px;">${strength}% correlation</div>
+            </div>
+          `;
+        } else if (type === 'activity') {
+          const impactColor = item.impact === 'beneficial' ? '#28a745' : '#dc3545';
+          const impactIcon = item.impact === 'beneficial' ? '✅' : '⚠️';
+          html += `
+            <div style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+              <div style="font-weight: 600; color: #333; margin-bottom: 5px;">${impactIcon} ${item.activity}</div>
+              <div style="font-size: 0.85rem; color: ${impactColor}; margin-bottom: 5px;">
+                ${item.impact === 'beneficial' ? 'Helps control' : 'May affect'} levels
+              </div>
+              <div style="font-size: 0.85rem; color: #666;">
+                Avg reading: ${item.avg_reading} mg/dL
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      html += '</div></div>';
+      return html;
+    }
+    
+    function createTimePatternsSection(patterns) {
+      let html = `
+        <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+          <h3 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px;">🕐 Time-of-Day Patterns</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+      `;
+      
+      const periodEmojis = {
+        'morning': '🌅',
+        'afternoon': '☀️',
+        'evening': '🌆',
+        'night': '🌙'
+      };
+      
+      Object.entries(patterns).forEach(([period, data]) => {
+        const rateColor = data.abnormal_rate > 40 ? '#dc3545' : data.abnormal_rate > 20 ? '#ffc107' : '#28a745';
+        html += `
+          <div style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+            <div style="font-weight: 600; color: #333; margin-bottom: 8px;">${periodEmojis[period] || '🕐'} ${period.charAt(0).toUpperCase() + period.slice(1)}</div>
+            <div style="font-size: 0.85rem; color: #666; margin-bottom: 4px;">
+              ${data.total_readings} readings
+            </div>
+            <div style="font-size: 0.85rem; color: ${rateColor}; font-weight: 600;">
+              ${data.abnormal_rate}% abnormal
+            </div>
+            <div style="font-size: 0.85rem; color: #666;">
+              Avg: ${data.avg_value} mg/dL
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div></div>';
+      return html;
+    }
+
+    // Load specialist messages/feedback
+    async function loadSpecialistMessages() {
+      const messagesContainer = document.getElementById('messagesContainer');
+      const patientId = localStorage.getItem('patientId');
+      
+      console.log('=== Loading Specialist Messages ===');
+      console.log('Patient ID:', patientId);
+      console.log('Messages container exists:', !!messagesContainer);
+      
+      if (!messagesContainer) {
+        console.error('Messages container not found');
+        return;
+      }
+      
+      if (!patientId) {
+        console.warn('Patient ID not available - user may need to log in again');
+        messagesContainer.innerHTML = '<p class="info-text">Please log in to view messages.</p>';
+        return;
+      }
+
+      try {
+        const url = `${API_BASE}/api/patient/${patientId}/feedback`;
+        console.log('Fetching from:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        const messages = data.feedback || [];
+        console.log('Number of messages:', messages.length);
+
+        if (messages.length === 0) {
+          messagesContainer.innerHTML = '<p class="info-text">No messages at this time. Your specialist will send messages here when they review your health data.</p>';
+          return;
+        }
+
+        // Render messages
+        messagesContainer.innerHTML = messages.map(msg => {
+          const authorName = msg.specialist_name || 'Specialist';
+          const text = msg.feedback_text || '';
+          const createdRaw = msg.created_at || msg.createdAt || '';
+          
+          let formattedDate = '';
+          if (createdRaw) {
+            try {
+              const date = new Date(createdRaw);
+              formattedDate = date.toLocaleString();
+            } catch (e) {
+              formattedDate = createdRaw;
+            }
+          }
+          
+          return `
+            <div class="message-item" style="padding: 15px; margin-bottom: 15px; background: #f8f9fa; border-left: 4px solid #007bff; border-radius: 6px;">
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #007bff;">${escapeHtml(authorName)}:</strong>
+                <span style="color: #333; margin-left: 8px;">${escapeHtml(text)}</span>
+              </div>
+              <small style="color: #666;">${escapeHtml(formattedDate)}</small>
+            </div>
+          `;
+        }).join('');
+        
+        console.log('✅ Messages loaded successfully');
+
+      } catch (error) {
+        console.error('Error loading specialist messages:', error);
+        messagesContainer.innerHTML = `<p class="error-text" style="color: #dc3545;">Unable to load messages: ${error.message}</p>`;
+      }
+    }
+
+    // Initialize dashboard on page load
+    (async function() {
+      await initializeDashboard();
+    })();
+
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      // Clear all session data
+      localStorage.removeItem('bsm_token');
+      localStorage.removeItem('loggedInPatient');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('patientId');
+      localStorage.removeItem('patientUsername');
+      localStorage.removeItem('patientFullName');
+      alert('You have been logged out.');
+      window.location.href = 'patient.html';
+    });
+    
+    // Setup inactivity timeout (30 minutes)
+    let inactivityTimer;
+    const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+    
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        alert('Your session has expired due to inactivity.');
+        localStorage.clear();
+        window.location.href = 'patient.html';
+      }, INACTIVITY_TIMEOUT);
+    }
+    
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+      document.addEventListener(event, resetInactivityTimer, true);
+    });
+    resetInactivityTimer();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,278 @@
+<!--
+  Blood Sugar Monitoring System - View Reports Page
+  ===================================================
+  This page allows patients to generate and view comprehensive health reports.
+  
+  Features Overview:
+  - Generate monthly health summary reports
+  - Generate custom date range reports
+  - View glucose statistics and trends
+  - Download reports as PDF
+  - Email reports to healthcare providers
+  - Print-friendly report format
+  
+  Key Components:
+  1. Navigation Bar - Back to Dashboard, Logout
+  2. Report Generation Form:
+     - Report Type dropdown (Monthly, Quarterly, Annual, Custom)
+     - Date Range selector (start date, end date)
+     - Generate Report button
+  
+  3. Report Display Section:
+     - Report header (title, date range, generation date)
+     - Patient information summary
+     - Glucose statistics:
+       * Average glucose level
+       * Minimum glucose (with date)
+       * Maximum glucose (with date)
+       * Standard deviation
+       * Coefficient of variation
+       * Time in range (% in normal range)
+     - Trend analysis with charts
+     - Pattern insights (morning highs, post-meal spikes)
+     - Food trigger analysis
+     - Activity correlation
+     - Medication adherence
+  
+  4. Report Actions:
+     - Download PDF button
+     - Email to Specialist button
+     - Print Report button
+     - Share Report (secure link)
+  
+  Report Types:
+  - Monthly Report: Last 30 days of data
+  - Quarterly Report: Last 90 days of data
+  - Annual Report: Last 365 days of data
+  - Custom Range: User-specified start and end dates
+  
+  Statistics Included:
+  - Total readings count
+  - Average glucose (overall, fasting, post-meal)
+  - Min/Max glucose values
+  - Standard deviation (glucose variability)
+  - Coefficient of variation (CV) - ideal <36%
+  - Time in range (TIR): % in 70-180 mg/dL
+  - Time below range: % <70 mg/dL
+  - Time above range: % >180 mg/dL
+  - HbA1c estimate (eA1c)
+  
+  Charts and Visualizations:
+  - Glucose trend line chart (daily averages)
+  - Time in range pie chart
+  - Daily pattern bar chart (meal-based)
+  - Glucose variability chart
+  
+  AI Insights:
+  - Pattern detection (morning highs, dawn phenomenon)
+  - Food trigger identification
+  - Activity recommendations
+  - Medication timing optimization
+  
+  PDF Export Features:
+  - Professional report layout
+  - Charts included as images
+  - Patient and provider information
+  - Report generation timestamp
+  - Secure watermark
+  
+  Email Report:
+  - Send to assigned specialist
+  - Include PDF attachment
+  - Add personal message/notes
+  - Confirmation of delivery
+  
+  Security:
+  - Patient authentication required
+  - Only user's own data in reports
+  - Secure PDF generation (no data leakage)
+  - Email encryption recommended
+  
+  Related Files:
+  - patient_dashboard.html (main dashboard with reports link)
+  - patient_history.html (detailed historical data view)
+  - backend/app.py (GET /report/{user_id} endpoint)
+  - js/api.js (getReport API call)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 176 lines
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>View Reports</title>
+
+  <!-- styles -->
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+
+  <!-- 🔗 CONNECT TO BACKEND API HELPERS -->
+  <!-- make sure api.js is in a folder called "js" next to this html -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
+
+  <style>
+    /* Form container styling */
+    form {
+      background: white;  /* White background */
+      padding: 20px;  /* Internal spacing */
+      border-radius: 12px;  /* Rounded corners */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
+    }
+
+    /* Form label styling */
+    form label {
+      display: block;  /* Stack labels above inputs */
+      margin: 15px 0 5px;  /* Spacing around labels */
+      font-weight: bold;  /* Emphasize labels */
+    }
+
+    /* Form input styling */
+    form input {
+      width: 100%;  /* Full width inputs */
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #004080;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background: #0066cc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background: #004080;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="staff_dashboard.html">Dashboard</a></li>
+        <li><a href="patient_records.html">Patient Records</a></li>
+        <li><a href="staff.html">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>View Reports</h1>
+
+    <!-- 🔍 small helper form so staff can choose the patient -->
+    <form id="reportForm">
+      <label for="userIdInput">Patient User ID</label>
+      <input type="number" id="userIdInput" placeholder="e.g. 101" required />
+      <button type="submit">Load Reports</button>
+    </form>
+
+    <table id="reportsTable">
+      <thead>
+        <tr>
+          <th>Report ID</th>
+          <th>Patient Name</th>
+          <th>Date</th>
+          <th>Summary</th>
+        </tr>
+      </thead>
+      <tbody id="reportsBody">
+        <!-- rows will be injected by JS -->
+        <tr>
+          <td colspan="4">
+            Enter a Patient User ID above and click “Load Reports”.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- 🔌 PAGE LOGIC: call Flask `/api/reports/<userId>` via getReport() -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("reportForm");
+      const userIdInput = document.getElementById("userIdInput");
+      const tbody = document.getElementById("reportsBody");
+
+      function formatDate(iso) {
+        if (!iso) return "-";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+        return d.toISOString().slice(0, 10); // YYYY-MM-DD
+      }
+
+      async function loadReports(userId) {
+        if (!userId) {
+          tbody.innerHTML =
+            '<tr><td colspan="4">Please enter a Patient User ID.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML =
+          '<tr><td colspan="4">Loading reports from server.</td></tr>';
+
+        try {
+          // uses getReport() from api.js → /api/reports/<userId>
+          const report = await getReport(userId);
+          console.log("Report from backend:", report);
+
+          const date = formatDate(report.generated_at);
+          const firstInsight =
+            report.insights && report.insights.length
+              ? report.insights[0].message || "See insights for details."
+              : "No insights available yet.";
+
+          tbody.innerHTML = `
+              <tr>
+                <td>${userId}</td>
+                <td>Patient #${userId}</td>
+                <td>${date}</td>
+                <td>${firstInsight}</td>
+              </tr>
+            `;
+        } catch (err) {
+          console.error(err);
+          tbody.innerHTML = `
+              <tr>
+                <td colspan="4" style="color:red">
+                  Failed to load reports: ${err.message}
+                </td>
+              </tr>
+            `;
+        }
+      }
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const userId = userIdInput.value.trim();
+        loadReports(userId);
+      });
+    });
+  </script>
+</body>
+
+</html>
