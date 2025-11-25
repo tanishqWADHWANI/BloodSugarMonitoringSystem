@@ -93,6 +93,11 @@
                         <option value="patient">Patient</option>
                     </select>
                     
+                    <!-- Clear Filter Button -->
+                    <button id="clearFilterBtn" onclick="clearFilters()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem; transition: all 0.3s ease;" onmouseenter="this.style.background='#5a6268'" onmouseleave="this.style.background='#6c757d'">
+                        Clear Filters
+                    </button>
+                    
                     <!-- User Count Badge -->
                     <div id="userCountBadge" style="background: #e7f3ff; color: #004080; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
                         <span id="displayedCount">0</span> / <span id="totalCount">0</span> users
@@ -188,6 +193,19 @@
 
                 return matchesSearch && matchesRole;
             });
+        }
+
+        function clearFilters() {
+            // Reset search input
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            
+            // Reset role filter
+            const roleFilter = document.getElementById('roleFilter');
+            if (roleFilter) roleFilter.value = '';
+            
+            // Refresh the display
+            filterUsers();
         }
 
         function filterUsers() {
