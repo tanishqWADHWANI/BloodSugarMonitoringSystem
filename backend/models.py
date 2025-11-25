@@ -336,9 +336,14 @@ class Database:
             if license_id is not None:
                 # Get current role
                 cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
-                result = cursor.fetchone()
+                role_result = cursor.fetchone()
                 cursor.fetchall()  # Consume any remaining results
-                current_role = result['role'] if result else None
+                
+                if not role_result:
+                    logger.error(f"User {user_id} not found when updating license_id")
+                    return False
+                    
+                current_role = role_result['role']
                 
                 if current_role == 'specialist':
                     # Check if specialist record exists
