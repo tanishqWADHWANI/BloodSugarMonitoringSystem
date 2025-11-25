@@ -16,6 +16,71 @@ The Database class uses mysql.connector for direct SQL queries
 and includes connection pooling, error handling, and logging.
 
 Database: blood_sugar_db (MySQL/MariaDB on port 3306)
+
+METHODS SUMMARY (Total: 35+ database operations)
+=================================================
+
+CONNECTION MANAGEMENT:
+----------------------
+- __init__(): Initialize database connection
+- connect(): Establish database connection using environment variables
+- _get_cursor(): Get a cursor, reconnecting if necessary
+- close(): Close database connection
+
+USER MANAGEMENT (CRUD):
+-----------------------
+- get_user(user_id): Get user by ID with role-specific data
+- get_user_by_email(email): Get user by email address
+- create_user(email, password, first_name, last_name, role, ...): Create new user
+- update_user(user_id, **kwargs): Update user information
+- delete_user(user_id): Delete user and cascade delete related data
+- get_all_users(): Get all users from database
+
+SPECIALIST & PATIENT RELATIONSHIPS:
+-----------------------------------
+- get_specialist_feedback(patient_id): Get feedback given to patient by specialist
+- assign_patient_to_specialist(patient_user_id, specialist_user_id): Assign patient to specialist
+- get_patient_specialist(patient_user_id): Get specialist assigned to patient
+- get_specialist_patients(specialist_id): Get all patients assigned to specialist
+- get_all_patients(): Get all users with patient role
+- get_specialist_dashboard(specialist_id): Get dashboard data for specialist
+- get_specialist_attention_list(specialist_id): Get patients needing attention
+
+BLOOD SUGAR READINGS:
+---------------------
+- create_reading(user_id, value, unit, fasting, food_intake, ...): Create blood sugar reading
+- get_user_readings(user_id, days): Get readings for user (default last 30 days)
+- get_all_readings_for_training(): Get all readings for ML model training
+- update_reading(reading_id, **kwargs): Update existing reading
+- delete_reading(reading_id): Delete reading by ID
+- get_reading_by_id(reading_id): Get specific reading by ID
+- get_abnormal_count(user_id, days): Count abnormal readings for user
+
+AI INSIGHTS:
+------------
+- create_ai_insight(user_id, pattern, suggestion, confidence): Store AI-generated insight
+- get_user_insights(user_id, limit): Get AI insights for user
+
+ALERTS:
+-------
+- create_alert(user_id, reason, specialist_id): Create alert for abnormal reading
+- get_user_alerts(user_id, days): Get alerts for user (default last 30 days)
+
+THRESHOLDS:
+-----------
+- get_user_thresholds(user_id): Get glucose thresholds for user
+- set_user_threshold(user_id, status, min_value, max_value): Set threshold for user
+- get_all_thresholds(): Get all thresholds (admin)
+- delete_threshold(threshold_id): Delete threshold by ID
+
+DIET RECOMMENDATIONS:
+---------------------
+- get_diet_recommendations(condition_name, meal_type): Get diet recommendations
+
+ML TRAINING DATA:
+-----------------
+- get_diabetes_dataset(): Get diabetes classification dataset
+- get_heart_disease_dataset(): Get heart disease dataset
 """
 
 import mysql.connector

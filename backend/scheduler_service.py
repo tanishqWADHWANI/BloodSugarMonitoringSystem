@@ -14,6 +14,36 @@ The scheduler runs in the background and executes tasks at configured intervals
 without blocking the main Flask application.
 
 Uses: APScheduler BackgroundScheduler
+
+METHODS SUMMARY (Total: 3 scheduler methods)
+=============================================
+
+INITIALIZATION:
+---------------
+- __init__(database, notification_service): 
+    Initialize scheduler with database and notification service references
+    Args:
+        database (Database): Database instance for data access
+        notification_service (NotificationService): Service for sending emails
+
+SCHEDULER CONTROL:
+------------------
+- start(): 
+    Start all scheduled background tasks
+    Adds hourly job for checking notifications
+    Starts APScheduler BackgroundScheduler
+
+NOTIFICATION CHECKS:
+--------------------
+- check_all_notifications(): 
+    Background job that runs hourly
+    Checks for patients with abnormal readings
+    Sends email alerts to patients and specialists
+    Process:
+        1. Query all patients with recent readings
+        2. Check for abnormal patterns (high/low glucose)
+        3. Send email notifications via NotificationService
+        4. Log notification activities
 """
 
 from apscheduler.schedulers.background import BackgroundScheduler

@@ -20,6 +20,98 @@ Technologies:
 
 Port: 5000 (default Flask development server)
 Database: MySQL on port 3306 (blood_sugar_db)
+
+FUNCTIONS SUMMARY (Total: 40+ API endpoints)
+=============================================
+
+HELPER FUNCTIONS:
+-----------------
+- allowed_file(filename): Check if uploaded file has allowed extension
+- get_user_from_token(): Extract user info from authorization token
+
+HEALTH & TESTING:
+-----------------
+- health_check(): GET /health - Service health check
+- test_database(): GET /api/test/database - Test database connection
+
+USER MANAGEMENT:
+----------------
+- get_current_user(): GET /api/me - Get current authenticated user
+- register_user(): POST /api/users/register - Register new patient account
+- get_all_users(): GET /api/admin/users/all - Get all users (admin only)
+- get_user(user_id): GET /api/users/<id> - Get specific user by ID
+- update_user(user_id): PUT /api/users/<id> - Update user information
+- delete_user(user_id): DELETE /api/users/<id> - Delete user account
+- create_user_admin(): POST /api/admin/users - Create user as admin
+- delete_user_admin(user_id): DELETE /api/admin/users/<id> - Admin delete user
+
+AUTHENTICATION:
+---------------
+- login(): POST /api/login - Main login endpoint (all roles)
+- handle_auth_login(): POST /api/auth/login - Alternative auth login
+
+BLOOD SUGAR READINGS:
+---------------------
+- add_reading(): POST /api/readings - Add new blood sugar reading
+- get_readings(user_id): GET /api/readings/<id> - Get user's readings
+- update_readings(reading_id): PUT /api/readings/<id> - Update reading
+- delete_reading(reading_id): DELETE /api/readings/<id> - Delete reading
+
+SPECIALIST FEATURES:
+--------------------
+- specialist_search_readings(specialist_id): GET /api/specialist/<id>/readings/search - Search patient readings
+- add_specialist_feedback(): POST /api/specialist/feedback - Add feedback for patient
+- get_patient_feedback(patient_id): GET /api/patient/<id>/feedback - Get feedback for patient
+- get_patient_specialist(patient_id): GET /api/patient/<id>/specialist - Get assigned specialist
+- get_specialist_patients(specialist_id): GET /api/specialist/<id>/patients - Get specialist's patients
+- get_specialist_dashboard(specialist_id): GET /api/specialist/<id>/dashboard - Specialist dashboard data
+- get_patients_needing_attention(specialist_id): GET /api/specialist/<id>/attention - Patients needing attention
+- get_specialist_alerts(specialist_id): GET /api/specialist/alerts/<id> - Get specialist's alerts
+
+AI & INSIGHTS:
+--------------
+- get_insights(user_id): GET /api/insights/<id> - Get AI insights for user
+- get_saved_insights(user_id): GET /api/aiinsights/<id> - Get saved AI insights
+- get_trends(user_id): GET /api/insights/<id>/trends - Get glucose trends
+- get_patterns(user_id): GET /api/insights/<id>/patterns - Get glucose patterns
+- get_alerts(user_id): GET /api/alerts/<id> - Get user's alerts
+
+THRESHOLDS:
+-----------
+- get_thresholds(user_id): GET /api/thresholds/<id> - Get user's thresholds
+- set_threshold(user_id): POST /api/thresholds/<id> - Set user threshold
+- get_all_thresholds(): GET /api/thresholds - Get all thresholds (admin)
+- delete_threshold(threshold_id): DELETE /api/thresholds/<id> - Delete threshold
+
+DIET & RECOMMENDATIONS:
+-----------------------
+- get_diet_recommendations(condition): GET /api/diet/<condition> - Get diet recommendations
+
+PATIENT & USER LISTS:
+---------------------
+- get_all_patients(): GET /api/patients - Get all patients
+- get_all_specialists(): GET /api/specialists - Get all specialists
+
+REPORTS:
+--------
+- generate_report(user_id): GET /api/reports/<id> - Generate user report
+- get_monthly_report(): GET /api/admin/reports/monthly - Admin monthly report
+- get_annual_report(): GET /api/admin/reports/annual - Admin annual report
+
+ASSIGNMENTS:
+------------
+- assign_patient_api(): POST /api/assignments/assign - Assign patient to specialist
+- assignments_api(): GET/POST /api/assignments - Get/create assignments
+- delete_assignment_by_id(assignment_id): DELETE /api/assignments/<id> - Delete assignment by ID
+- remove_assignment_api(specialist_id, patient_id): DELETE /api/assignments/<sid>/<pid> - Remove assignment
+
+DOCUMENTS:
+----------
+- upload_documents(patient_id): POST /api/patients/<id>/documents - Upload patient documents
+
+SETUP:
+------
+- setup_demo_users(): POST /api/setup/demo-users - Create demo user accounts
 """
 
 from flask import Flask, request, jsonify

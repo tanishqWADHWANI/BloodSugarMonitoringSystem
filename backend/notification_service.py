@@ -18,6 +18,37 @@ Configuration is loaded from environment variables:
 - SMTP_PORT: SMTP port (default: 587 for TLS)
 
 Note: Gmail requires "App Passwords" for secure access
+
+METHODS SUMMARY (Total: 3 email methods)
+=========================================
+
+INITIALIZATION:
+---------------
+- __init__(): Initialize email service with SMTP configuration from environment
+
+EMAIL SENDING:
+--------------
+- send_email(to_email, subject, body, html=False): 
+    Send email to specified recipient
+    Args:
+        to_email (str): Recipient email address
+        subject (str): Email subject line
+        body (str): Email message body
+        html (bool): Whether body is HTML formatted
+    Returns: 
+        bool: True if sent successfully, False otherwise
+
+ALERT NOTIFICATIONS:
+--------------------
+- send_alert(user_email, user_name, reading_value, status): 
+    Send alert notification for abnormal blood sugar reading
+    Args:
+        user_email (str): Patient email address
+        user_name (str): Patient name
+        reading_value (float): Glucose reading value
+        status (str): Reading status (low/high/critical)
+    Returns:
+        bool: True if sent successfully, False otherwise
 """
 
 import smtplib

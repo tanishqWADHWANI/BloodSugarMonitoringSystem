@@ -20,6 +20,101 @@ Output:
     - models/feature_columns.joblib (feature names for inference)
 
 Requirements: scikit-learn, pandas, numpy, joblib
+
+CLASSES & METHODS SUMMARY
+==========================
+
+CLASS: BloodSugarMLTrainer
+--------------------------
+Main class for training blood sugar classification models
+
+INITIALIZATION:
+---------------
+- __init__(): 
+    Initialize trainer with model directory and empty data structures
+
+DATA LOADING:
+-------------
+- load_data_from_database(): 
+    Load blood sugar readings from MySQL database
+    Connects to database, queries readings table
+    Returns: DataFrame with readings or None if connection fails
+
+- load_diabetes_dataset(): 
+    Load diabetes classification dataset from CSV
+    Path: datasets/Diabetes Classification.csv
+    Returns: DataFrame or None if file not found
+
+- load_heart_disease_dataset(): 
+    Load heart disease dataset from CSV
+    Path: datasets/heart_disease.csv
+    Returns: DataFrame or None if file not found
+
+DATA GENERATION:
+----------------
+- generate_synthetic_data(): 
+    Generate synthetic blood sugar data as fallback
+    Creates realistic glucose readings with meal types, times, activities
+    Returns: DataFrame with 1000+ synthetic samples
+
+DATA PREPROCESSING:
+-------------------
+- prepare_training_data(df): 
+    Prepare data for model training
+    Steps:
+        1. Feature engineering (extract hour, day of week from timestamp)
+        2. Handle missing values
+        3. Encode categorical variables
+        4. Create target labels (normal/prediabetic/diabetic)
+        5. Split into features (X) and target (y)
+    Returns: X (features), y (target labels)
+
+FEATURE ENGINEERING:
+--------------------
+- engineer_features(df): 
+    Create additional features from raw data
+    Creates: time-based features, meal patterns, activity indicators
+    Returns: DataFrame with engineered features
+
+MODEL TRAINING:
+---------------
+- train_models(X_train, y_train): 
+    Train multiple ML models and select best performer
+    Models: Random Forest, Gradient Boosting
+    Uses 5-fold cross-validation
+    Returns: Best trained model
+
+MODEL EVALUATION:
+-----------------
+- evaluate_model(model, X_test, y_test): 
+    Evaluate model performance on test set
+    Prints: accuracy, classification report, confusion matrix
+    Returns: accuracy score
+
+MODEL PERSISTENCE:
+------------------
+- save_model(model, scaler, feature_columns): 
+    Save trained model and preprocessing objects to disk
+    Saves to: models/ directory
+    Files: blood_sugar_model.joblib, scaler.joblib, feature_columns.joblib
+
+MAIN EXECUTION:
+---------------
+- run(): 
+    Main training pipeline
+    Steps:
+        1. Load data from all sources
+        2. Combine datasets
+        3. Prepare training data
+        4. Split train/test sets
+        5. Train models
+        6. Evaluate best model
+        7. Save model to disk
+
+MAIN SCRIPT:
+------------
+if __name__ == '__main__':
+    Create trainer instance and run training pipeline
 """
 
 import pandas as pd  # Data manipulation and analysis library

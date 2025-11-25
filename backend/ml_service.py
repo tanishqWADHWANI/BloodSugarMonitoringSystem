@@ -15,6 +15,76 @@ The service uses scikit-learn models trained on historical blood sugar data.
 If trained models are not available, it falls back to rule-based analysis.
 
 Models stored in: models/blood_sugar_model.joblib, models/scaler.joblib
+
+METHODS SUMMARY (Total: 15+ analysis methods)
+==============================================
+
+INITIALIZATION:
+---------------
+- __init__(): Initialize ML service and load trained models if available
+
+PREDICTIONS & STATUS:
+---------------------
+- predict_status(value, fasting, food_intake, activity, time_of_day): 
+    Predict blood sugar status (low/normal/prediabetic/high)
+    Returns: status, severity, and insights with recommendations
+
+INSIGHTS GENERATION:
+--------------------
+- generate_insights(readings): 
+    Generate comprehensive AI insights from readings
+    Returns: patterns, food_triggers, activity_triggers, time_patterns, 
+             symptom_patterns, and personalized recommendations
+
+PATTERN ANALYSIS (PRIVATE HELPER METHODS):
+------------------------------------------
+- _analyze_food_patterns(df, abnormal_df): 
+    Identify foods that correlate with abnormal readings
+    
+- _analyze_activity_patterns(df, abnormal_df): 
+    Identify activities that correlate with abnormal readings
+    
+- _analyze_time_patterns(df, abnormal_df): 
+    Identify times of day with abnormal patterns (dawn phenomenon, etc.)
+    
+- _analyze_symptom_patterns(df, abnormal_df): 
+    Identify symptoms associated with abnormal readings
+    
+- _generate_personalized_recommendations(food_correlations, activity_correlations, 
+                                         time_patterns, symptom_patterns):
+    Generate personalized recommendations based on identified patterns
+
+TREND ANALYSIS:
+---------------
+- analyze_trends(readings): 
+    Analyze glucose trends over time
+    Returns: trend direction, average change, and interpretation
+
+PATTERN IDENTIFICATION:
+-----------------------
+- identify_patterns(readings): 
+    Identify various glucose patterns (weekly, meal, variability, consistency)
+    Returns: weekly_patterns, meal_patterns, variability, consistency_score
+
+PATTERN HELPERS (PRIVATE):
+--------------------------
+- _identify_weekly_patterns(df): 
+    Identify day-of-week patterns in glucose levels
+    
+- _identify_meal_patterns(df): 
+    Identify meal-time patterns (breakfast, lunch, dinner, snacks)
+    
+- _calculate_variability(df): 
+    Calculate glucose variability metrics (standard deviation, coefficient of variation)
+    
+- _assess_consistency(df): 
+    Assess consistency of glucose control (time in range, fluctuations)
+
+REPORT GENERATION:
+------------------
+- generate_report(user_id, readings): 
+    Generate comprehensive health report with insights, trends, and patterns
+    Returns: Complete analysis report with recommendations
 """
 
 import joblib
