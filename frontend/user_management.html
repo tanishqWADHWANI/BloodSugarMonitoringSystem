@@ -25,14 +25,39 @@
 
     <main class="container">
         <section class="dashboard-header">
-            <h1 style="color: #004080; font-size: 2rem; margin-bottom: 10px;">User Management</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h1 style="color: #004080; font-size: 2rem; margin: 0;">User Management</h1>
+                <button onclick="window.location.href='admin_dashboard.html'" style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(102,126,234,0.3);" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(102,126,234,0.4)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(102,126,234,0.3)'">
+                    ← Back to Dashboard
+                </button>
+            </div>
             <p class="subtext" style="color: #666; font-size: 1rem;">
                 View and manage all system users across different roles.
             </p>
         </section>
 
         <section class="card">
-            <h2>All Users</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">All Users</h2>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <!-- Search Input -->
+                    <input type="text" id="searchInput" placeholder="🔍 Search by name, email, or ID..." style="padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; width: 300px; transition: border-color 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#ddd'" />
+                    
+                    <!-- Role Filter -->
+                    <select id="roleFilter" style="padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; cursor: pointer; background: white; transition: border-color 0.3s;" onchange="filterUsers()" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#ddd'">
+                        <option value="">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="staff">Staff</option>
+                        <option value="specialist">Specialist</option>
+                        <option value="patient">Patient</option>
+                    </select>
+                    
+                    <!-- User Count Badge -->
+                    <div id="userCountBadge" style="background: #e7f3ff; color: #004080; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                        <span id="displayedCount">0</span> / <span id="totalCount">0</span> users
+                    </div>
+                </div>
+            </div>
             <div class="table-wrapper">
                 <table id="usersTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <thead>
@@ -91,10 +116,42 @@
                 
                 const data = await response.json();
                 allUsers = data.users || [];
+                updateUserCounts();
                 renderUsers();
             } catch (error) {
                 console.error('Error fetching users:', error);
             }
+        }
+
+        function updateUserCounts() {
+            const totalCount = allUsers.length;
+            const filteredUsers = getFilteredUsers();
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('displayedCount').textContent = filteredUsers.length;
+        }
+
+        function getFilteredUsers() {
+            const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            const roleFilter = (document.getElementById('roleFilter')?.value || '').toLowerCase();
+
+            return allUsers.filter(user => {
+                // Search filter
+                const matchesSearch = !searchTerm || 
+                    user.user_id?.toString().includes(searchTerm) ||
+                    `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm) ||
+                    user.email?.toLowerCase().includes(searchTerm) ||
+                    user.phone?.includes(searchTerm);
+
+                // Role filter
+                const matchesRole = !roleFilter || user.role?.toLowerCase() === roleFilter;
+
+                return matchesSearch && matchesRole;
+            });
+        }
+
+        function filterUsers() {
+            updateUserCounts();
+            renderUsers();
         }
 
         function renderUsers() {
@@ -103,18 +160,20 @@
 
             tbody.innerHTML = '';
             
-            if (allUsers.length === 0) {
+            const usersToDisplay = getFilteredUsers();
+            
+            if (usersToDisplay.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="8" style="padding: 40px; text-align: center; color: #666; font-size: 1rem;">
-                            No users found. Create your first user above.
+                            ${allUsers.length === 0 ? 'No users found.' : 'No users match your search criteria.'}
                         </td>
                     </tr>
                 `;
                 return;
             }
 
-            allUsers.forEach(u => {
+            usersToDisplay.forEach(u => {
                 const row = document.createElement('tr');
                 row.style.borderBottom = '1px solid #f0f0f0';
                 row.style.transition = 'background 0.2s';
@@ -178,6 +237,22 @@
         const usersTableBody = document.querySelector('#usersTable tbody');
         if (usersTableBody) {
             usersTableBody.addEventListener('click', handleDeleteUser);
+        }
+
+        // Search with debounce
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(filterUsers, 300);
+            });
+        }
+
+        // Role filter
+        const roleFilter = document.getElementById('roleFilter');
+        if (roleFilter) {
+            roleFilter.addEventListener('change', filterUsers);
         }
 
         // Initial load
