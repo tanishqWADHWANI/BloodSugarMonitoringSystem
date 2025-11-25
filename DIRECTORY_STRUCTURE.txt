@@ -1,0 +1,404 @@
+================================================================================
+BLOOD SUGAR MONITORING SYSTEM - COMPLETE DIRECTORY STRUCTURE
+================================================================================
+Generated: November 24, 2025
+Full repository file and folder structure
+
+================================================================================
+ROOT DIRECTORY
+================================================================================
+
+BloodSugarMonitoringSystem/
+│
+├── .gitignore                          # Git ignore file (excludes uploads, dev-tools, etc.)
+├── .vscode/                            # VS Code workspace settings
+│   └── settings.json                   # Editor configuration
+│
+├── ACCOUNT_MANAGEMENT_PROGRESS.md      # Documentation for account features
+├── ACCOUNT_MANAGEMENT_STATUS.md        # Account management status tracking
+├── CLEANUP_ACTION_PLAN.txt            # Step-by-step cleanup instructions
+├── config.json                         # Application configuration file
+├── FUTURE_IMPROVEMENTS.txt            # Comprehensive roadmap (49 improvements)
+├── PORT_CONFIGURATION.md              # Server port configuration guide
+├── README.md                          # Main project documentation
+├── requirements.txt                    # Python dependencies (root level)
+├── Server_instructions.docx           # Server setup instructions
+├── THRESHOLD_MANAGEMENT.md            # Blood sugar threshold documentation
+├── UNNEEDED_FILES_ANALYSIS.txt        # Analysis of cleanup candidates
+
+
+================================================================================
+BACKEND/ - Python Backend Application (Flask API)
+================================================================================
+
+backend/
+│
+├── CORE APPLICATION FILES (Essential - Keep These)
+│   ├── app.py                         # Main Flask application (1600+ lines)
+│   │                                  # - 40+ API endpoints
+│   │                                  # - User authentication
+│   │                                  # - Blood sugar readings CRUD
+│   │                                  # - Specialist features
+│   │                                  # - Document upload handling
+│   │
+│   ├── models.py                      # Database models and queries
+│   │                                  # - Database class with 35+ methods
+│   │                                  # - User management (CRUD)
+│   │                                  # - Blood sugar readings
+│   │                                  # - Specialist-patient relationships
+│   │                                  # - AI insights management
+│   │
+│   ├── ml_service.py                  # Machine Learning service
+│   │                                  # - Blood sugar predictions
+│   │                                  # - Pattern analysis
+│   │                                  # - Trend detection
+│   │                                  # - Insight generation
+│   │                                  # - Report generation
+│   │
+│   ├── notification_service.py        # Email notification service
+│   │                                  # - SMTP email sending
+│   │                                  # - Alert notifications
+│   │                                  # - Email configuration
+│   │
+│   ├── scheduler_service.py           # Background job scheduler
+│   │                                  # - APScheduler integration
+│   │                                  # - Hourly notification checks
+│   │                                  # - Automated alert system
+│   │
+│   ├── train_model.py                 # ML model training script
+│   │                                  # - BloodSugarMLTrainer class
+│   │                                  # - Data loading and preprocessing
+│   │                                  # - Feature engineering
+│   │                                  # - Model training and evaluation
+│   │                                  # - Model persistence
+│   │
+│   ├── blood_sugar_db.sql            # Database schema (14,373 lines)
+│   │                                  # - All table definitions
+│   │                                  # - Sample data
+│   │                                  # - Demo user data
+│   │
+│   └── requirements.txt               # Backend Python dependencies
+│
+│
+├── DEVELOPMENT & TESTING SCRIPTS (Move to dev-tools/)
+│   │
+│   ├── CHECK SCRIPTS (13 files) - Database verification
+│   │   ├── check_bob.py              # Verify Bob's user and health records
+│   │   ├── check_alice_data.py       # Verify Alice's readings
+│   │   ├── check_alice_profile_image.py  # Check Alice's profile image
+│   │   ├── check_assignment.py       # Verify specialist-patient assignments
+│   │   ├── check_all_users.py        # List all users by role
+│   │   ├── check_all_specialists.py  # List specialists with assignments
+│   │   ├── check_patient_emails.py   # Display patient email list
+│   │   ├── check_demo_accounts.py    # Test demo account credentials
+│   │   ├── check_admin_workingid.py  # Check license_id assignments
+│   │   ├── check_bob_specialist.py   # Check Bob's role assignments
+│   │   ├── list_patients.py          # List all patient accounts
+│   │   ├── verify_db_structure.py    # Verify database schema
+│   │   └── verify_hash.py            # Check password hash formats
+│   │
+│   ├── TEST SCRIPTS (3 files) - API and functionality testing
+│   │   ├── test_assignment.py        # Test assignment API endpoint
+│   │   ├── test_login.py             # Test login API for staff/admin
+│   │   └── email_test.py             # Test SMTP email configuration
+│   │
+│   ├── DATA POPULATION SCRIPTS (7 files) - Demo data generation
+│   │   ├── add_bob_health_data.py    # 8 days of prediabetic profile data
+│   │   ├── add_demo_data.py          # 90 days demo blood sugar readings
+│   │   ├── populate_demo_health_data.py  # Health data for 5 demo patients
+│   │   ├── create_demo_users.py      # Create staff/admin demo accounts
+│   │   ├── create_admin_user.py      # Create admin user if not exists
+│   │   ├── assign_alice_to_christina.py  # Manual assignment setup
+│   │   └── populate_license_ids.py   # Generate license IDs for users
+│   │
+│   └── CONFIGURATION FILES (2 files)
+│       ├── backend_testing.json      # Postman collection for API testing
+│       └── insert_demo_users.sql     # SQL demo data creation script
+│
+│
+├── COMPLETED MIGRATION SCRIPTS (8 files) - Can be deleted
+│   ├── update_demo_emails.py         # ❌ DELETE - Email migration completed
+│   ├── update_passwords.py           # ❌ DELETE - Password migration done
+│   ├── update_alice_to_mahito.py     # ❌ DELETE - One-time email change
+│   ├── update_bob_sql.py             # ❌ DELETE - Profile picture added
+│   ├── fix_christina_name.py         # ❌ DELETE - Name fix completed
+│   ├── fix_profile_image_column.py   # ❌ DELETE - Column migration done
+│   ├── rename_db_columns.py          # ❌ DELETE - Column rename completed
+│   └── rename_working_id_to_license_id.sql  # ❌ DELETE - SQL migration done
+│
+│
+├── UPLOADS/ - Patient document storage (Keep - used by app.py)
+│   ├── .gitkeep                      # Maintains directory in Git
+│   │                                 # (Actual uploaded files ignored by .gitignore)
+│   │
+│   └── patient_1/                    # Patient-specific upload folders
+│       ├── id_6axpe9te5vo41.jpg     # Test upload 1
+│       └── id_openart-image_Ts3KtYk1_1763013864932_raw.jpg  # Test upload 2
+│
+│
+└── __pycache__/                      # Python bytecode cache (ignored by Git)
+    ├── app.cpython-311.pyc
+    ├── ml_service.cpython-311.pyc
+    ├── models.cpython-311.pyc
+    ├── notification_service.cpython-311.pyc
+    └── scheduler_service.cpython-311.pyc
+
+
+================================================================================
+DATASETS/ - Machine Learning Training Data
+================================================================================
+
+datasets/
+│
+├── Diabetes Classification.csv       # Main diabetes classification dataset
+├── diet_recommendations_dataset.csv  # Diet recommendation data
+├── heart_disease.csv                 # Heart disease dataset
+│
+└── Diabetes Data ML/                 # Processed diabetes datasets
+    ├── description.csv               # Dataset description
+    ├── Diabetes Original Dataset.csv # Original raw data
+    ├── Diabetes_preprocessed_Label_encode.csv  # Label encoded version
+    └── Diabetes_preprocessed_OneHot_encode.csv  # One-hot encoded version
+
+
+================================================================================
+FRONTEND/ - HTML/CSS/JavaScript Web Interface
+================================================================================
+
+frontend/
+│
+├── HTML PAGES (32 files)
+│   │
+│   ├── LOGIN & AUTHENTICATION
+│   │   ├── index.html                # Main login/landing page
+│   │   ├── patient.html              # Patient login
+│   │   ├── specialist.html           # Specialist login
+│   │   ├── staff.html                # Staff login
+│   │   ├── admin.html                # Admin login
+│   │   ├── clinic.html               # Clinic login
+│   │   ├── create_account.html       # Registration page
+│   │   ├── check_token.html          # Token validation page
+│   │   └── force_logout.html         # Force logout page
+│   │
+│   ├── DASHBOARDS
+│   │   ├── patient_dashboard.html    # Patient main dashboard
+│   │   ├── specialist_dashboard.html # Specialist main dashboard
+│   │   ├── staff_dashboard.html      # Staff main dashboard
+│   │   └── admin_dashboard.html      # Admin main dashboard
+│   │
+│   ├── PATIENT FEATURES
+│   │   ├── patient_history.html      # Blood sugar history
+│   │   ├── patient_records.html      # Medical records view
+│   │   ├── upload_documents.html     # Document upload
+│   │   ├── update_medical.html       # Update medical info
+│   │   ├── view_reports.html         # View AI reports
+│   │   └── thresholds.html           # Blood sugar thresholds
+│   │
+│   ├── SPECIALIST FEATURES
+│   │   ├── specialist_patient_view.html  # View patient details
+│   │   └── patient_assignments.html  # Patient assignment list
+│   │
+│   ├── STAFF FEATURES
+│   │   ├── staff_view.html           # Staff main view
+│   │   ├── staff_email_patients.html # Email patients
+│   │   ├── staff_email_specialists.html  # Email specialists
+│   │   └── staff_view_messages.html  # View messages
+│   │
+│   ├── ADMIN FEATURES
+│   │   ├── assign_patients.html      # Assign patients to specialists
+│   │   ├── reports_management.html   # Reports management
+│   │   └── user_management.html      # User account management
+│   │
+│   ├── PROFILE EDITING
+│   │   ├── edit_profile_patient.html # Patient profile editor
+│   │   ├── edit_profile_specialist.html  # Specialist profile editor
+│   │   ├── edit_profile_staff.html   # Staff profile editor
+│   │   └── edit_profile_admin.html   # Admin profile editor
+│   │
+│   ├── OTHER PAGES
+│   │   ├── contact.html              # Contact page
+│   │   └── BloodSugarMonitoringSystem.code-workspace  # VS Code workspace
+│   │
+│   └── ASSETS
+│       └── map.jpg                   # Map image
+│
+│
+├── CSS/ - Stylesheets (2 files)
+│   ├── style.css                     # Main application styles
+│   │                                 # - Color palette definitions
+│   │                                 # - Typography and layout
+│   │                                 # - Component styles
+│   │                                 # - Responsive design
+│   │
+│   └── dasshboard.css                # Dashboard-specific styles
+│                                     # - Dashboard layout system
+│                                     # - Grid layouts
+│                                     # - Card components
+│
+│
+├── JS/ - JavaScript (2 files)
+│   ├── api.js                        # API client library
+│   │                                 # - 20+ API functions
+│   │                                 # - JSDoc documentation
+│   │                                 # - Authentication helpers
+│   │                                 # - Data fetching functions
+│   │
+│   └── logout.js                     # Logout functionality
+│
+│
+└── PICS/ - Images and assets
+    ├── app.zip                       # App package
+    ├── appointment.jpg               # Appointment image
+    ├── appointment.png               # Appointment PNG
+    ├── blood_sugar_daily.csv         # Sample data
+    ├── header.png                    # Header image
+    ├── jones.jpg                     # Specialist photo
+    ├── lee.jpg                       # Specialist photo
+    ├── smith.jpg                     # Specialist photo
+    │
+    └── app/                          # App-specific files
+        ├── app.html                  # App HTML
+        └── Untitled-1.html           # Untitled HTML
+
+
+================================================================================
+MODELS/ - Trained Machine Learning Models
+================================================================================
+
+models/
+│
+├── blood_sugar_model.joblib          # Trained ML model (scikit-learn)
+│                                     # - Predicts blood sugar levels
+│                                     # - Generated by train_model.py
+│
+├── feature_columns.joblib            # Feature column definitions
+│                                     # - Feature names and order
+│                                     # - Used for predictions
+│
+└── scaler.joblib                     # Data scaler (StandardScaler)
+                                      # - Feature normalization
+                                      # - Ensures consistent scaling
+
+
+================================================================================
+FILE COUNT SUMMARY
+================================================================================
+
+Total Files by Directory:
+- Root: 12 files
+- Backend: 42 files (8 essential + 34 dev/testing/migration)
+  * Essential: 8 files (app.py, models.py, ml_service.py, etc.)
+  * Development: 25 files (check_*.py, test_*.py, populate_*.py)
+  * Migrations: 8 files (can be deleted)
+  * Config: 2 files
+  * Uploads: 1 .gitkeep + 2 test images
+- Datasets: 8 files (4 main + 4 in subfolder)
+- Frontend: 45 files (32 HTML + 2 CSS + 2 JS + 9 images/assets)
+- Models: 3 files (.joblib machine learning models)
+
+Total: ~110 files (excluding __pycache__)
+
+
+================================================================================
+ESSENTIAL FILES FOR PRODUCTION (Keep These)
+================================================================================
+
+Backend (8 files):
+✓ app.py                              # Main Flask application
+✓ models.py                           # Database layer
+✓ ml_service.py                       # ML predictions
+✓ notification_service.py             # Email notifications
+✓ scheduler_service.py                # Background jobs
+✓ train_model.py                      # ML training
+✓ blood_sugar_db.sql                  # Database schema
+✓ requirements.txt                    # Python dependencies
+
+Frontend (45 files):
+✓ All HTML pages (32 files)          # User interface
+✓ All CSS files (2 files)            # Styles
+✓ All JS files (2 files)             # Client-side logic
+✓ All images/assets (9 files)        # Visual assets
+
+Datasets (8 files):
+✓ All dataset files                   # ML training data
+
+Models (3 files):
+✓ All .joblib files                   # Trained ML models
+
+Configuration (3 files):
+✓ .gitignore                          # Git exclusions
+✓ config.json                         # App configuration
+✓ requirements.txt (root)             # Dependencies
+
+
+================================================================================
+FILES TO REMOVE OR RELOCATE
+================================================================================
+
+To Delete (8 files - completed migrations):
+❌ backend/update_demo_emails.py
+❌ backend/update_passwords.py
+❌ backend/update_alice_to_mahito.py
+❌ backend/update_bob_sql.py
+❌ backend/fix_christina_name.py
+❌ backend/fix_profile_image_column.py
+❌ backend/rename_db_columns.py
+❌ backend/rename_working_id_to_license_id.sql
+
+To Move to dev-tools/ (25 files):
+⚠️ All check_*.py scripts (13 files)
+⚠️ All test_*.py scripts (3 files)
+⚠️ All data population scripts (7 files)
+⚠️ backend_testing.json
+⚠️ insert_demo_users.sql
+
+
+================================================================================
+DIRECTORY SIZE ESTIMATES
+================================================================================
+
+Approximate sizes:
+- Backend code: ~500 KB (Python files)
+- Backend SQL: ~1-2 MB (blood_sugar_db.sql with data)
+- Frontend: ~500 KB (HTML/CSS/JS)
+- Images: ~2-3 MB (frontend/pics/)
+- Datasets: ~5-10 MB (CSV files)
+- ML Models: ~1-2 MB (.joblib files)
+- Uploads: Varies (user uploads, not in Git)
+
+Total Repository: ~10-20 MB (excluding uploads and __pycache__)
+
+
+================================================================================
+SPECIAL DIRECTORIES
+================================================================================
+
+.vscode/                              # VS Code settings (keep for team)
+__pycache__/                          # Python bytecode (ignored by Git)
+uploads/                              # User uploads (ignored by Git)
+  ├── .gitkeep                       # (tracked - maintains directory)
+  └── patient_*/ folders             # (ignored - user data)
+
+
+================================================================================
+NOTES
+================================================================================
+
+1. The uploads/ directory contains patient documents and should NEVER be
+   committed to Git. Only .gitkeep is tracked to maintain structure.
+
+2. __pycache__/ directories are automatically generated by Python and are
+   ignored by Git (.gitignore).
+
+3. The backend has 42 total files, but only 8 are essential for production.
+   The rest are development/testing tools.
+
+4. All documentation files (*.md, *.txt) should be kept for reference.
+
+5. ML models in models/ directory can be regenerated using train_model.py
+   if needed.
+
+6. The frontend has a consistent structure with separate pages for each
+   user role (patient, specialist, staff, admin).
+
+================================================================================
