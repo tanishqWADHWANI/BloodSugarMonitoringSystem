@@ -89,7 +89,7 @@ from datetime import datetime, timedelta
 import os
 import logging
 import hashlib
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Set up logging for database operations
 logger = logging.getLogger(__name__)
@@ -99,6 +99,16 @@ class Database:
     Main database interface class for Blood Sugar Monitoring System.
     Manages MySQL connections and provides data access methods.
     """
+
+    def verify_password(self, user, password):
+        """
+        Verify a user's password using werkzeug's check_password_hash.
+        Accepts a user dict (with 'password_hash') and the plain password.
+        Returns True if the password matches, False otherwise.
+        """
+        if not user or 'password_hash' not in user:
+            return False
+        return check_password_hash(user['password_hash'], password)
     
     def __init__(self):
         """Initialize database connection"""
