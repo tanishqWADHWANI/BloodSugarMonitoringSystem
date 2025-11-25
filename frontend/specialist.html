@@ -188,6 +188,7 @@
     <!-- ===============================
          LOGIN SCRIPT
          =============================== -->
+    <script src="js/api.js"></script>
     <script>
       const demoSpecialists = [
         { id: 1, username: 'jsmith', password: 'smith123', fullName: 'Dr. John Smith', specialty: 'Endocrinologist' },
@@ -205,9 +206,18 @@
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
 
+        // Map username to email for database login
+        const emailMap = {
+          'jsmith': 'jsmith@demo',
+          'ajones': 'ajones@demo',
+          'clee': 'clee@clinic'
+        };
+        
+        const email = emailMap[username] || username;
+
         try {
           // Try database login first
-          const response = await loginUser(username, password, 'specialist');
+          const response = await loginUser(email, password);
           
           if (response && response.user && response.user.role === 'specialist') {
             const user = response.user;
@@ -220,7 +230,7 @@
             localStorage.setItem('specialistUserId', String(user.user_id || user.id));
             localStorage.setItem('userId', String(user.user_id || user.id));
             
-            // Store token if available
+            // Store token - this is critical for edit profile!
             if (response.token || response.access_token) {
               localStorage.setItem('bsm_token', response.token || response.access_token);
             }
