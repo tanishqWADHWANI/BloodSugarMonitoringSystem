@@ -173,24 +173,34 @@
             </form>
         </section>
 
-        <section class="card">
-            <h2>Users</h2>
-            <div class="table-wrapper">
-                <table id="usersTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <thead>
-                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">ID</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Name</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Email</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Phone</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">DOB</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Role</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Status</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+        <section class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;" onclick="window.location.href='user_management.html'" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(102,126,234,0.3)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="color: white; margin-bottom: 10px; font-size: 1.8rem;">👥 User Management</h2>
+                    <p style="color: rgba(255,255,255,0.9); font-size: 1rem; margin-bottom: 15px;">View and manage all system users across different roles</p>
+                    <div style="display: flex; gap: 20px; margin-top: 20px;">
+                        <div>
+                            <div style="font-size: 2rem; font-weight: bold;" id="totalUsersCount">-</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Total Users</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: bold;" id="totalPatientsCount">-</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Patients</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: bold;" id="totalSpecialistsCount">-</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Specialists</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: bold;" id="totalStaffCount">-</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Staff</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size: 4rem; opacity: 0.3;">→</div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.95rem; opacity: 0.9;">
+                Click to view full user list, manage accounts, and perform user operations
             </div>
         </section>
 
@@ -403,7 +413,7 @@
         const ASSIGN_KEY = 'assignments';
 
         // Element References
-        let createForm, usersTableBody, assignForm, patientSelect, specialistSelect, assignTableBody;
+        let createForm, assignForm, patientSelect, specialistSelect, assignTableBody;
         let elTotalUsers, elCP, elCS, elCSt, elCA, elAssigned, elUnassigned, elR7Total, elR7Abn, elR7Pct;
         let roleSelect, licenseIdContainer;
 
@@ -491,7 +501,7 @@
         }
 
         // ===== Render Functions =====
-        async function renderUsers() {
+        async function updateUserStats() {
             let users = USERS_CACHE.length ? USERS_CACHE : await fetchUsersFromAPI();
 
             // Fetch patients from the database
@@ -533,42 +543,20 @@
                 console.warn('Could not fetch patients from database', e);
             }
 
-            // helper escape to avoid HTML injection from stored data
-            function escapeHtml(s) {
-                return String(s || '').replace(/[&<>"']/g, function(c){
-                    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-                });
-            }
-
-            usersTableBody.innerHTML = users.map(u => {
-                const name = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-                const email = u.email || '';
-                const phone = u.phone || '';
-                const dob = u.date_of_birth || '';
-                const role = (u.role || '').toLowerCase();
-                // render each field into its own column so columns align with the header
-                return `
-                <tr style="border-bottom: 1px solid #e9ecef;">
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529; font-weight: 600;">${escapeHtml(String(u.user_id))}</td>
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${escapeHtml(name || '—')}</td>
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #666;">${escapeHtml(email)}</td>
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${escapeHtml(phone || 'N/A')}</td>
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${escapeHtml(dob)}</td>
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${escapeHtml(role)}</td>
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #28a745; font-weight: 600;">Active</td>
-                    <td style="padding: 14px 16px;">
-                        <button type="button" class="btn-sm btn-delete" data-id="${escapeHtml(String(u.user_id))}" style="background: #dc3545; color: white; padding: 6px 14px; border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer; font-weight: 500;">Delete</button>
-                    </td>
-                </tr>`;
-            }).join('');
-
+            // Update user count statistics
+            const totalUsers = users.length;
             const patients = users.filter(u => u.role === 'patient');
             const specialists = users.filter(u => u.role === 'specialist');
+            const staff = users.filter(u => u.role === 'staff');
+
+            document.getElementById('totalUsersCount').textContent = totalUsers;
+            document.getElementById('totalPatientsCount').textContent = patients.length;
+            document.getElementById('totalSpecialistsCount').textContent = specialists.length;
+            document.getElementById('totalStaffCount').textContent = staff.length;
 
             console.log('Total users loaded:', users.length);
             console.log('Patients found:', patients.length);
             console.log('Specialists found:', specialists.length);
-            console.log('Sample patient:', patients[0]);
 
             // Store all patients for filtering
             window.ALL_PATIENTS = patients;
@@ -576,6 +564,13 @@
             // Initial render with current filter
             updatePatientDropdown();
             
+            // helper escape to avoid HTML injection from stored data
+            function escapeHtml(s) {
+                return String(s || '').replace(/[&<>"']/g, function(c){
+                    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+                });
+            }
+
             specialistSelect.innerHTML = specialists.map(s => `
                 <option value="${escapeHtml(String(s.user_id))}">${escapeHtml((s.first_name || '') + ' ' + (s.last_name || '')).trim()} (${escapeHtml(s.email || '')})</option>
             `).join('');
@@ -814,7 +809,7 @@
 
                 createForm.reset();
                 await fetchUsersFromAPI();
-                await renderUsers();
+                await updateUserStats();
                 await renderReport();
             } catch (error) {
                 console.error("User creation failed:", error);
@@ -907,37 +902,6 @@
             saveAssignments(left);
             renderAssignments();
             renderReport();
-        }
-
-        async function handleDeleteUser(e) {
-            const btn = e.target.closest('.btn-delete');
-            if (!btn) return;
-            
-            const userId = btn.dataset.id;
-            if (!confirm(`Are you sure you want to delete user ID ${userId}?`)) return;
-
-            try {
-                const token = localStorage.getItem('bsm_token') || '';
-                const response = await fetch(`http://127.0.0.1:5000/api/admin/users/${userId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                alert('User deleted successfully!');
-                await fetchUsersFromAPI();
-                await renderUsers();
-                await renderReport();
-            } catch (error) {
-                console.error('Delete failed:', error);
-                alert('Error deleting user: ' + error.message);
-            }
         }
 
         // ===== Detailed Report Functions =====
@@ -1591,7 +1555,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // Bind Elements
             createForm = document.getElementById('createUserForm');
-            usersTableBody = document.querySelector('#usersTable tbody');
+
             assignForm = document.getElementById('assignForm');
             patientSelect = document.getElementById('patientSelect');
             specialistSelect = document.getElementById('specialistSelect');
@@ -1840,7 +1804,6 @@
             if (createForm) createForm.addEventListener('submit', handleCreateUser);
             if (assignForm) assignForm.addEventListener('submit', handleAssignSubmit);
             if (assignTableBody) assignTableBody.addEventListener('click', handleRemoveAssignment);
-            if (usersTableBody) usersTableBody.addEventListener('click', handleDeleteUser);
 
             // Admin Profile Edit
             const adminProfileForm = document.getElementById('adminProfileForm');
@@ -1957,7 +1920,7 @@
 
                 await fetchUsersFromAPI();
                 await fetchAssignmentsFromAPI();
-                renderUsers();
+                updateUserStats();
                 await renderAssignments();
                 await renderReport();
 

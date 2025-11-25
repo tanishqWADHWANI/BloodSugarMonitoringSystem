@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>User Management - Admin</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dasshboard.css" />
+    <script src="js/api.js"></script>
+    <script src="js/demo_users.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="clinic.html">Clinic</a></li>
+                <li><button id="logoutBtn" class="logout-btn" style="background: #dc3545; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; color: white; font-weight: 500; font-size: 0.95rem;">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="dashboard-header">
+            <h1 style="color: #004080; font-size: 2rem; margin-bottom: 10px;">User Management</h1>
+            <p class="subtext" style="color: #666; font-size: 1rem;">
+                View and manage all system users across different roles.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>All Users</h2>
+            <div class="table-wrapper">
+                <table id="usersTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">ID</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Name</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Email</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Phone</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">DOB</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Role</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Status</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+        let allUsers = [];
+
+        // Check admin authorization
+        const token = localStorage.getItem('bsm_token');
+        if (!token || !token.includes('_admin')) {
+            alert('Access denied: Admin credentials required');
+            window.location.href = 'admin.html';
+        }
+
+        // Logout functionality
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.clear();
+                alert('You have been logged out.');
+                window.location.href = 'admin.html';
+            });
+        }
+
+        async function fetchUsersFromAPI() {
+            try {
+                const token = localStorage.getItem('bsm_token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const response = await fetch(`${API_BASE}/api/admin/users/all`, { headers });
+                
+                if (!response.ok) {
+                    console.error('Failed to fetch users:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                allUsers = data.users || [];
+                renderUsers();
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        }
+
+        function renderUsers() {
+            const tbody = document.querySelector('#usersTable tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            
+            if (allUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="padding: 40px; text-align: center; color: #666; font-size: 1rem;">
+                            No users found. Create your first user above.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            allUsers.forEach(u => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #f0f0f0';
+                row.style.transition = 'background 0.2s';
+                row.addEventListener('mouseenter', () => row.style.background = '#f8f9fa');
+                row.addEventListener('mouseleave', () => row.style.background = 'transparent');
+
+                const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'N/A';
+                const dob = u.date_of_birth || '';
+                const status = u.status || 'Active';
+                const statusColor = status.toLowerCase() === 'active' ? '#28a745' : '#6c757d';
+
+                row.innerHTML = `
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${u.user_id}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057; font-weight: 500;">${name}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${u.email || 'N/A'}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${u.phone || ''}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${dob}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem;">
+                        <span style="background: #e7f3ff; color: #004080; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">${u.role || 'N/A'}</span>
+                    </td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem;">
+                        <span style="color: ${statusColor}; font-weight: 500;">${status}</span>
+                    </td>
+                    <td style="padding: 12px 16px;">
+                        <button class="delete-btn" data-id="${u.user_id}" style="background: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function handleDeleteUser(e) {
+            if (!e.target.classList.contains('delete-btn')) return;
+
+            const userId = e.target.getAttribute('data-id');
+            if (!userId) return;
+
+            if (!confirm(`Are you sure you want to delete user ID ${userId}?`)) return;
+
+            try {
+                const token = localStorage.getItem('bsm_token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+                    method: 'DELETE',
+                    headers
+                });
+
+                if (response.ok) {
+                    alert('User deleted successfully');
+                    await fetchUsersFromAPI();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to delete user: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user');
+            }
+        }
+
+        const usersTableBody = document.querySelector('#usersTable tbody');
+        if (usersTableBody) {
+            usersTableBody.addEventListener('click', handleDeleteUser);
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchUsersFromAPI();
+        });
+    </script>
+</body>
+
+</html>
