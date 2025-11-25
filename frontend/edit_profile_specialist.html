@@ -297,21 +297,11 @@
       // Get user data from database using token
       const token = localStorage.getItem('bsm_token');
       
-      console.log('=== EDIT PROFILE DEBUG ===');
-      console.log('Token from localStorage:', token);
-      console.log('All localStorage keys:', Object.keys(localStorage));
-      console.log('specialistUserId:', localStorage.getItem('specialistUserId'));
-      console.log('userId:', localStorage.getItem('userId'));
-      
       if (!token) {
-        console.error('NO TOKEN FOUND!');
         showMessage('Session expired. Please log in again.', 'error');
         setTimeout(() => window.location.href = 'specialist.html', 2000);
         return;
       }
-      
-      console.log('Token exists, making API call...');      
-      console.log('Token exists, making API call...');
 
       try {
         const response = await fetch(`${API_BASE}/api/me`, {
@@ -320,19 +310,14 @@
           }
         });
         
-        console.log('API response status:', response.status);
-        
         if (response.ok) {
           const user = await response.json();
-          console.log('User data loaded:', user);
           currentUserId = user.user_id;  // Store user ID
           populateForm(user);
         } else if (response.status === 401) {
-          console.error('401 Unauthorized - token invalid');
           showMessage('Session expired. Please log in again.', 'error');
           setTimeout(() => window.location.href = 'specialist.html', 2000);
         } else {
-          console.error('API error:', response.status);
           showMessage('Failed to load user data', 'error');
         }
       } catch (error) {
