@@ -37,9 +37,17 @@
         </div>
         <div class="form-actions">
           <button type="submit">Login</button>
-          <button type="button" id="demoStaffLogin">Demo Staff Login</button>
         </div>
       </form>
+      
+      <!-- Demo Credentials -->
+      <div style="background:#e8f4f8;border:2px solid #004080;border-radius:8px;padding:15px;margin-top:20px;">
+        <h4 style="color:#004080;margin:0 0 10px 0;">🔐 Demo Staff Login</h4>
+        <div style="font-size:0.9rem;line-height:1.8;">
+          <strong>Email:</strong> staff@clinic.com<br>
+          <strong>Password:</strong> demo123
+        </div>
+      </div>
     </section>
 
     <section class="card">
@@ -71,23 +79,9 @@
       const form   = document.getElementById('staffLoginForm');
       const email  = document.getElementById('staffEmail');
       const pass   = document.getElementById('staffPassword');
-      const demoBtn = document.getElementById('demoStaffLogin');
       const msgBox = document.getElementById('loginMsg');
 
       if (!form) return;
-
-      // Demo Staff Login
-      if (demoBtn) {
-        demoBtn.addEventListener('click', () => {
-          localStorage.setItem('loggedInStaff', 'staff@clinic');
-          localStorage.setItem('staffName', 'Staff2');
-          localStorage.setItem('staffUserId', '106');
-          localStorage.setItem('userId', '106');
-          // Generate token for demo staff
-          localStorage.setItem('bsm_token', 'token_106_staff');
-          window.location.href = 'staff_dashboard.html';
-        });
-      }
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();

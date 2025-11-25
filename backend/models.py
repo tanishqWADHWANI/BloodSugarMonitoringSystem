@@ -31,9 +31,13 @@ class Database:
     
     def _get_cursor(self):
         """Get a cursor, reconnecting if necessary"""
-        if not self.connection or not self.connection.is_connected():
+        try:
+            if not self.connection or not self.connection.is_connected():
+                self.connect()
+        except:
+            # If connection check fails, reconnect
             self.connect()
-        return self.connection.cursor(dictionary=True)
+        return self.connection.cursor(dictionary=True, buffered=True)
     
     # User Management
     def get_user(self, user_id):
@@ -43,24 +47,28 @@ class Database:
             # Get base user data
             cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
             user = cursor.fetchone()
+            cursor.fetchall()  # Consume any remaining results
             
             if user and user.get('role'):
-                # Add role-specific data
+                # Add role-specific data using fresh cursor for each query
                 if user['role'] == 'patient':
                     cursor.execute("SELECT health_care_number FROM patients WHERE user_id = %s", (user_id,))
                     patient_data = cursor.fetchone()
+                    cursor.fetchall()  # Consume any remaining results
                     if patient_data:
                         user['health_care_number'] = patient_data.get('health_care_number')
                 
                 elif user['role'] == 'specialist':
                     cursor.execute("SELECT license_id FROM specialists WHERE user_id = %s", (user_id,))
                     specialist_data = cursor.fetchone()
+                    cursor.fetchall()  # Consume any remaining results
                     if specialist_data:
                         user['license_id'] = specialist_data.get('license_id')
                 
                 elif user['role'] in ('staff', 'admin'):
                     cursor.execute("SELECT license_id FROM staff WHERE user_id = %s", (user_id,))
                     staff_data = cursor.fetchone()
+                    cursor.fetchall()  # Consume any remaining results
                     if staff_data:
                         user['license_id'] = staff_data.get('license_id')
             
@@ -181,6 +189,7 @@ class Database:
 
             sql = f"UPDATE users SET {set_clause} WHERE user_id = %s"
             cursor.execute(sql, values)
+            cursor.fetchall()  # Consume any remaining results
 
             if cursor.rowcount == 0:
                 return False
@@ -189,15 +198,19 @@ class Database:
             if role is not None:
                 cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
                 result = cursor.fetchone()
+                cursor.fetchall()  # Consume any remaining results
                 old_role = result['role'] if result else None
 
                 # Clean up old role table
                 if old_role == "patient":
                     cursor.execute("DELETE FROM patients WHERE user_id = %s", (user_id,))
+                    cursor.fetchall()  # Consume any remaining results
                 elif old_role == "specialist":
                     cursor.execute("DELETE FROM specialists WHERE user_id = %s", (user_id,))
+                    cursor.fetchall()  # Consume any remaining results
                 elif old_role == "staff":
                     cursor.execute("DELETE FROM staff WHERE user_id = %s", (user_id,))
+                    cursor.fetchall()  # Consume any remaining results
 
                 # Insert into new role table
                 if role == "patient":
@@ -205,10 +218,13 @@ class Database:
                         "INSERT INTO patients (user_id, health_care_number) VALUES (%s, %s)",
                         (user_id, health_care_number)
                     )
+                    cursor.fetchall()  # Consume any remaining results
                 elif role == "specialist":
                     cursor.execute("INSERT INTO specialists (user_id) VALUES (%s)", (user_id,))
+                    cursor.fetchall()  # Consume any remaining results
                 elif role == "staff":
                     cursor.execute("INSERT INTO staff (user_id) VALUES (%s)", (user_id,))
+                    cursor.fetchall()  # Consume any remaining results
 
             # Update health care number if provided
             elif health_care_number is not None:
@@ -216,6 +232,7 @@ class Database:
                     "UPDATE patients SET health_care_number = %s WHERE user_id = %s",
                     (health_care_number, user_id)
                 )
+                cursor.fetchall()  # Consume any remaining results
             
             # Update license_id if provided (for specialists, staff, or admin)
             # This is the province/state professional license number
@@ -223,6 +240,7 @@ class Database:
                 # Get current role
                 cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
                 result = cursor.fetchone()
+                cursor.fetchall()  # Consume any remaining results
                 current_role = result['role'] if result else None
                 
                 if current_role == 'specialist':
@@ -230,11 +248,13 @@ class Database:
                         "UPDATE specialists SET license_id = %s WHERE user_id = %s",
                         (license_id, user_id)
                     )
+                    cursor.fetchall()  # Consume any remaining results
                 elif current_role in ('staff', 'admin'):
                     cursor.execute(
                         "UPDATE staff SET license_id = %s WHERE user_id = %s",
                         (license_id, user_id)
                     )
+                    cursor.fetchall()  # Consume any remaining results
 
             self.connection.commit()
             return True

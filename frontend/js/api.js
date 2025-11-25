@@ -50,7 +50,7 @@ const deleteUser = (id) =>
   apiRequest(`/api/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
 // Login (generic for all roles)
-const loginUser = (email, password) =>
+const loginUser = (email, password, role) =>
   apiRequest('/api/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
@@ -60,7 +60,7 @@ const loginUser = (email, password) =>
 const login = (email, password, role) =>
   apiRequest('/api/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password, role })
+    body: JSON.stringify({ email, password })
   });
 
 // Shared auth storage 

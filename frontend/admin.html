@@ -41,9 +41,17 @@
 
         <div class="form-actions">
           <button type="submit">Login</button>
-          <button type="button" id="demoLogin">Demo Admin Login</button>
         </div>
       </form>
+      
+      <!-- Demo Credentials -->
+      <div style="background:#e8f4f8;border:2px solid #004080;border-radius:8px;padding:15px;margin-top:20px;">
+        <h4 style="color:#004080;margin:0 0 10px 0;">🔐 Demo Admin Login</h4>
+        <div style="font-size:0.9rem;line-height:1.8;">
+          <strong>Email:</strong> admin@clinic.com<br>
+          <strong>Password:</strong> admin123
+        </div>
+      </div>
     </section>
 
     <section class="card">
@@ -80,7 +88,6 @@
       const form = document.getElementById('adminLoginForm');
       const emailEl = document.getElementById('adminEmail');
       const passEl = document.getElementById('adminPassword');
-      const demoBtn = document.getElementById('demoLogin');
       const msgEl = document.getElementById('adminMsg');
 
       // 3. CRITICAL CHECK: Ensure form exists before binding events
@@ -135,22 +142,6 @@
           console.error('Admin login failed', err);
           msgEl.textContent = 'Login failed: ' + (err && err.message ? err.message : err);
         }
-      });
-
-      demoBtn.addEventListener('click', function () {
-        const demo = {
-          email: 'demo@admin.com',
-          role: 'admin',
-          id: 999,
-          firstName: 'Demo',
-          lastName: 'Admin'
-        };
-        localStorage.setItem('loggedInAdmin', JSON.stringify(demo));
-        localStorage.setItem('adminUserId', '999');
-        localStorage.setItem('userId', '999');
-        // Generate token for demo admin
-        localStorage.setItem('bsm_token', 'token_999_admin');
-        window.location.href = 'admin_dashboard.html';
       });
     }); // 4. CLOSE: End of DOMContentLoaded listener
   </script>
