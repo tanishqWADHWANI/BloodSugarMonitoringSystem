@@ -512,10 +512,11 @@
     tbody.innerHTML = patients.map(p => {
       const name = p.name || p.fullName || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
       const id = p.patientId || p.patient_id || p.number || p.id || '-';
+      const userId = p.userId || p.user_id || id;
       const lastChecked = p.lastChecked || p.last_date_time || '-';
       
       return `
-        <tr onclick="viewPatient('${id}', '${name}')">
+        <tr onclick="viewPatient('${id}', '${name}', '${userId}')">
           <td>${id}</td>
           <td>${name}</td>
           <td>${lastChecked}</td>
@@ -524,9 +525,10 @@
     }).join('');
   }
 
-  function viewPatient(id, name) {
+  function viewPatient(id, name, userId) {
     localStorage.setItem('viewingPatientNumber', id);
     localStorage.setItem('viewingPatientName', name);
+    localStorage.setItem('viewingPatientUserId', userId || id);
     window.location.href = 'staff_view.html';
   }
 
@@ -748,10 +750,34 @@
   // Logout functionality
   const logoutBtn = document.getElementById('logoutBtn');
   logoutBtn.addEventListener('click', () => {
+    // Clear all staff session data
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('staffId');
+    localStorage.removeItem('staffUserId');
     localStorage.removeItem('loggedInStaff');
     localStorage.removeItem('staffName');
+    alert('You have been logged out.');
     window.location.href = 'staff.html';
   });
+  
+  // Setup inactivity timeout (30 minutes)
+  let inactivityTimer;
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+  
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      alert('Your session has expired due to inactivity.');
+      localStorage.clear();
+      window.location.href = 'staff.html';
+    }, INACTIVITY_TIMEOUT);
+  }
+  
+  ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+    document.addEventListener(event, resetInactivityTimer, true);
+  });
+  resetInactivityTimer();
 
   // Initialize
   loadPatientCount();

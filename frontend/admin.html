@@ -65,6 +65,14 @@
   
   <!-- JS Logic -->
   <script>
+    // Clear any existing session on page load
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('adminId');
+    localStorage.removeItem('adminUserId');
+    localStorage.removeItem('loggedInAdmin');
+    localStorage.removeItem('adminName');
+    
     // 1. ADD: Wrap all logic inside DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -140,6 +148,8 @@
         localStorage.setItem('loggedInAdmin', JSON.stringify(demo));
         localStorage.setItem('adminUserId', '999');
         localStorage.setItem('userId', '999');
+        // Generate token for demo admin
+        localStorage.setItem('bsm_token', 'token_999_admin');
         window.location.href = 'admin_dashboard.html';
       });
     }); // 4. CLOSE: End of DOMContentLoaded listener

@@ -541,13 +541,35 @@
   // Logout
   document.getElementById('logoutBtn').addEventListener('click', e => {
     e.preventDefault();
+    // Clear all specialist session data
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('specialistId');
+    localStorage.removeItem('specialistUserId');
     localStorage.removeItem('specialistUsername');
     localStorage.removeItem('specialistFullName');
     localStorage.removeItem('specialistSpecialty');
-    localStorage.removeItem('specialistId');
-    localStorage.removeItem('bsm_token');
+    alert('You have been logged out.');
     window.location.href = 'specialist.html';
   });
+  
+  // Setup inactivity timeout (30 minutes)
+  let inactivityTimer;
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+  
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      alert('Your session has expired due to inactivity.');
+      localStorage.clear();
+      window.location.href = 'specialist.html';
+    }, INACTIVITY_TIMEOUT);
+  }
+  
+  ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+    document.addEventListener(event, resetInactivityTimer, true);
+  });
+  resetInactivityTimer();
   </script>
 </body>
 </html>

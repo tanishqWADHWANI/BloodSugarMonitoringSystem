@@ -1606,12 +1606,34 @@
     // Logout button
     const logoutBtn = document.getElementById('logoutBtn');
     logoutBtn.addEventListener('click', () => {
+      // Clear all session data
+      localStorage.removeItem('bsm_token');
       localStorage.removeItem('loggedInPatient');
       localStorage.removeItem('userId');
       localStorage.removeItem('patientId');
+      localStorage.removeItem('patientUsername');
+      localStorage.removeItem('patientFullName');
       alert('You have been logged out.');
-      window.location.href = 'index.html';
+      window.location.href = 'patient.html';
     });
+    
+    // Setup inactivity timeout (30 minutes)
+    let inactivityTimer;
+    const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+    
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        alert('Your session has expired due to inactivity.');
+        localStorage.clear();
+        window.location.href = 'patient.html';
+      }, INACTIVITY_TIMEOUT);
+    }
+    
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+      document.addEventListener(event, resetInactivityTimer, true);
+    });
+    resetInactivityTimer();
   </script>
 </body>
 

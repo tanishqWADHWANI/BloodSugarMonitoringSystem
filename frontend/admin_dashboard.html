@@ -1861,10 +1861,44 @@
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', () => {
+                    // Clear all admin session keys
+                    localStorage.removeItem('bsm_token');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('adminId');
+                    localStorage.removeItem('adminUserId');
                     localStorage.removeItem('loggedInAdmin');
-                    window.location.href = 'index.html';
+                    localStorage.removeItem('adminName');
+                    alert('You have been logged out.');
+                    window.location.href = 'admin.html';
                 });
             }
+
+            // 30-minute inactivity timeout
+            let inactivityTimer;
+            const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(() => {
+                    // Clear all admin session keys
+                    localStorage.removeItem('bsm_token');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('adminId');
+                    localStorage.removeItem('adminUserId');
+                    localStorage.removeItem('loggedInAdmin');
+                    localStorage.removeItem('adminName');
+                    alert('Your session has expired due to inactivity.');
+                    window.location.href = 'admin.html';
+                }, INACTIVITY_TIMEOUT);
+            }
+
+            // Track user activity to reset timer
+            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+                document.addEventListener(event, resetInactivityTimer, true);
+            });
+
+            // Start the inactivity timer
+            resetInactivityTimer();
 
             // Initial Load
                 // Load admin profile

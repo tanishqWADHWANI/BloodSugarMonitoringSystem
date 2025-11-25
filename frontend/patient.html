@@ -277,6 +277,13 @@
   <!-- Patient login with database integration -->
   <script>
     (function () {
+      // Clear any existing session on page load
+      localStorage.removeItem('bsm_token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('patientId');
+      localStorage.removeItem('patientUsername');
+      localStorage.removeItem('patientFullName');
+      
       var form = document.getElementById('loginForm');
       var emailEl = document.getElementById('loginEmail');
       var passEl = document.getElementById('loginPassword');

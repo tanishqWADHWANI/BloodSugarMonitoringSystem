@@ -59,6 +59,14 @@
   </footer>
 
   <script>
+    // Clear any existing session on page load
+    localStorage.removeItem('bsm_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('staffId');
+    localStorage.removeItem('staffUserId');
+    localStorage.removeItem('loggedInStaff');
+    localStorage.removeItem('staffName');
+    
     document.addEventListener('DOMContentLoaded', () => {
       const form   = document.getElementById('staffLoginForm');
       const email  = document.getElementById('staffEmail');
@@ -73,8 +81,10 @@
         demoBtn.addEventListener('click', () => {
           localStorage.setItem('loggedInStaff', 'staff@clinic');
           localStorage.setItem('staffName', 'Staff2');
-          localStorage.setItem('staffUserId', '13');
-          localStorage.setItem('userId', '13');
+          localStorage.setItem('staffUserId', '106');
+          localStorage.setItem('userId', '106');
+          // Generate token for demo staff
+          localStorage.setItem('bsm_token', 'token_106_staff');
           window.location.href = 'staff_dashboard.html';
         });
       }

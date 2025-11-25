@@ -99,9 +99,11 @@
         }
         
         // Build the specialist options once
-        const specialistOptions = specialists.map(s => `
-            <option value="${s.user_id}">Dr. ${s.first_name} ${s.last_name} (${s.email})</option>
-        `).join('');
+        const specialistOptions = specialists.map(s => {
+            const fullName = `${s.first_name} ${s.last_name}`.trim();
+            const displayName = fullName.startsWith('Dr.') ? fullName : `Dr. ${fullName}`;
+            return `<option value="${s.user_id}">${displayName} (${s.email})</option>`;
+        }).join('');
 
         patientTableBody.innerHTML = patients.map(p => `
             <tr data-patient-id="${p.user_id}" data-patient-name="${p.first_name} ${p.last_name}">

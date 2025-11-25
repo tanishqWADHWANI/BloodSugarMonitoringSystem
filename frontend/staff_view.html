@@ -93,6 +93,7 @@
   async function loadPatientInfo() {
     const patientNumber = localStorage.getItem('viewingPatientNumber');
     const patientName = localStorage.getItem('viewingPatientName');
+    const patientUserId = localStorage.getItem('viewingPatientUserId') || patientNumber;
     
     // Display basic info
     if (patientNumber) {
@@ -105,7 +106,10 @@
     // Load full patient data from API to get profile image
     try {
       const token = localStorage.getItem('bsm_token') || '';
-      const userResponse = await fetch(`http://127.0.0.1:5000/api/users/${patientNumber}`, {
+      
+      // Use user_id for API call (not patient_id)
+      let userData = null;
+      let userResponse = await fetch(`http://127.0.0.1:5000/api/users/${patientUserId}`, {
         headers: {
           'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -113,8 +117,10 @@
       });
       
       if (userResponse.ok) {
-        const userData = await userResponse.json();
-        
+        userData = await userResponse.json();
+      }
+      
+      if (userData) {
         // Display profile image if available
         const imgElement = document.getElementById('patientProfileImage');
         const defaultAvatar = document.getElementById('defaultAvatar');
@@ -136,6 +142,15 @@
         // Update other fields if available
         if (userData.phone) {
           document.getElementById('patientContact').textContent = userData.phone;
+        }
+        if (userData.date_of_birth) {
+          // Calculate age from date of birth
+          const dob = new Date(userData.date_of_birth);
+          const age = new Date().getFullYear() - dob.getFullYear();
+          document.getElementById('patientAge').textContent = age;
+        }
+        if (userData.gender) {
+          document.getElementById('patientGender').textContent = userData.gender;
         }
       }
     } catch (error) {
@@ -159,8 +174,10 @@
         
         if (data.specialist) {
           const spec = data.specialist;
+          const fullName = `${spec.first_name} ${spec.last_name}`.trim();
+          const displayName = fullName.startsWith('Dr.') ? fullName : `Dr. ${fullName}`;
           specialistCell.innerHTML = `
-            <strong>Dr. ${spec.first_name} ${spec.last_name}</strong><br>
+            <strong>${displayName}</strong><br>
             <small style="color:#666;">${spec.email}</small>
           `;
         } else {

@@ -190,6 +190,15 @@
          =============================== -->
     <script src="js/api.js"></script>
     <script>
+      // Clear any existing session on page load
+      localStorage.removeItem('bsm_token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('specialistId');
+      localStorage.removeItem('specialistUserId');
+      localStorage.removeItem('specialistUsername');
+      localStorage.removeItem('specialistFullName');
+      localStorage.removeItem('specialistSpecialty');
+      
       const demoSpecialists = [
         { id: 1, username: 'jsmith', password: 'smith123', fullName: 'Dr. John Smith', specialty: 'Endocrinologist' },
         { id: 2, username: 'ajones', password: 'jones123', fullName: 'Dr. Alex Jones', specialty: 'Diabetes Specialist' },
@@ -261,6 +270,11 @@
           localStorage.setItem('specialistId', String(found.id));
           localStorage.setItem('specialistUserId', String(found.id));
           localStorage.setItem('userId', String(found.id));
+          
+          // Generate token for demo specialist based on database ID
+          // jsmith=101, ajones=102, clee=103
+          const tokenMap = { 'jsmith': 'token_101_specialist', 'ajones': 'token_102_specialist', 'clee': 'token_103_specialist' };
+          localStorage.setItem('bsm_token', tokenMap[username] || `token_${found.id}_specialist`);
 
           // Also cache the specialists list for dashboard reference
           localStorage.setItem('specialists', JSON.stringify(demoSpecialists.map(s => ({
