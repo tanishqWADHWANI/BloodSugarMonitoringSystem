@@ -290,23 +290,33 @@
   <script>
     const API_BASE = 'http://127.0.0.1:5000';
     let currentProfileImage = null;
+    let currentUserId = null;  // Store the user ID from database
 
     // Load current user data
     async function loadUserData() {
-      const userId = localStorage.getItem('specialistUserId');
+      // Get user data from database using token
+      const token = localStorage.getItem('bsm_token');
       
-      if (!userId) {
-        showMessage('Specialist ID not found. Please log in again.', 'error');
+      if (!token) {
+        showMessage('Session expired. Please log in again.', 'error');
         setTimeout(() => window.location.href = 'specialist.html', 2000);
         return;
       }
 
       try {
-        const response = await fetch(`${API_BASE}/api/users/${userId}`);
+        const response = await fetch(`${API_BASE}/api/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (response.ok) {
           const user = await response.json();
+          currentUserId = user.user_id;  // Store user ID
           populateForm(user);
+        } else if (response.status === 401) {
+          showMessage('Session expired. Please log in again.', 'error');
+          setTimeout(() => window.location.href = 'specialist.html', 2000);
         } else {
           showMessage('Failed to load user data', 'error');
         }
@@ -356,10 +366,8 @@
     document.getElementById('profileForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const userId = localStorage.getItem('specialistUserId');
-      
-      if (!userId) {
-        showMessage('Specialist ID not found', 'error');
+      if (!currentUserId) {
+        showMessage('User ID not found. Please reload the page.', 'error');
         return;
       }
 
@@ -376,7 +384,7 @@
       };
 
       try {
-        const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+        const response = await fetch(`${API_BASE}/api/users/${currentUserId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
