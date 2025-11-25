@@ -1746,23 +1746,41 @@
             }
 
             async function loadAdminProfile() {
-                const adminUserId = localStorage.getItem('adminUserId') || localStorage.getItem('userId');
                 const token = localStorage.getItem('bsm_token');
+                let userData = null;
                 
-                if (!adminUserId) {
-                    console.warn('No admin user ID found');
-                    return;
+                // Try to fetch from database using token first
+                if (token) {
+                    try {
+                        const response = await fetch(`${API_BASE}/api/me`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            userData = await response.json();
+                        }
+                    } catch (error) {
+                        console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
+                    }
+                }
+                
+                // Fallback to localStorage if /api/me failed
+                if (!userData) {
+                    const adminUserId = localStorage.getItem('adminUserId') || localStorage.getItem('userId');
+                    if (!adminUserId) {
+                        console.warn('No admin user ID found');
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`${API_BASE}/api/users/${adminUserId}`);
+                        userData = await response.json();
+                    } catch (error) {
+                        console.error('Failed to load admin profile:', error);
+                        return;
+                    }
                 }
 
                 try {
-                    const headers = {};
-                    if (token) {
-                        headers['Authorization'] = `Bearer ${token}`;
-                    }
-                    const response = await fetch(`${API_BASE}/api/users/${adminUserId}`, { headers });
-                    const userData = await response.json();
-
-                    if (response.ok) {
+                    if (userData && userData.user_id) {
                         currentAdminData = userData;
 
                         const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Not provided';

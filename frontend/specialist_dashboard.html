@@ -272,21 +272,41 @@
 
   // Load specialist profile info
   async function loadSpecialistProfile() {
-    const userId = specialistUserId || localStorage.getItem('userId');
     const token = localStorage.getItem('bsm_token');
-    if (!userId) {
-      console.error('No userId found for specialist');
-      return;
+    let user = null;
+    
+    // Try to fetch from database using token first
+    if (token) {
+      try {
+        const response = await fetch(`${API_BASE}/api/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          user = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
+      }
+    }
+    
+    // Fallback to localStorage if /api/me failed
+    if (!user) {
+      const userId = specialistUserId || localStorage.getItem('userId');
+      if (!userId) {
+        console.error('No userId found for specialist');
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE}/api/users/${userId}`);
+        user = await response.json();
+      } catch (error) {
+        console.error('Failed to load specialist profile:', error);
+        return;
+      }
     }
 
     try {
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const response = await fetch(`${API_BASE}/api/users/${userId}`, { headers });
-      if (response.ok) {
-        const user = await response.json();
+      if (user && user.user_id) {
         currentUserData = user;
         
         document.getElementById('profileEmail').textContent = user.email || 'Not provided';

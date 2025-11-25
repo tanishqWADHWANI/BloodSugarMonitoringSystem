@@ -1204,28 +1204,47 @@
     });
 
     async function loadPatientInfo() {
-      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
       const token = localStorage.getItem('bsm_token');
-      console.log('Loading patient info for userId:', userId);
+      let user = null;
       
-      if (!userId) {
-        console.error('No userId found in localStorage');
-        return;
+      // Try to fetch from database using token first
+      if (token) {
+        try {
+          console.log('Fetching patient info from /api/me');
+          const response = await fetch(`http://127.0.0.1:5000/api/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            user = await response.json();
+            console.log('Patient info from /api/me:', user);
+          }
+        } catch (error) {
+          console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
+        }
+      }
+      
+      // Fallback to localStorage if /api/me failed
+      if (!user) {
+        const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
+        if (!userId) {
+          console.error('No userId found in localStorage');
+          return;
+        }
+        try {
+          const url = `http://127.0.0.1:5000/api/users/${userId}`;
+          console.log('Fetching patient info from:', url);
+          const response = await fetch(url);
+          console.log('Patient info response status:', response.status);
+          user = await response.json();
+          console.log('Patient info received:', user);
+        } catch (error) {
+          console.error('Failed to load patient info:', error);
+          return;
+        }
       }
 
       try {
-        const url = `http://127.0.0.1:5000/api/users/${userId}`;
-        console.log('Fetching patient info from:', url);
-        const headers = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        const response = await fetch(url, { headers });
-        console.log('Patient info response status:', response.status);
-        
-        if (response.ok) {
-          const user = await response.json();
-          console.log('Patient info received:', user);
+        if (user && user.user_id) {
           currentUserData = user; // Store for edit form
           document.getElementById('patientEmail').textContent = user.email || 'Not provided';
           document.getElementById('patientPhone').textContent = user.phone || 'Not provided';

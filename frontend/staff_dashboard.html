@@ -679,22 +679,41 @@
 
   // Load staff profile data
   async function loadStaffProfile() {
-    const userId = localStorage.getItem('staffUserId') || localStorage.getItem('userId');
     const token = localStorage.getItem('bsm_token');
+    let userData = null;
     
-    if (!userId) {      console.warn('No staff user ID found');
-      return;
+    // Try to fetch from database using token first
+    if (token) {
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          userData = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
+      }
+    }
+    
+    // Fallback to localStorage if /api/me failed
+    if (!userData) {
+      const userId = localStorage.getItem('staffUserId') || localStorage.getItem('userId');
+      if (!userId) {
+        console.warn('No staff user ID found');
+        return;
+      }
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`);
+        userData = await response.json();
+      } catch (error) {
+        console.error('Failed to load staff profile:', error);
+        return;
+      }
     }
 
     try {
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`, { headers });
-      const userData = await response.json();
-
-      if (response.ok && userData.user_id) {
+      if (userData && userData.user_id) {
         currentUserData = {
           userId: userData.user_id,
           firstName: userData.first_name,
