@@ -182,110 +182,254 @@
             });
         }
 
-        // Report generation functions (copy from admin_dashboard.html)
+        // Report generation functions
         document.getElementById('generateMonthlyBtn')?.addEventListener('click', generateMonthlyReport);
         document.getElementById('generateAnnualBtn')?.addEventListener('click', generateAnnualReport);
-        document.getElementById('clearReportBtn')?.addEventListener('click', clearReport);
+        document.getElementById('clearReportBtn')?.addEventListener('click', clearReportInputs);
+
+        let currentDetailedReport = null;
+
+        function getMonthName(monthNum) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[monthNum - 1] || 'Unknown';
+        }
 
         async function generateMonthlyReport() {
             const monthInput = document.getElementById('reportMonth').value;
             if (!monthInput) {
-                alert('Please select a month');
+                alert('Please select a month (YYYY-MM format)');
                 return;
             }
 
             const [year, month] = monthInput.split('-');
-            await fetchAndDisplayReport('monthly', { year: parseInt(year), month: parseInt(month) });
+            if (!year || !month) {
+                alert('Please select a valid month');
+                return;
+            }
+            
+            try {
+                const reportData = await getAdminMonthlyReport(monthInput, parseInt(year));
+                currentDetailedReport = reportData;
+                
+                displayDetailedReport(reportData, 'Monthly', `${getMonthName(parseInt(month))} ${year}`);
+            } catch (error) {
+                console.error('Error generating monthly report:', error);
+                alert('Failed to generate monthly report: ' + error.message);
+            }
         }
 
         async function generateAnnualReport() {
             const year = document.getElementById('reportYear').value;
             if (!year) {
-                alert('Please select a year');
+                alert('Please enter a year');
                 return;
             }
 
-            await fetchAndDisplayReport('annual', { year: parseInt(year) });
-        }
-
-        async function fetchAndDisplayReport(type, params) {
             try {
-                const headers = { 'Authorization': `Bearer ${token}` };
-                const url = type === 'monthly' 
-                    ? `${API_BASE}/api/admin/reports/monthly?year=${params.year}&month=${params.month}`
-                    : `${API_BASE}/api/admin/reports/annual?year=${params.year}`;
+                // Aggregate data for the entire year by fetching each month
+                let annualData = {
+                    patient_statistics: [],
+                    food_triggers: {},
+                    activity_triggers: {}
+                };
 
-                const response = await fetch(url, { headers });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch report');
+                const patientMap = new Map();
+
+                for (let month = 1; month <= 12; month++) {
+                    const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+                    try {
+                        const monthData = await getAdminMonthlyReport(monthStr, parseInt(year));
+                        
+                        // Aggregate patient statistics
+                        (monthData.patient_statistics || []).forEach(p => {
+                            const patientId = p.user_id || p.patient_id;
+                            const patientName = p.patient_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                            
+                            if (!patientMap.has(patientId)) {
+                                patientMap.set(patientId, {
+                                    patient_id: patientId,
+                                    patient_name: patientName,
+                                    total_readings: 0,
+                                    normal_count: 0,
+                                    borderline_count: 0,
+                                    abnormal_count: 0,
+                                    values: [],
+                                    max_value: 0,
+                                    min_value: Infinity
+                                });
+                            }
+                            
+                            const existing = patientMap.get(patientId);
+                            existing.total_readings += parseInt(p.total_readings) || 0;
+                            existing.normal_count += parseInt(p.normal_count) || 0;
+                            existing.borderline_count += parseInt(p.borderline_count) || 0;
+                            existing.abnormal_count += parseInt(p.abnormal_count) || 0;
+                            
+                            // Track average values for annual averaging
+                            if (p.avg_value > 0) existing.values.push(parseFloat(p.avg_value));
+                            // Track highest max_value across all months
+                            if (p.max_value > 0 && p.max_value > existing.max_value) existing.max_value = parseFloat(p.max_value);
+                            // Track lowest min_value across all months
+                            if (p.min_value > 0 && p.min_value < existing.min_value) existing.min_value = parseFloat(p.min_value);
+                        });
+
+                        // Aggregate food triggers
+                        Object.entries(monthData.food_triggers || {}).forEach(([food, data]) => {
+                            const count = typeof data === 'number' ? data : (data.count || 0);
+                            const patients = typeof data === 'object' ? (data.patients || '') : '';
+                            
+                            if (!annualData.food_triggers[food]) {
+                                annualData.food_triggers[food] = { count: 0, patients: new Set() };
+                            }
+                            annualData.food_triggers[food].count += count;
+                            if (patients) {
+                                patients.split(', ').forEach(p => annualData.food_triggers[food].patients.add(p.trim()));
+                            }
+                        });
+
+                        // Aggregate activity triggers
+                        Object.entries(monthData.activity_triggers || {}).forEach(([activity, data]) => {
+                            const count = typeof data === 'number' ? data : (data.count || 0);
+                            const patients = typeof data === 'object' ? (data.patients || '') : '';
+                            
+                            if (!annualData.activity_triggers[activity]) {
+                                annualData.activity_triggers[activity] = { count: 0, patients: new Set() };
+                            }
+                            annualData.activity_triggers[activity].count += count;
+                            if (patients) {
+                                patients.split(', ').forEach(p => annualData.activity_triggers[activity].patients.add(p.trim()));
+                            }
+                        });
+                    } catch (e) {
+                        console.warn(`Failed to fetch data for ${monthStr}:`, e);
+                    }
                 }
-                
-                const data = await response.json();
-                displayReport(data, type, params);
+
+                // Calculate final statistics for each patient
+                annualData.patient_statistics = Array.from(patientMap.values()).map(p => {
+                    const allValues = p.values.filter(v => v > 0);
+                    return {
+                        ...p,
+                        avg_value: allValues.length > 0 ? (allValues.reduce((a, b) => a + b, 0) / allValues.length) : 0,
+                        max_value: p.max_value > 0 ? p.max_value : 0,
+                        min_value: p.min_value < Infinity ? p.min_value : 0
+                    };
+                });
+
+                // Convert trigger Sets to comma-separated strings
+                Object.keys(annualData.food_triggers).forEach(food => {
+                    const trigger = annualData.food_triggers[food];
+                    annualData.food_triggers[food] = {
+                        count: trigger.count,
+                        patients: Array.from(trigger.patients).join(', ')
+                    };
+                });
+                Object.keys(annualData.activity_triggers).forEach(activity => {
+                    const trigger = annualData.activity_triggers[activity];
+                    annualData.activity_triggers[activity] = {
+                        count: trigger.count,
+                        patients: Array.from(trigger.patients).join(', ')
+                    };
+                });
+
+                currentDetailedReport = annualData;
+                displayDetailedReport(annualData, 'Annual', year);
             } catch (error) {
-                console.error('Error fetching report:', error);
-                alert('Failed to generate report. Please try again.');
+                console.error('Error generating annual report:', error);
+                alert('Failed to generate annual report: ' + error.message);
             }
         }
 
-        function displayReport(data, type, params) {
+        function displayDetailedReport(data, reportType, period) {
             const reportArea = document.getElementById('detailedReportArea');
             reportArea.style.display = 'block';
 
-            // Set title and period
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                               'July', 'August', 'September', 'October', 'November', 'December'];
+            // Update header
+            document.getElementById('reportTitle').textContent = `${reportType} Report`;
+            document.getElementById('reportPeriod').textContent = `Period: ${period}`;
+
+            const patientStats = data.patient_statistics || [];
+            const totalPatients = patientStats.length;
+            const patientsWithReadings = patientStats.filter(p => p.total_readings > 0).length;
             
-            if (type === 'monthly') {
-                document.getElementById('reportTitle').textContent = `Monthly Report - ${monthNames[params.month - 1]} ${params.year}`;
-                document.getElementById('reportPeriod').textContent = `Period: ${monthNames[params.month - 1]} ${params.year}`;
-            } else {
-                document.getElementById('reportTitle').textContent = `Annual Report - ${params.year}`;
-                document.getElementById('reportPeriod').textContent = `Period: Year ${params.year}`;
-            }
+            const totalReadings = patientStats.reduce((sum, p) => sum + (parseInt(p.total_readings) || 0), 0);
+            const totalNormal = patientStats.reduce((sum, p) => sum + (parseInt(p.normal_count) || 0), 0);
+            const totalBorderline = patientStats.reduce((sum, p) => sum + (parseInt(p.borderline_count) || 0), 0);
+            const totalAbnormal = patientStats.reduce((sum, p) => sum + (parseInt(p.abnormal_count) || 0), 0);
 
-            // Patient Overview
-            document.getElementById('reportTotalPatients').textContent = data.total_patients || 0;
-            document.getElementById('reportActivePatients').textContent = data.active_patients || 0;
-            document.getElementById('reportTotalReadings').textContent = data.total_readings || 0;
-            document.getElementById('reportAvgReadings').textContent = (data.avg_readings_per_patient || 0).toFixed(1);
+            const allValues = patientStats.flatMap(p => 
+                [p.avg_value, p.max_value, p.min_value].filter(v => v > 0)
+            );
+            const overallAvg = allValues.length > 0 
+                ? (allValues.reduce((a, b) => a + b, 0) / allValues.length).toFixed(2)
+                : '0.00';
 
-            // Blood Sugar Trends
-            document.getElementById('reportOverallAvg').textContent = (data.overall_avg_glucose || 0).toFixed(1);
-            document.getElementById('reportNormalCount').textContent = data.normal_count || 0;
-            document.getElementById('reportNormalPct').textContent = (data.normal_percentage || 0).toFixed(1);
-            document.getElementById('reportBorderlineCount').textContent = data.borderline_count || 0;
-            document.getElementById('reportBorderlinePct').textContent = (data.borderline_percentage || 0).toFixed(1);
-            document.getElementById('reportAbnormalCount').textContent = data.abnormal_count || 0;
-            document.getElementById('reportAbnormalPct').textContent = (data.abnormal_percentage || 0).toFixed(1);
+            // Update overview stats
+            document.getElementById('reportTotalPatients').textContent = totalPatients;
+            document.getElementById('reportActivePatients').textContent = patientsWithReadings;
+            document.getElementById('reportTotalReadings').textContent = totalReadings;
+            document.getElementById('reportAvgReadings').textContent = 
+                patientsWithReadings > 0 ? (totalReadings / patientsWithReadings).toFixed(2) : '0.00';
 
-            // Trend Analysis
-            if (data.highest_reading) {
-                document.getElementById('trendHighestValue').textContent = data.highest_reading.glucose_level?.toFixed(2) || '0.00';
-                document.getElementById('trendHighestPatient').textContent = data.highest_reading.patient_name || '-';
-            }
-            if (data.lowest_reading) {
-                document.getElementById('trendLowestValue').textContent = data.lowest_reading.glucose_level?.toFixed(2) || '0.00';
-                document.getElementById('trendLowestPatient').textContent = data.lowest_reading.patient_name || '-';
-            }
-            if (data.most_stable_patient) {
-                document.getElementById('trendMostStable').textContent = data.most_stable_patient.patient_name || '-';
-                document.getElementById('trendStableVariance').textContent = data.most_stable_patient.variance?.toFixed(2) || '0.00';
-            }
-            if (data.most_at_risk_patient) {
-                document.getElementById('trendMostAtRisk').textContent = data.most_at_risk_patient.patient_name || '-';
-                document.getElementById('trendRiskPct').textContent = data.most_at_risk_patient.abnormal_percentage?.toFixed(2) || '0.00';
-            }
+            // Update blood sugar trends
+            document.getElementById('reportOverallAvg').textContent = overallAvg;
+            document.getElementById('reportNormalCount').textContent = totalNormal;
+            document.getElementById('reportNormalPct').textContent = 
+                totalReadings > 0 ? ((totalNormal / totalReadings) * 100).toFixed(2) : '0.00';
+            document.getElementById('reportBorderlineCount').textContent = totalBorderline;
+            document.getElementById('reportBorderlinePct').textContent = 
+                totalReadings > 0 ? ((totalBorderline / totalReadings) * 100).toFixed(2) : '0.00';
+            document.getElementById('reportAbnormalCount').textContent = totalAbnormal;
+            document.getElementById('reportAbnormalPct').textContent = 
+                totalReadings > 0 ? ((totalAbnormal / totalReadings) * 100).toFixed(2) : '0.00';
+
+            // Calculate detailed trend analysis
+            let highestOverall = { value: 0, patient: '-' };
+            let lowestOverall = { value: Infinity, patient: '-' };
+            let mostStable = { patient: '-', variance: Infinity };
+            let mostAtRisk = { patient: '-', pct: 0 };
+
+            patientStats.forEach(p => {
+                if (p.total_readings > 0) {
+                    // Highest value
+                    if (p.max_value && p.max_value > highestOverall.value) {
+                        highestOverall = { value: p.max_value, patient: p.patient_name || 'Unknown' };
+                    }
+                    // Lowest value
+                    if (p.min_value && p.min_value < lowestOverall.value) {
+                        lowestOverall = { value: p.min_value, patient: p.patient_name || 'Unknown' };
+                    }
+                    // Most stable (lowest variance)
+                    const variance = Math.abs((p.max_value || 0) - (p.min_value || 0));
+                    if (variance < mostStable.variance) {
+                        mostStable = { patient: p.patient_name || 'Unknown', variance: variance };
+                    }
+                    // Most at risk (highest abnormal percentage)
+                    const abnormalPct = p.total_readings > 0 ? ((p.abnormal_count / p.total_readings) * 100) : 0;
+                    if (abnormalPct > mostAtRisk.pct) {
+                        mostAtRisk = { patient: p.patient_name || 'Unknown', pct: abnormalPct };
+                    }
+                }
+            });
+
+            document.getElementById('trendHighestValue').textContent = highestOverall.value > 0 ? highestOverall.value.toFixed(2) : '0.00';
+            document.getElementById('trendHighestPatient').textContent = highestOverall.patient;
+            document.getElementById('trendLowestValue').textContent = lowestOverall.value < Infinity ? lowestOverall.value.toFixed(2) : '0.00';
+            document.getElementById('trendLowestPatient').textContent = lowestOverall.patient;
+            document.getElementById('trendMostStable').textContent = mostStable.patient;
+            document.getElementById('trendStableVariance').textContent = mostStable.variance < Infinity ? mostStable.variance.toFixed(2) : '0.00';
+            document.getElementById('trendMostAtRisk').textContent = mostAtRisk.patient;
+            document.getElementById('trendRiskPct').textContent = mostAtRisk.pct.toFixed(2);
 
             // Patient Statistics Table
-            renderPatientStatsTable(data.patient_stats || []);
+            renderPatientStatsTable(patientStats);
 
             // Abnormal Details
             renderAbnormalDetails(data.abnormal_readings || []);
 
             // AI Insights
-            renderAIInsights(data.ai_insights || {});
+            renderAIInsights({ food_triggers: data.food_triggers, activity_triggers: data.activity_triggers });
         }
 
         function renderPatientStatsTable(stats) {
@@ -303,17 +447,25 @@
                 const row = document.createElement('tr');
                 row.style.borderBottom = '1px solid #f0f0f0';
                 
-                const trendIcon = patient.trend === 'improving' ? '📈' : 
-                                 patient.trend === 'stable' ? '➡️' : '📉';
+                // Calculate abnormal percentage from data
+                const totalReadings = parseInt(patient.total_readings) || 0;
+                const abnormalCount = parseInt(patient.abnormal_count) || 0;
+                const abnormalPct = totalReadings > 0 ? ((abnormalCount / totalReadings) * 100) : 0;
+                
+                // Determine trend based on normal vs abnormal
+                const normalCount = parseInt(patient.normal_count) || 0;
+                const normalPct = totalReadings > 0 ? ((normalCount / totalReadings) * 100) : 0;
+                const trendIcon = normalPct >= 70 ? '📈' : normalPct >= 40 ? '➡️' : '📉';
+                const trendText = normalPct >= 70 ? 'improving' : normalPct >= 40 ? 'stable' : 'declining';
                 
                 row.innerHTML = `
                     <td style="padding: 12px; text-align: left;">${patient.patient_name || 'N/A'}</td>
-                    <td style="padding: 12px; text-align: center;">${patient.reading_count || 0}</td>
-                    <td style="padding: 12px; text-align: center;">${(patient.avg_glucose || 0).toFixed(1)}</td>
-                    <td style="padding: 12px; text-align: center;">${(patient.max_glucose || 0).toFixed(1)}</td>
-                    <td style="padding: 12px; text-align: center;">${(patient.min_glucose || 0).toFixed(1)}</td>
-                    <td style="padding: 12px; text-align: center;">${(patient.abnormal_percentage || 0).toFixed(1)}%</td>
-                    <td style="padding: 12px; text-align: center;">${trendIcon} ${patient.trend || 'stable'}</td>
+                    <td style="padding: 12px; text-align: center;">${totalReadings}</td>
+                    <td style="padding: 12px; text-align: center;">${(parseFloat(patient.avg_value) || 0).toFixed(1)}</td>
+                    <td style="padding: 12px; text-align: center;">${(parseFloat(patient.max_value) || 0).toFixed(1)}</td>
+                    <td style="padding: 12px; text-align: center;">${(parseFloat(patient.min_value) || 0).toFixed(1)}</td>
+                    <td style="padding: 12px; text-align: center;">${abnormalPct.toFixed(1)}%</td>
+                    <td style="padding: 12px; text-align: center;">${trendIcon} ${trendText}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -352,30 +504,61 @@
             const container = document.getElementById('aiInsightsArea');
             if (!container) return;
 
-            if (!insights || Object.keys(insights).length === 0) {
+            const foodTriggers = insights.food_triggers || {};
+            const activityTriggers = insights.activity_triggers || {};
+
+            if (Object.keys(foodTriggers).length === 0 && Object.keys(activityTriggers).length === 0) {
                 container.innerHTML = '<p style="color: #666; padding: 10px 0;">No AI insights available for this period.</p>';
                 return;
             }
 
             let html = '<div style="display: grid; gap: 15px;">';
             
-            if (insights.common_food_triggers && insights.common_food_triggers.length > 0) {
+            // Food Triggers
+            const foodEntries = Object.entries(foodTriggers).sort((a, b) => {
+                const countA = typeof a[1] === 'number' ? a[1] : (a[1].count || 0);
+                const countB = typeof b[1] === 'number' ? b[1] : (b[1].count || 0);
+                return countB - countA;
+            }).slice(0, 10);
+
+            if (foodEntries.length > 0) {
                 html += `
                     <div style="background: #fff8e1; padding: 15px; border-radius: 6px; border-left: 4px solid #ffc107;">
                         <h5 style="color: #004080; margin-bottom: 10px;">🍽️ Common Food Triggers</h5>
                         <ul style="margin: 0; padding-left: 20px;">
-                            ${insights.common_food_triggers.map(food => `<li style="color: #666; margin-bottom: 5px;">${food}</li>`).join('')}
+                            ${foodEntries.map(([food, data]) => {
+                                const count = typeof data === 'number' ? data : data.count;
+                                const patients = typeof data === 'object' ? data.patients : '';
+                                return `<li style="color: #666; margin-bottom: 5px;">
+                                    <strong>${food}</strong> (${count} occurrence${count > 1 ? 's' : ''})
+                                    ${patients ? `<br><small style="color: #999;">Patients: ${patients}</small>` : ''}
+                                </li>`;
+                            }).join('')}
                         </ul>
                     </div>
                 `;
             }
 
-            if (insights.activity_patterns && insights.activity_patterns.length > 0) {
+            // Activity Triggers
+            const activityEntries = Object.entries(activityTriggers).sort((a, b) => {
+                const countA = typeof a[1] === 'number' ? a[1] : (a[1].count || 0);
+                const countB = typeof b[1] === 'number' ? b[1] : (b[1].count || 0);
+                return countB - countA;
+            }).slice(0, 10);
+
+            if (activityEntries.length > 0) {
                 html += `
                     <div style="background: #e8f5e9; padding: 15px; border-radius: 6px; border-left: 4px solid #28a745;">
                         <h5 style="color: #004080; margin-bottom: 10px;">🏃 Activity Patterns</h5>
                         <ul style="margin: 0; padding-left: 20px;">
-                            ${insights.activity_patterns.map(activity => `<li style="color: #666; margin-bottom: 5px;">${activity}</li>`).join('')}
+                            ${activityEntries.map(([activity, data]) => {
+                                const count = typeof data === 'number' ? data : data.count;
+                                const patients = typeof data === 'object' ? data.patients : '';
+                                return `<li style="color: #666; margin-bottom: 5px;">
+                                    <strong>${activity}</strong> (${count} occurrence${count > 1 ? 's' : ''})
+                                    ${patients ? `<br><small style="color: #999;">Patients: ${patients}</small>` : ''}
+                                </li>`;
+                            }).join('')}
                         </ul>
                     </div>
                 `;
@@ -385,10 +568,11 @@
             container.innerHTML = html;
         }
 
-        function clearReport() {
+        function clearReportInputs() {
             document.getElementById('detailedReportArea').style.display = 'none';
             document.getElementById('reportMonth').value = '';
             document.getElementById('reportYear').value = '';
+            currentDetailedReport = null;
         }
 
         // Set default date values

@@ -936,8 +936,7 @@ def get_all_specialists():
                     u.date_of_birth,
                     u.role,
                     s.specialist_id,
-                    s.license_id,
-                    s.specialization
+                    s.license_id
                 FROM users u
                 INNER JOIN specialists s ON u.user_id = s.user_id
                 WHERE u.role = 'specialist' AND u.account_status = 'Active'
