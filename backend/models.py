@@ -154,7 +154,7 @@ class Database:
                    first_name: str | None = None, last_name: str | None = None, 
                    role: str | None = None, date_of_birth: str | None = None, 
                    phone: str | None = None, health_care_number: str | None = None,
-                   license_id: str | None = None) -> bool:
+                   license_id: str | None = None, profile_image: str | None = None) -> bool:
         """
         Update user. Only provided fields are updated.
         Password is stored in plain text (demo only).
@@ -170,6 +170,7 @@ class Database:
             if role is not None:           updates["role"] = role
             if date_of_birth is not None:  updates["date_of_birth"] = date_of_birth
             if phone is not None:          updates["phone"] = phone
+            if profile_image is not None:  updates["profile_image"] = profile_image
 
             if not updates:
                 return False

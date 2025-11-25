@@ -177,7 +177,8 @@ def update_user(user_id):
             date_of_birth=data.get('dateOfBirth'),
             phone=data.get('phone'),
             health_care_number=data.get('healthCareNumber'),
-            license_id=data.get('licenseId')  # Province/state professional license
+            license_id=data.get('licenseId'),  # Province/state professional license
+            profile_image=data.get('profileImage')  # Profile picture URL
         )
 
         if not updated:
