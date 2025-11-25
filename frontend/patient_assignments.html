@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Assignments - Admin Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .dashboard-header { margin-bottom: 30px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .form-field { margin-bottom: 15px; }
+        .form-field label { display: block; margin-bottom: 6px; color: #004080; font-weight: 500; }
+        .table-wrapper { overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">🩸 Blood Sugar Monitoring</div>
+        <nav>
+            <a href="admin_dashboard.html">Dashboard</a>
+            <a href="user_management.html">Users</a>
+            <a href="patient_assignments.html" class="active">Assignments</a>
+        </nav>
+        <div>
+            <button id="logoutBtn" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Logout</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="dashboard-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h1 style="color: #004080; font-size: 2rem; margin: 0;">Patient Assignments</h1>
+                <button onclick="window.location.href='admin_dashboard.html'" style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(102,126,234,0.3);" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(102,126,234,0.4)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(102,126,234,0.3)'">
+                    ← Back to Dashboard
+                </button>
+            </div>
+            <p class="subtext" style="color: #666; font-size: 1rem;">
+                Assign patients to specialists and manage current assignments.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Assign Patient to Specialist</h2>
+            
+            <form id="assignForm" class="form-grid">
+                <div class="form-row" style="display: flex; gap: 20px; align-items: flex-end;">
+                    <div class="form-field" style="flex: 1;">
+                        <label for="patientSelect">Patient</label>
+                        <select id="patientSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;"></select>
+                    </div>
+                    <div class="form-field" style="flex: 1;">
+                        <label for="specialistSelect">Specialist</label>
+                        <select id="specialistSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;"></select>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 15px;">
+                    <button type="submit" style="background: #007bff; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Assign</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Current Assignments</h2>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <!-- Search Input -->
+                    <input type="text" id="searchInput" placeholder="🔍 Search by patient or specialist..." style="padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; width: 300px; transition: border-color 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#ddd'" />
+                    
+                    <!-- Assignment Count Badge -->
+                    <div id="assignmentCountBadge" style="background: #e7f3ff; color: #004080; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                        <span id="displayedCount">0</span> / <span id="totalCount">0</span> assignments
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                <table id="assignTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Assignment ID</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Patient</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Specialist</th>
+                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Online Blood Sugar Monitoring Clinic. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+        let allAssignments = [];
+        let allPatients = [];
+        let allSpecialists = [];
+
+        // Check admin authorization
+        const token = localStorage.getItem('bsm_token');
+        if (!token || !token.includes('_admin')) {
+            alert('Access denied: Admin credentials required');
+            window.location.href = 'admin.html';
+        }
+
+        // Logout functionality
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.clear();
+                alert('You have been logged out.');
+                window.location.href = 'admin.html';
+            });
+        }
+
+        async function fetchAssignmentsFromAPI() {
+            try {
+                const headers = { 'Authorization': `Bearer ${token}` };
+                const response = await fetch(`${API_BASE}/api/assignments`, { headers });
+                
+                if (!response.ok) {
+                    console.error('Failed to fetch assignments:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                allAssignments = data.assignments || [];
+                updateAssignmentCounts();
+                renderAssignments();
+            } catch (error) {
+                console.error('Error fetching assignments:', error);
+            }
+        }
+
+        async function fetchPatientsAndSpecialists() {
+            try {
+                const headers = { 'Authorization': `Bearer ${token}` };
+                
+                const [patientsRes, specialistsRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/patients`, { headers }),
+                    fetch(`${API_BASE}/api/specialists`, { headers })
+                ]);
+                
+                if (patientsRes.ok) {
+                    const pData = await patientsRes.json();
+                    allPatients = pData.patients || [];
+                    populatePatientSelect();
+                }
+                
+                if (specialistsRes.ok) {
+                    const sData = await specialistsRes.json();
+                    allSpecialists = sData.specialists || [];
+                    populateSpecialistSelect();
+                }
+            } catch (error) {
+                console.error('Error fetching patients/specialists:', error);
+            }
+        }
+
+        function populatePatientSelect() {
+            const select = document.getElementById('patientSelect');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">-- Select Patient --</option>';
+            allPatients.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.user_id;
+                option.textContent = `${p.first_name} ${p.last_name} (ID: ${p.user_id})`;
+                select.appendChild(option);
+            });
+        }
+
+        function populateSpecialistSelect() {
+            const select = document.getElementById('specialistSelect');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">-- Select Specialist --</option>';
+            allSpecialists.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.user_id;
+                option.textContent = `${s.first_name} ${s.last_name} (ID: ${s.user_id})`;
+                select.appendChild(option);
+            });
+        }
+
+        function updateAssignmentCounts() {
+            const totalCount = allAssignments.length;
+            const filteredAssignments = getFilteredAssignments();
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('displayedCount').textContent = filteredAssignments.length;
+        }
+
+        function getFilteredAssignments() {
+            const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+
+            return allAssignments.filter(assignment => {
+                if (!searchTerm) return true;
+                
+                const patientName = `${assignment.patient_first_name} ${assignment.patient_last_name}`.toLowerCase();
+                const specialistName = `${assignment.specialist_first_name} ${assignment.specialist_last_name}`.toLowerCase();
+                
+                return patientName.includes(searchTerm) || 
+                       specialistName.includes(searchTerm) ||
+                       assignment.assignment_id?.toString().includes(searchTerm);
+            });
+        }
+
+        function filterAssignments() {
+            updateAssignmentCounts();
+            renderAssignments();
+        }
+
+        function renderAssignments() {
+            const tbody = document.querySelector('#assignTable tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            
+            const assignmentsToDisplay = getFilteredAssignments();
+            
+            if (assignmentsToDisplay.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="padding: 40px; text-align: center; color: #666; font-size: 1rem;">
+                            ${allAssignments.length === 0 ? 'No assignments found.' : 'No assignments match your search criteria.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            assignmentsToDisplay.forEach(a => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #f0f0f0';
+                row.style.transition = 'background 0.2s';
+                row.addEventListener('mouseenter', () => row.style.background = '#f8f9fa');
+                row.addEventListener('mouseleave', () => row.style.background = 'transparent');
+
+                const patientName = `${a.patient_first_name || ''} ${a.patient_last_name || ''}`.trim() || 'N/A';
+                const specialistName = `${a.specialist_first_name || ''} ${a.specialist_last_name || ''}`.trim() || 'N/A';
+
+                row.innerHTML = `
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057;">${a.assignment_id}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057; font-weight: 500;">${patientName}</td>
+                    <td style="padding: 12px 16px; font-size: 0.95rem; color: #495057; font-weight: 500;">${specialistName}</td>
+                    <td style="padding: 12px 16px;">
+                        <button class="delete-btn" data-id="${a.assignment_id}" style="background: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Handle assignment form submission
+        const assignForm = document.getElementById('assignForm');
+        if (assignForm) {
+            assignForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const patientId = document.getElementById('patientSelect').value;
+                const specialistId = document.getElementById('specialistSelect').value;
+                
+                if (!patientId || !specialistId) {
+                    alert('Please select both a patient and a specialist.');
+                    return;
+                }
+                
+                try {
+                    const headers = {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    const response = await fetch(`${API_BASE}/api/assignments`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            patient_id: parseInt(patientId),
+                            specialist_id: parseInt(specialistId)
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        alert('Assignment created successfully!');
+                        assignForm.reset();
+                        await fetchAssignmentsFromAPI();
+                    } else {
+                        const error = await response.json();
+                        alert(`Failed to create assignment: ${error.error || 'Unknown error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error creating assignment:', error);
+                    alert('Error creating assignment');
+                }
+            });
+        }
+
+        // Handle delete assignment
+        async function handleDeleteAssignment(e) {
+            if (!e.target.classList.contains('delete-btn')) return;
+
+            const assignmentId = e.target.getAttribute('data-id');
+            if (!assignmentId) return;
+
+            if (!confirm(`Are you sure you want to delete assignment ID ${assignmentId}?`)) return;
+
+            try {
+                const headers = { 'Authorization': `Bearer ${token}` };
+                const response = await fetch(`${API_BASE}/api/assignments/${assignmentId}`, {
+                    method: 'DELETE',
+                    headers
+                });
+
+                if (response.ok) {
+                    alert('Assignment deleted successfully');
+                    await fetchAssignmentsFromAPI();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to delete assignment: ${error.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting assignment:', error);
+                alert('Error deleting assignment');
+            }
+        }
+
+        const assignTableBody = document.querySelector('#assignTable tbody');
+        if (assignTableBody) {
+            assignTableBody.addEventListener('click', handleDeleteAssignment);
+        }
+
+        // Search with debounce
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(filterAssignments, 300);
+            });
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Promise.all([
+                fetchAssignmentsFromAPI(),
+                fetchPatientsAndSpecialists()
+            ]);
+        });
+    </script>
+</body>
+</html>

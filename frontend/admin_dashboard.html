@@ -204,166 +204,57 @@
             </div>
         </section>
 
-        <section class="card">
-            <h2>Assign Patient to Specialist</h2>
-            
-            <form id="assignForm" class="form-grid">
-                <div class="form-row" style="display: flex; gap: 20px; align-items: flex-end;">
-                    <div class="form-field" style="flex: 1;">
-                        <label for="patientSelect">Patient</label>
-                        <select id="patientSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;"></select>
-                    </div>
-                    <div class="form-field" style="flex: 1;">
-                        <label for="specialistSelect">Specialist</label>
-                        <select id="specialistSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;"></select>
+        <section class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; cursor: pointer; transition: all 0.3s ease; border: none; box-shadow: 0 4px 15px rgba(79,172,254,0.3);" onclick="window.location.href='patient_assignments.html'" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(79,172,254,0.4)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(79,172,254,0.3)'">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                    <h2 style="color: white; font-size: 1.8rem; margin-bottom: 15px; font-weight: 600;">Patient Assignments</h2>
+                    <p style="font-size: 1rem; opacity: 0.95; margin-bottom: 20px; line-height: 1.6;">
+                        Assign patients to specialists, manage current assignments, and track patient-specialist relationships.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 2rem; font-weight: bold;" id="totalAssignmentsCount">-</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Total Assignments</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 2rem; font-weight: bold;" id="activeSpecialistsCount">-</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Active Specialists</div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-actions" style="margin-top: 15px;">
-                    <button type="submit" style="background: #007bff; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Assign</button>
-                </div>
-            </form>
-
-            <h3 style="margin-top: 30px; margin-bottom: 15px; font-size: 1.4rem;">Current Assignments</h3>
-            <div class="table-wrapper">
-                <table id="assignTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <thead>
-                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Assignment ID</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Patient</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Specialist</th>
-                            <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div style="font-size: 4rem; opacity: 0.3;">→</div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.95rem; opacity: 0.9;">
+                Click to assign patients, view all assignments, and manage patient-specialist relationships
             </div>
         </section>
 
-        <section class="card">
-            <h2 style="color: #004080; font-size: 1.5rem; margin-bottom: 20px;">Monthly & Annual Reports</h2>
-            <p class="hint" style="margin-bottom: 20px; padding: 12px 16px; background: #f8f9fa; border-radius: 6px; color: #666; font-size: 0.9rem; line-height: 1.6;">
-                Generate comprehensive reports including patient statistics, blood sugar trends, and AI-powered insights on food/activity triggers for abnormal readings.
-            </p>
-            
-            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 20px; margin-bottom: 20px; align-items: end;">
-                <div class="form-field">
-                    <label for="reportMonth" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Select Month</label>
-                    <input type="month" id="reportMonth" placeholder="YYYY-MM" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
+        <section class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; cursor: pointer; transition: all 0.3s ease; border: none; box-shadow: 0 4px 15px rgba(240,147,251,0.3);" onclick="window.location.href='reports_management.html'" onmouseenter="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(240,147,251,0.4)'" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(240,147,251,0.3)'">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                    <h2 style="color: white; font-size: 1.8rem; margin-bottom: 15px; font-weight: 600;">Monthly & Annual Reports</h2>
+                    <p style="font-size: 1rem; opacity: 0.95; margin-bottom: 20px; line-height: 1.6;">
+                        Generate comprehensive reports with patient statistics, blood sugar trends, and AI-powered insights on food/activity triggers.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 1.5rem; font-weight: bold;">📊</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Monthly Reports</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 1.5rem; font-weight: bold;">📈</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">Annual Reports</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                            <div style="font-size: 1.5rem; font-weight: bold;">🤖</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px;">AI Insights</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-field">
-                    <label for="reportYear" style="display: block; margin-bottom: 6px; color: #004080; font-weight: 500; font-size: 0.95rem;">Select Year</label>
-                    <input type="number" id="reportYear" min="2020" max="2030" placeholder="e.g. 2025" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;" />
-                </div>
-                <div class="form-actions" style="display: flex; gap: 12px;">
-                    <button type="button" id="generateMonthlyBtn" style="background: #007bff; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Monthly Report</button>
-                    <button type="button" id="generateAnnualBtn" style="background: #28a745; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Annual Report</button>
-                </div>
-                <div>
-                    <button type="button" id="clearReportBtn" style="background: #6c757d; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">Clear</button>
-                </div>
+                <div style="font-size: 4rem; opacity: 0.3;">→</div>
             </div>
-
-            <div id="detailedReportArea" style="display: none;">
-                <div style="background: #e7f3ff; border-left: 4px solid #007bff; padding: 15px 20px; margin-bottom: 20px; border-radius: 6px;">
-                    <h3 id="reportTitle" style="color: #004080; font-size: 1.3rem; margin-bottom: 10px;">Report</h3>
-                    <p id="reportPeriod" style="color: #666; font-size: 0.95rem;">Period: -</p>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                    <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #007bff; padding-bottom: 8px;">📊 Patient Overview</h4>
-                        <ul style="list-style: none; padding: 0; margin: 0;">
-                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Total Active Patients: <strong id="reportTotalPatients">0</strong></li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Patients with Readings: <strong id="reportActivePatients">0</strong></li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Total Readings: <strong id="reportTotalReadings">0</strong></li>
-                            <li style="padding: 8px 0;">Average Readings per Patient: <strong id="reportAvgReadings">0</strong></li>
-                        </ul>
-                    </div>
-
-                    <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #28a745; padding-bottom: 8px;">📈 Blood Sugar Trends</h4>
-                        <ul style="list-style: none; padding: 0; margin: 0;">
-                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">Overall Average: <strong id="reportOverallAvg">0</strong> mg/dL</li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; color: #28a745;">Normal Readings: <strong id="reportNormalCount">0</strong> (<strong id="reportNormalPct">0%</strong>)</li>
-                            <li style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; color: #ffc107;">Borderline: <strong id="reportBorderlineCount">0</strong> (<strong id="reportBorderlinePct">0%</strong>)</li>
-                            <li style="padding: 8px 0; color: #dc3545;">Abnormal: <strong id="reportAbnormalCount">0</strong> (<strong id="reportAbnormalPct">0%</strong>)</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
-                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #17a2b8; padding-bottom: 8px;">📊 Detailed Trend Analysis</h4>
-                    <div id="trendAnalysisArea" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
-                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Highest Overall Reading</h5>
-                            <p style="font-size: 1.8rem; font-weight: bold; color: #dc3545; margin: 0;"><span id="trendHighestValue">0.00</span> mg/dL</p>
-                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Patient: <span id="trendHighestPatient">-</span></p>
-                        </div>
-                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
-                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Lowest Overall Reading</h5>
-                            <p style="font-size: 1.8rem; font-weight: bold; color: #28a745; margin: 0;"><span id="trendLowestValue">0.00</span> mg/dL</p>
-                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Patient: <span id="trendLowestPatient">-</span></p>
-                        </div>
-                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
-                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Most Stable Patient</h5>
-                            <p style="font-size: 1.1rem; font-weight: bold; color: #28a745; margin: 0;"><span id="trendMostStable">-</span></p>
-                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Variance: <span id="trendStableVariance">0.00</span></p>
-                        </div>
-                        <div style="padding: 15px; background: #f8f9fa; border-radius: 6px;">
-                            <h5 style="color: #004080; font-size: 1rem; margin-bottom: 10px;">Most At-Risk Patient</h5>
-                            <p style="font-size: 1.1rem; font-weight: bold; color: #dc3545; margin: 0;"><span id="trendMostAtRisk">-</span></p>
-                            <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">Abnormal: <span id="trendRiskPct">0.00</span>%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
-                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">👥 Patient Statistics (Top 10)</h4>
-                    <div class="table-wrapper">
-                        <table id="patientStatsTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
-                            <thead>
-                                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                                    <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 0.9rem; color: #495057;">Patient Name</th>
-                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Readings</th>
-                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Average (mg/dL)</th>
-                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Highest</th>
-                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Lowest</th>
-                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Abnormal %</th>
-                                    <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 0.9rem; color: #495057;">Trend</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
-                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #dc3545; padding-bottom: 8px;">⚠️ Abnormal Readings Details</h4>
-                    <div id="abnormalDetailsArea">
-                        <p style="color: #666; padding: 10px 0;">Loading abnormal readings analysis...</p>
-                    </div>
-                </div>
-
-                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
-                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #dc3545; padding-bottom: 8px;">🍔 Top Food Triggers for Abnormal Readings (AI Insights)</h4>
-                    <div id="foodTriggersArea">
-                        <p style="color: #666; padding: 10px 0;">Loading AI insights...</p>
-                    </div>
-                </div>
-
-                <div style="background: white; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
-                    <h4 style="color: #004080; font-size: 1.1rem; margin-bottom: 15px; border-bottom: 2px solid #ff6b6b; padding-bottom: 8px;">🏃 Top Activity Triggers for Abnormal Readings (AI Insights)</h4>
-                    <div id="activityTriggersArea">
-                        <p style="color: #666; padding: 10px 0;">Loading AI insights...</p>
-                    </div>
-                </div>
-
-                <div class="form-actions" style="margin-top: 20px;">
-                    <button type="button" id="exportDetailedReportBtn" style="background: #6c757d; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500;">📄 Export JSON</button>
-                    <button type="button" id="exportPDFBtn" style="background: #dc3545; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500; margin-left: 10px;">📕 Export PDF</button>
-                    <button type="button" id="exportCSVBtn" style="background: #28a745; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500; margin-left: 10px;">📊 Export CSV</button>
-                    <button type="button" id="printReportBtn" style="background: #17a2b8; color: white; padding: 10px 24px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500; margin-left: 10px;">🖨️ Print Report</button>
-                </div>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.95rem; opacity: 0.9;">
+                Click to generate detailed monthly/annual reports with blood sugar trends and AI-powered analysis
             </div>
         </section>
 
@@ -413,7 +304,7 @@
         const ASSIGN_KEY = 'assignments';
 
         // Element References
-        let createForm, assignForm, patientSelect, specialistSelect, assignTableBody;
+        let createForm;
         let elTotalUsers, elCP, elCS, elCSt, elCA, elAssigned, elUnassigned, elR7Total, elR7Abn, elR7Pct;
         let roleSelect, licenseIdContainer;
 
@@ -554,6 +445,9 @@
             document.getElementById('totalSpecialistsCount').textContent = specialists.length;
             document.getElementById('totalStaffCount').textContent = staff.length;
 
+            // Update assignment statistics
+            updateAssignmentStats(specialists.length);
+
             console.log('Total users loaded:', users.length);
             console.log('Patients found:', patients.length);
             console.log('Specialists found:', specialists.length);
@@ -600,101 +494,24 @@
             }).join('');
         }
 
+        function updateAssignmentStats(specialistCount) {
+            const assigns = ASSIGNMENTS_CACHE || [];
+            document.getElementById('totalAssignmentsCount').textContent = assigns.length;
+            document.getElementById('activeSpecialistsCount').textContent = specialistCount;
+        }
+
         async function renderAssignments() {
             const users = USERS_CACHE || [];
             
             // Fetch assignments from database
             let assigns = await fetchAssignmentsFromAPI();
             
-            // Also sync from patient records in localStorage (legacy support)
-            try {
-                const raw = localStorage.getItem('patients');
-                if (raw) {
-                    let localPatients = JSON.parse(raw);
-                    if (localPatients && !Array.isArray(localPatients) && typeof localPatients === 'object') localPatients = Object.values(localPatients || {});
-                    if (Array.isArray(localPatients)) {
-                        localPatients.forEach(p => {
-                            // possible specialist references in patient record
-                            const specRef = (p.assigned_specialist && (p.assigned_specialist.id || p.assigned_specialist.user_id)) || p.specialist_id || p.specialistId || p.specialist || null;
-                            if (!specRef) return;
-
-                            // Resolve patient id to a consistent id to store in assignments
-                            const patientIdVal = p.user_id || p.userId || p.patientId || p.patient_id || p.id || p.number || null;
-                            if (!patientIdVal) return;
-
-                            // Try to resolve specialist id to a numeric user_id if possible (search USERS_CACHE)
-                            const specUser = users.find(u => String(u.user_id) === String(specRef) || String(u.id) === String(specRef) || (u.email && String(u.email).toLowerCase() === String(specRef).toLowerCase()) || ((u.first_name||'') + ' ' + (u.last_name||'')).toLowerCase().includes(String(specRef).toLowerCase()));
-                            const specIdVal = specUser ? (specUser.user_id || specUser.id) : specRef;
-
-                            // If an assignment for this patient already exists, update specialistId if different
-                            const existing = assigns.find(a => String(a.patientId) === String(patientIdVal));
-                            if (existing) {
-                                if (String(existing.specialistId) !== String(specIdVal)) {
-                                    existing.specialistId = specIdVal;
-                                }
-                            } else {
-                                assigns.push({ id: Date.now().toString() + Math.floor(Math.random()*1000), patientId: patientIdVal, specialistId: specIdVal });
-                            }
-                        });
-                        // persist any changes
-                        saveAssignments(assigns);
-                    }
-                }
-            } catch (e) { /* ignore sync errors */ }
-
-            // helper escape to avoid HTML injection
-            function escapeHtml(s) {
-                return String(s || '').replace(/[&<>'"]/g, function(c){
-                    return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c];
-                });
-            }
-
-            // Helper: try to resolve a user (patient/specialist) by several sources and return HTML
-            function resolveUserLabel(idOrVal, roleHint) {
-                if (idOrVal === null || idOrVal === undefined) return '—';
-                // 1) match by user_id in USERS_CACHE
-                const byId = users.find(u => String(u.user_id) === String(idOrVal) || String(u.id) === String(idOrVal));
-                if (byId) return `<div style="font-weight:600">${escapeHtml(((byId.first_name || '') + ' ' + (byId.last_name || '')).trim() || byId.email || '')}</div><div style="font-size:0.85rem;color:#666">${escapeHtml(byId.email || '')}</div>`;
-
-                // 2) if patients cached in localStorage (array or map), try to find by patientId / number / id / email
-                try {
-                    const raw = localStorage.getItem('patients');
-                    if (raw) {
-                        let localPatients = JSON.parse(raw);
-                        if (localPatients && !Array.isArray(localPatients) && typeof localPatients === 'object') localPatients = Object.values(localPatients || {});
-                        if (Array.isArray(localPatients)) {
-                            const p = localPatients.find(x => String(x.patientId) === String(idOrVal) || String(x.id) === String(idOrVal) || String(x.number) === String(idOrVal) || String(x.email) === String(idOrVal) || String((x.name||'')).toLowerCase().includes(String(idOrVal).toLowerCase()));
-                            if (p) return `<div style="font-weight:600">${escapeHtml(p.name || p.fullName || p.first_name || '')}</div><div style="font-size:0.85rem;color:#666">${escapeHtml(p.email || p.number || p.id || '')}</div>`;
-                        }
-                    }
-                } catch (e) { /* ignore */ }
-
-                // 3) try to resolve from specialists cache in localStorage
-                try {
-                    const rawSpecs = JSON.parse(localStorage.getItem('specialists') || '[]');
-                    if (Array.isArray(rawSpecs)) {
-                        const s = rawSpecs.find(s => String(s.id) === String(idOrVal) || String(s.user_id) === String(idOrVal) || String(s.username) === String(idOrVal) || String(s.email) === String(idOrVal));
-                        if (s) return `<div style="font-weight:600">${escapeHtml(s.full_name || s.name || s.username || '')}</div><div style="font-size:0.85rem;color:#666">${escapeHtml(s.email || '')}</div>`;
-                    }
-                } catch (e) { /* ignore */ }
-
-                // final fallback: raw value
-                return escapeHtml(String(idOrVal));
-            }
-
-            assignTableBody.innerHTML = assigns.map(a => `
-                <tr style="border-bottom: 1px solid #e9ecef;">
-                    <td style="padding: 14px 16px; font-size: 0.9rem; color: #212529;">${escapeHtml(String(a.id))}</td>
-                    <td style="padding: 14px 16px;">${resolveUserLabel(a.patientId, 'patient')}</td>
-                    <td style="padding: 14px 16px;">${resolveUserLabel(a.specialistId, 'specialist')}</td>
-                    <td style="padding: 14px 16px;"><button type="button" class="remove-assign" data-id="${escapeHtml(String(a.id))}" data-specialist-id="${escapeHtml(String(a.specialistId))}" data-patient-id="${escapeHtml(String(a.patientId))}" style="background: #dc3545; color: white; padding: 6px 14px; border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer; font-weight: 500;">Remove</button></td>
-                </tr>
-            `).join('');
+            // Update assignment statistics only (no table on this page)
+            const specialists = USERS_CACHE.filter(u => u.role === 'specialist');
+            updateAssignmentStats(specialists.length);
             
-            // Update patient dropdown to reflect current assignments
-            if (typeof updatePatientDropdown === 'function') {
-                updatePatientDropdown();
-            }
+            // Return assignments for use by other functions
+            return assigns;
         }
 
         async function renderReport() {
@@ -1556,11 +1373,6 @@
             // Bind Elements
             createForm = document.getElementById('createUserForm');
 
-            assignForm = document.getElementById('assignForm');
-            patientSelect = document.getElementById('patientSelect');
-            specialistSelect = document.getElementById('specialistSelect');
-            assignTableBody = document.querySelector('#assignTable tbody');
-
             elTotalUsers = document.getElementById('totalUsers');
             elCP = document.getElementById('countPatients');
             elCS = document.getElementById('countSpecialists');
@@ -1802,8 +1614,6 @@
 
             // Event Listeners
             if (createForm) createForm.addEventListener('submit', handleCreateUser);
-            if (assignForm) assignForm.addEventListener('submit', handleAssignSubmit);
-            if (assignTableBody) assignTableBody.addEventListener('click', handleRemoveAssignment);
 
             // Admin Profile Edit
             const adminProfileForm = document.getElementById('adminProfileForm');
