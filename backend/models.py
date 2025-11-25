@@ -129,7 +129,8 @@ class Database:
         except:
             # If connection check fails, reconnect
             self.connect()
-        return self.connection.cursor(dictionary=True, buffered=True)
+        # Use non-buffered cursor to avoid "commands out of sync" errors
+        return self.connection.cursor(dictionary=True, buffered=False)
     
     # User Management
     def get_user(self, user_id):
@@ -141,40 +142,34 @@ class Database:
             user = cursor.fetchone()
             
             if user and user.get('role'):
-                # Add role-specific data using fresh cursor for each query
+                # Add role-specific data using single query approach
                 if user['role'] == 'patient':
-                    cursor2 = self._get_cursor()
-                    try:
-                        cursor2.execute("SELECT health_care_number FROM patients WHERE user_id = %s", (user_id,))
-                        patient_data = cursor2.fetchone()
-                        if patient_data:
-                            user['health_care_number'] = patient_data.get('health_care_number')
-                    finally:
-                        cursor2.close()
+                    cursor.execute("SELECT health_care_number FROM patients WHERE user_id = %s", (user_id,))
+                    patient_data = cursor.fetchone()
+                    if patient_data:
+                        user['health_care_number'] = patient_data.get('health_care_number')
                 
                 elif user['role'] == 'specialist':
-                    cursor2 = self._get_cursor()
-                    try:
-                        cursor2.execute("SELECT license_id FROM specialists WHERE user_id = %s", (user_id,))
-                        specialist_data = cursor2.fetchone()
-                        if specialist_data:
-                            user['license_id'] = specialist_data.get('license_id')
-                    finally:
-                        cursor2.close()
+                    cursor.execute("SELECT license_id FROM specialists WHERE user_id = %s", (user_id,))
+                    specialist_data = cursor.fetchone()
+                    if specialist_data:
+                        user['license_id'] = specialist_data.get('license_id')
                 
                 elif user['role'] in ('staff', 'admin'):
-                    cursor2 = self._get_cursor()
-                    try:
-                        cursor2.execute("SELECT license_id FROM staff WHERE user_id = %s", (user_id,))
-                        staff_data = cursor2.fetchone()
-                        if staff_data:
-                            user['license_id'] = staff_data.get('license_id')
-                    finally:
-                        cursor2.close()
+                    cursor.execute("SELECT license_id FROM staff WHERE user_id = %s", (user_id,))
+                    staff_data = cursor.fetchone()
+                    if staff_data:
+                        user['license_id'] = staff_data.get('license_id')
             
             return user
+        except Exception as e:
+            logger.error(f"Error getting user {user_id}: {e}")
+            return None
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_user_by_email(self, email):
         """Get user by email"""
@@ -182,8 +177,14 @@ class Database:
         try:
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             return cursor.fetchone()
+        except Exception as e:
+            logger.error(f"Error getting user by email {email}: {e}")
+            return None
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def create_user(self, email, password, first_name, last_name, role, 
                    date_of_birth=None, phone=None, health_care_number=None, license_id=None, profile_image=None):
@@ -265,7 +266,10 @@ class Database:
             logger.error(f"Error creating user: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
 
     def update_user(self, user_id, *, email: str | None = None, password: str | None = None, 
                    first_name: str | None = None, last_name: str | None = None, 
@@ -401,7 +405,10 @@ class Database:
             logger.error(f"Error updating user {user_id}: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
 
     def delete_user(self, user_id) -> bool:
         """
@@ -418,7 +425,10 @@ class Database:
             logger.error(f"Error deleting user {user_id}: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
 
     def get_specialist_feedback(self, patient_id):
         """Get all feedback for a patient"""
@@ -447,7 +457,10 @@ class Database:
                 feedback.append(r)
             return feedback
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
 
     # Assigns Patient to Doctors
     def assign_patient_to_specialist(self, patient_user_id, specialist_user_id):
@@ -490,7 +503,10 @@ class Database:
             logger.error(f"Error assigning patient: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
 
             
     # Blood Sugar Readings
@@ -519,7 +535,10 @@ class Database:
             logger.error(f"Error creating reading: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_user_readings(self, user_id, days=30):
         """Get blood sugar readings for a user"""
@@ -546,7 +565,10 @@ class Database:
             
             return readings
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_all_readings_for_training(self):
         """Get all blood sugar readings for ML training"""
@@ -577,7 +599,10 @@ class Database:
             
             return readings
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def update_reading(self, reading_id, **kwargs):
         """Update a blood sugar reading"""
@@ -608,7 +633,10 @@ class Database:
             logger.error(f"Error updating reading: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def delete_reading(self, reading_id):
         """Delete a blood sugar reading"""
@@ -622,7 +650,10 @@ class Database:
             logger.error(f"Error deleting reading: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_reading_by_id(self, reading_id):
         """Get a specific reading by ID"""
@@ -643,7 +674,10 @@ class Database:
             
             return reading
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_abnormal_count(self, user_id, days=7):
         """Count abnormal readings in the past N days"""
@@ -659,7 +693,10 @@ class Database:
             result = cursor.fetchone()
             return result['count'] if result else 0
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     # AI Insights
     def create_ai_insight(self, user_id, pattern, suggestion, confidence):
@@ -678,7 +715,10 @@ class Database:
             logger.error(f"Error creating insight: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_user_insights(self, user_id, limit=10):
         """Get AI insights for a user"""
@@ -701,7 +741,10 @@ class Database:
             
             return insights
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     # Alerts
     def create_alert(self, user_id, reason, specialist_id=None):
@@ -720,7 +763,10 @@ class Database:
             logger.error(f"Error creating alert: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_user_alerts(self, user_id, days=30):
         """Get alerts for a user"""
@@ -743,7 +789,10 @@ class Database:
             
             return alerts
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     # Thresholds
     def get_user_thresholds(self, user_id):
@@ -766,7 +815,10 @@ class Database:
             
             return thresholds
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def set_user_threshold(self, user_id, status, min_value, max_value):
         """Set or update a user's threshold"""
@@ -799,7 +851,10 @@ class Database:
             logger.error(f"Error setting threshold: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_all_thresholds(self):
         """Get all thresholds in system (for staff management)"""
@@ -823,7 +878,10 @@ class Database:
             
             return thresholds
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def delete_threshold(self, threshold_id):
         """Delete a threshold by ID"""
@@ -838,7 +896,10 @@ class Database:
             logger.error(f"Error deleting threshold: {e}")
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     # Diet Recommendations
     def get_diet_recommendations(self, condition_name, meal_type=None):
@@ -870,7 +931,10 @@ class Database:
             
             return recommendations
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
 
     def get_all_users(self):
         """Get all users from the users table for the Admin Dashboard."""
@@ -893,7 +957,10 @@ class Database:
             logger.error(f"Database error in get_all_users: {e}") 
             raise
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
         
     # Specialist Functions
     def get_patient_specialist(self, patient_user_id):
@@ -912,7 +979,10 @@ class Database:
             cursor.execute(sql, (patient_user_id,))
             return cursor.fetchone()
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_specialist_patients(self, specialist_id):
         """Get all patients assigned to a specialist"""
@@ -928,7 +998,10 @@ class Database:
             cursor.execute(sql, (specialist_id,))
             return cursor.fetchall()
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_all_patients(self):
         """Get all patients in the system (for staff/admin)"""
@@ -943,7 +1016,10 @@ class Database:
             cursor.execute(sql)
             return cursor.fetchall()
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_specialist_dashboard(self, specialist_id):
         """Get dashboard data for specialist using pre-built view"""
@@ -964,7 +1040,10 @@ class Database:
             
             return result
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_specialist_attention_list(self, specialist_id):
         """Get patients requiring attention using pre-built view"""
@@ -988,7 +1067,10 @@ class Database:
             
             return patients
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     # Kaggle Datasets for ML Training
     def get_diabetes_dataset(self):
@@ -999,7 +1081,10 @@ class Database:
             cursor.execute(sql)
             return cursor.fetchall()
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def get_heart_disease_dataset(self):
         """Get heart disease data for ML training"""
@@ -1009,7 +1094,10 @@ class Database:
             cursor.execute(sql)
             return cursor.fetchall()
         finally:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
     
     def close(self):
         """Close database connection"""
