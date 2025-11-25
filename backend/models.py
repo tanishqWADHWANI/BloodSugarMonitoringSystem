@@ -269,6 +269,7 @@ class Database:
         finally:
             cursor.close()
 
+
     def update_user(self, user_id, *, email: str | None = None, password: str | None = None, 
                    first_name: str | None = None, last_name: str | None = None, 
                    role: str | None = None, date_of_birth: str | None = None, 
@@ -276,20 +277,32 @@ class Database:
                    license_id: str | None = None, profile_image: str | None = None) -> bool:
         """
         Update user. Only provided fields are updated.
-        Password is stored in plain text (demo only).
+        Password is securely hashed if provided.
         """
         cursor = self._get_cursor()
         try:
-            # Build updates for `users` table
             updates = {}
-            if email is not None:          updates["email"] = email
-            if password is not None:       updates["password_hash"] = password
-            if first_name is not None:     updates["first_name"] = first_name
-            if last_name is not None:      updates["last_name"] = last_name
-            if role is not None:           updates["role"] = role
-            if date_of_birth is not None:  updates["date_of_birth"] = date_of_birth
-            if phone is not None:          updates["phone"] = phone
-            if profile_image is not None:  updates["profile_image"] = profile_image
+            if email is not None:
+                updates["email"] = email
+            if password is not None and password != "":
+                # Only hash if not already hashed (very basic check)
+                if not password.startswith('pbkdf2:sha256:'):
+                    from werkzeug.security import generate_password_hash
+                    updates["password_hash"] = generate_password_hash(password)
+                else:
+                    updates["password_hash"] = password
+            if first_name is not None:
+                updates["first_name"] = first_name
+            if last_name is not None:
+                updates["last_name"] = last_name
+            if role is not None:
+                updates["role"] = role
+            if date_of_birth is not None:
+                updates["date_of_birth"] = date_of_birth
+            if phone is not None:
+                updates["phone"] = phone
+            if profile_image is not None:
+                updates["profile_image"] = profile_image
 
             if not updates:
                 return False
@@ -302,69 +315,31 @@ class Database:
             cursor.execute(sql, values)
             cursor.fetchall()  # Consume any remaining results
 
+            # If nothing was updated, return False
             if cursor.rowcount == 0:
                 return False
 
-            # Role-specific logic
-            if role is not None:
-                cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
-                result = cursor.fetchone()
-                cursor.fetchall()  # Consume any remaining results
-                old_role = result['role'] if result else None
-
-                # Clean up old role table
-                if old_role == "patient":
-                    cursor.execute("DELETE FROM patients WHERE user_id = %s", (user_id,))
-                    cursor.fetchall()  # Consume any remaining results
-                elif old_role == "specialist":
-                    cursor.execute("DELETE FROM specialists WHERE user_id = %s", (user_id,))
-                    cursor.fetchall()  # Consume any remaining results
-                elif old_role == "staff":
-                    cursor.execute("DELETE FROM staff WHERE user_id = %s", (user_id,))
-                    cursor.fetchall()  # Consume any remaining results
-
-                # Insert into new role table
-                if role == "patient":
-                    cursor.execute(
-                        "INSERT INTO patients (user_id, health_care_number) VALUES (%s, %s)",
-                        (user_id, health_care_number)
-                    )
-                    cursor.fetchall()  # Consume any remaining results
-                elif role == "specialist":
-                    cursor.execute("INSERT INTO specialists (user_id) VALUES (%s)", (user_id,))
-                    cursor.fetchall()  # Consume any remaining results
-                elif role == "staff":
-                    cursor.execute("INSERT INTO staff (user_id) VALUES (%s)", (user_id,))
-                    cursor.fetchall()  # Consume any remaining results
-
             # Update health care number if provided
-            elif health_care_number is not None:
+            if health_care_number is not None:
                 cursor.execute(
                     "UPDATE patients SET health_care_number = %s WHERE user_id = %s",
                     (health_care_number, user_id)
                 )
                 cursor.fetchall()  # Consume any remaining results
-            
+
             # Update license_id if provided (for specialists, staff, or admin)
-            # This is the province/state professional license number
             if license_id is not None:
-                # Get current role
                 cursor.execute("SELECT role FROM users WHERE user_id = %s", (user_id,))
                 role_result = cursor.fetchone()
                 cursor.fetchall()  # Consume any remaining results
-                
                 if not role_result:
                     logger.error(f"User {user_id} not found when updating license_id")
                     return False
-                    
                 current_role = role_result['role']
-                
                 if current_role == 'specialist':
-                    # Check if specialist record exists
                     cursor.execute("SELECT user_id FROM specialists WHERE user_id = %s", (user_id,))
                     spec_exists = cursor.fetchone()
                     cursor.fetchall()
-                    
                     if spec_exists:
                         cursor.execute(
                             "UPDATE specialists SET license_id = %s WHERE user_id = %s",
@@ -376,13 +351,10 @@ class Database:
                             (user_id, license_id)
                         )
                     cursor.fetchall()  # Consume any remaining results
-                    
                 elif current_role in ('staff', 'admin'):
-                    # Check if staff record exists
                     cursor.execute("SELECT user_id FROM staff WHERE user_id = %s", (user_id,))
                     staff_exists = cursor.fetchone()
                     cursor.fetchall()
-                    
                     if staff_exists:
                         cursor.execute(
                             "UPDATE staff SET license_id = %s WHERE user_id = %s",
@@ -397,6 +369,12 @@ class Database:
 
             self.connection.commit()
             return True
+        except Exception as e:
+            self.connection.rollback()
+            logger.error(f"Error updating user {user_id}: {e}")
+            raise
+        finally:
+            cursor.close()
 
         except Exception as e:
             self.connection.rollback()
