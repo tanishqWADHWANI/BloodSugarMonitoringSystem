@@ -1059,7 +1059,7 @@ def get_all_specialists():
                     s.license_id
                 FROM users u
                 INNER JOIN specialists s ON u.user_id = s.user_id
-                WHERE u.role = 'specialist' AND u.account_status = 'Active'
+                WHERE u.role = 'specialist'
                 ORDER BY u.last_name, u.first_name
             """)
             specialists = cursor.fetchall()
