@@ -1,0 +1,24 @@
+{
+  "backend": {
+    "host": "127.0.0.1",
+    "port": 5000,
+    "api_url": "http://127.0.0.1:5000"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "name": "blood_sugar_db",
+    "user": "root",
+    "password": ""
+  },
+  "frontend": {
+    "default_page": "index.html",
+    "api_endpoint": "http://127.0.0.1:5000"
+  },
+  "notes": {
+    "backend_port": "Flask API server runs on port 5000",
+    "database_port": "MySQL/MariaDB runs on default port 3306 (not specified in code, uses default)",
+    "common_mistake": "Do NOT use port 5000 for database connections - that's the Flask API port",
+    "database_connection": "Use mysql.connector.connect() without specifying port to use default 3306"
+  }
+}
