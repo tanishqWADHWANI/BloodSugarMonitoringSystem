@@ -1,24 +1,107 @@
+<!--
+  Blood Sugar Monitoring System - Patient Records (Staff View)
+  ==============================================================
+  This page allows clinic staff to view and search patient records.
+  
+  Features Overview:
+  - Patient search functionality (by name, ID, email)
+  - Patient list table with key information
+  - Individual patient profile cards
+  - Quick actions (view details, email, update contact)
+  
+  Key Components:
+  1. Navigation Bar - Dashboard, Patient Records (active), Logout
+  2. Search Form:
+     - Text input (search by name, ID, or email)
+     - Search button
+     - Clear button
+  
+  3. Patient List Table:
+     - Patient ID
+     - Full Name
+     - Email
+     - Phone Number
+     - Date of Birth
+     - Blood Type
+     - Assigned Specialist
+     - Last Visit Date
+     - Actions (View, Email, Edit)
+  
+  4. Patient Profile Card (detailed view):
+     - Profile photo
+     - Personal information (name, DOB, gender)
+     - Contact details (email, phone, address)
+     - Medical information (blood type, allergies)
+     - Emergency contact
+     - Assigned specialist
+     - Recent readings summary
+     - Document access link
+  
+  Search Features:
+  - Real-time search (filters as you type)
+  - Search across multiple fields (name, ID, email)
+  - Case-insensitive matching
+  - Clear search results button
+  
+  Staff Actions:
+  - View full patient profile
+  - Send email to patient
+  - Update contact information
+  - View patient documents
+  - View patient history
+  - View assigned specialist details
+  
+  Card Styling:
+  - White background with rounded corners
+  - Shadow for depth
+  - Responsive padding
+  - Blue headings (#004080)
+  
+  Security:
+  - Staff role verification required
+  - Token-based authentication
+  - Read-only access (no medical data modification)
+  - HIPAA compliance considerations
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - staff_email_patients.html (email functionality)
+  - staff_view.html (detailed patient view)
+  - js/api.js (API client library)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 267 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Patient Records</title>
-<link rel="stylesheet" href="css/style.css">
-<script src="js/api.js"></script>
-<script src="js/demo_users.js"></script>
+<link rel="stylesheet" href="css/style.css">  <!-- Main stylesheet -->
+<script src="js/api.js"></script>  <!-- API client functions -->
+<script src="js/demo_users.js"></script>  <!-- Demo account credentials -->
 <style>
-  h1 { color: #004080; margin-bottom: 20px; }
-  .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
-  .card h2 { margin-top: 0; color: #004080; }
-  .btn { display: inline-block; margin: 5px 5px 0 0; padding: 8px 12px; background: #004080; color: white; border-radius: 6px; text-decoration: none; }
-  .btn:hover { background: #0066cc; }
-  form input[type="text"] { padding: 8px; width: 200px; margin-right: 10px; border-radius: 6px; border: 1px solid #ccc; }
-  form button { padding: 8px 15px; border-radius: 6px; background: #004080; color: white; border: none; cursor: pointer; }
-  form button:hover { background: #0066cc; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
-  th { background: #004080; color: white; }
+  /* Page heading styling */
+  h1 { color: #004080; margin-bottom: 20px; }  /* Clinic blue heading */
+  
+  /* Card component styling - used for patient profiles */
+  .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }  /* White card with shadow */
+  .card h2 { margin-top: 0; color: #004080; }  /* Blue card headings */
+  
+  /* Button styling */
+  .btn { display: inline-block; margin: 5px 5px 0 0; padding: 8px 12px; background: #004080; color: white; border-radius: 6px; text-decoration: none; }  /* Blue button */
+  .btn:hover { background: #0066cc; }  /* Lighter blue on hover */
+  
+  /* Form input styling */
+  form input[type="text"] { padding: 8px; width: 200px; margin-right: 10px; border-radius: 6px; border: 1px solid #ccc; }  /* Search text input */
+  form button { padding: 8px 15px; border-radius: 6px; background: #004080; color: white; border: none; cursor: pointer; }  /* Search button */
+  form button:hover { background: #0066cc; }  /* Hover effect */
+  
+  /* Table styling */
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }  /* Full-width table */
+  th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }  /* Cell padding and borders */
+  th { background: #004080; color: white; }  /* Blue table header */
 </style>
 </head>
 <body>

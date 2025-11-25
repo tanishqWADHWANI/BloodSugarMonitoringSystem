@@ -1,3 +1,109 @@
+<!--
+  Blood Sugar Monitoring System - Staff Email Patients Page
+  ===========================================================
+  This page allows clinic staff to send emails to patients.
+  
+  Features Overview:
+  - Send individual emails to specific patients
+  - Send bulk emails to multiple patients
+  - Email templates for common scenarios
+  - Email composition with subject and body
+  - Patient selection with search
+  - Email history tracking
+  
+  Key Components:
+  1. Back Button - Return to staff dashboard
+  2. Email Composition Form:
+     - Recipient Selection:
+       * Single patient dropdown
+       * Multiple patient checkboxes
+       * "Select All" option
+       * Search/filter patients by name or ID
+     
+     - Email Content:
+       * Subject line input (required)
+       * Message body textarea (required, rich text)
+       * Email template dropdown (optional pre-fill)
+       * Attachment support (optional)
+     
+     - Actions:
+       * Send Email button
+       * Save as Draft button
+       * Preview Email button
+       * Clear Form button
+  
+  3. Email Templates Dropdown:
+     - Appointment Reminder
+     - Lab Results Available
+     - Medication Reminder
+     - Follow-up Required
+     - General Notification
+     - Custom (blank template)
+  
+  4. Patient List Display:
+     - Patient name
+     - Patient ID
+     - Email address
+     - Last email sent date
+     - Selection checkbox
+  
+  5. Sent Emails History:
+     - Timestamp of sent emails
+     - Recipient(s)
+     - Subject line
+     - View email content option
+  
+  Email Templates:
+  - Appointment Reminder:
+    * Subject: "Upcoming Appointment Reminder"
+    * Body: Pre-filled with appointment details placeholders
+  
+  - Lab Results Available:
+    * Subject: "Your Lab Results Are Ready"
+    * Body: Notification to check portal for results
+  
+  - Medication Reminder:
+    * Subject: "Medication Refill Reminder"
+    * Body: Reminder to refill prescriptions
+  
+  - Follow-up Required:
+    * Subject: "Follow-up Appointment Needed"
+    * Body: Request to schedule follow-up
+  
+  Bulk Email Features:
+  - Select multiple patients via checkboxes
+  - "Select All" checkbox for mass emails
+  - Preview recipient list before sending
+  - Confirmation dialog for bulk sends
+  - Progress indicator for sending ("Sending 1 of 25...")
+  
+  Form Validation:
+  - At least one recipient must be selected
+  - Subject line required (max 100 characters)
+  - Message body required (min 10 characters)
+  - Valid email addresses verification
+  
+  Security:
+  - Staff authentication required
+  - Only patients in clinic database can be emailed
+  - Email logging for accountability
+  - HIPAA-compliant email system
+  - No PHI in subject lines (recommended)
+  
+  Design:
+  - Gradient background: Green (#43e97b to #38f9d7)
+  - White container with shadow
+  - Blue headings (#2c5aa0)
+  - Modern, clean interface
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - staff_email_specialists.html (specialist email functionality)
+  - backend/notification_service.py (email sending backend)
+  - backend/app.py (POST /send-email endpoint)
+  
+  Page Size: 449 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,30 +111,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Patients - Staff Dashboard</title>
     <style>
+        /* Global reset for consistent styling */
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            margin: 0;  /* Remove default margins */
+            padding: 0;  /* Remove default padding */
+            box-sizing: border-box;  /* Include padding/border in width calculations */
         }
 
+        /* Body styling with gradient background */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  /* Modern font stack */
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);  /* Green gradient background */
+            min-height: 100vh;  /* Full viewport height */
+            padding: 20px;  /* Outer padding */
         }
 
+        /* Main container styling */
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 40px;
+            max-width: 900px;  /* Maximum content width */
+            margin: 0 auto;  /* Center horizontally */
+            background: white;  /* White background */
+            border-radius: 12px;  /* Rounded corners */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);  /* Prominent shadow for elevation */
+            padding: 40px;  /* Internal spacing */
         }
 
+        /* Heading styling */
         h1 {
-            color: #2c5aa0;
+            color: #2c5aa0;  /* Blue heading color */
             margin-bottom: 10px;
             font-size: 2rem;
         }

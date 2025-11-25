@@ -1,33 +1,149 @@
+<!--
+  Blood Sugar Monitoring System - Specialist Patient View Page
+  ==============================================================
+  This page provides specialists with detailed view of individual patient data.
+  
+  Features Overview:
+  - Complete patient profile with medical history
+  - Glucose readings table (last 30 days)
+  - Glucose trend chart (Chart.js visualization)
+  - AI-powered pattern analysis
+  - Dietary recommendations
+  - Alert history
+  - Communication tools (send message, dietary advice)
+  
+  Key Components:
+  1. Navigation Bar - Back to Dashboard, Logout
+  2. Patient Profile Section:
+     - Patient name, ID, photo
+     - Age, gender, blood type
+     - Contact information (email, phone)
+     - Emergency contact details
+     - Diagnosis (Type 1/2 Diabetes)
+     - Account creation date
+  
+  3. Glucose Readings Section:
+     - Readings table (last 30 days):
+       * Date & Time
+       * Glucose Level (mg/dL)
+       * Meal Type
+       * Activity (pre/post exercise)
+       * Notes
+       * Color-coded by glucose range
+     - Sort by date (newest first)
+     - Filter by meal type
+     - Filter by date range
+  
+  4. Trend Chart Section:
+     - 30-day glucose trend line chart
+     - Color-coded data points (low/normal/high)
+     - Meal type markers
+     - Average glucose line overlay
+     - Hover tooltips with full details
+  
+  5. Statistics Summary:
+     - Total readings (last 30 days)
+     - Average glucose level
+     - Minimum glucose (with date)
+     - Maximum glucose (with date)
+     - Standard deviation
+     - Time in range (% in 70-180 mg/dL)
+     - Time below range (% <70 mg/dL)
+     - Time above range (% >180 mg/dL)
+  
+  6. Pattern Analysis (AI Insights):
+     - Morning highs detection
+     - Post-meal spikes
+     - Hypoglycemia episodes
+     - Food triggers (specific foods causing spikes)
+     - Activity correlation (exercise impact)
+     - Medication adherence patterns
+  
+  7. Dietary Recommendations:
+     - Personalized meal suggestions
+     - Food substitution recommendations
+     - Meal timing optimization
+     - Portion size guidance
+     - Carbohydrate counting tips
+  
+  8. Alert History:
+     - Critical high/low glucose alerts
+     - Alert timestamp
+     - Alert resolution status
+     - Specialist response notes
+  
+  9. Communication Tools:
+     - Send Message to Patient button
+     - Send Dietary Advice button
+     - Schedule Follow-up button
+     - Request Additional Testing button
+  
+  Chart Features (Chart.js):
+  - Responsive line chart
+  - Gradient fill under line
+  - Color-coded data points:
+    * Red: <70 mg/dL (hypoglycemia)
+    * Green: 70-180 mg/dL (normal)
+    * Orange: 181-250 mg/dL (high)
+    * Red: >250 mg/dL (critical high)
+  - Legend with range indicators
+  - Zoom/pan capabilities
+  
+  Table Features:
+  - Sortable columns (click header to sort)
+  - Color-coded glucose values
+  - Expandable rows (show full notes)
+  - Export to CSV button
+  - Print-friendly view
+  
+  Security:
+  - Specialist authentication required
+  - Patient must be assigned to specialist
+  - Token-based access control
+  - Read-only view of patient data
+  - No data modification allowed
+  
+  Related Files:
+  - specialist_dashboard.html (specialist main dashboard)
+  - specialist.html (specialist login)
+  - js/demo_users.js (demo account data)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 525 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Patient Details - Online Blood Sugar Monitor</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <script src="js/demo_users.js"></script>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <script src="js/demo_users.js"></script>  <!-- Demo account credentials -->
   <style>
+    /* Logout button styling - red accent for prominence */
     .logout-btn {
-      background:#cc0000;
-      border:none;
-      border-radius:5px;
-      padding:8px 12px;
-      cursor:pointer;
-      color:white;
+      background:#cc0000;  /* Red background */
+      border:none;  /* Remove default border */
+      border-radius:5px;  /* Rounded corners */
+      padding:8px 12px;  /* Button padding */
+      cursor:pointer;  /* Pointer cursor on hover */
+      color:white;  /* White text */
     }
-    .logout-btn:hover { background:#ff3333; }
+    .logout-btn:hover { background:#ff3333; }  /* Lighter red on hover */
 
-    .container { max-width:1100px; margin:20px auto; padding:0 15px; }
-    h1,h2,h3,h4,p { margin-bottom:10px; }
+    .container { max-width:1100px; margin:20px auto; padding:0 15px; }  /* Main container */
+    h1,h2,h3,h4,p { margin-bottom:10px; }  /* Consistent heading margins */
 
+    /* Section card styling for organized content */
     .section-card {
-      background:white;
-      border-radius:8px;
-      box-shadow:0 3px 8px rgba(0,0,0,0.1);
-      padding:20px;
-      margin-bottom:25px;
+      background:white;  /* White card background */
+      border-radius:8px;  /* Rounded corners */
+      box-shadow:0 3px 8px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
+      padding:20px;  /* Internal spacing */
+      margin-bottom:25px;  /* Space between cards */
     }
 
+    /* Table styling */
     table {
       width:100%;
       border-collapse:collapse;

@@ -1,3 +1,78 @@
+<!--
+  Blood Sugar Monitoring System - Upload Documents Page
+  =======================================================
+  This page allows patients to upload medical documents and reports.
+  
+  Features Overview:
+  - File upload functionality (PDF, images, lab reports)
+  - Document categorization (lab results, prescriptions, medical records)
+  - File preview before upload
+  - Upload progress indicator
+  - Document list with download/delete options
+  
+  Key Components:
+  1. Navigation Bar - Back to Dashboard, Logout
+  2. Upload Form:
+     - Document Type dropdown (Lab Results, Prescription, Medical Record, Insurance, Other)
+     - Document Title input
+     - Description textarea
+     - File input (accepts PDF, PNG, JPG, JPEG)
+     - Upload button with progress bar
+  
+  3. Uploaded Documents List:
+     - Document icon/thumbnail
+     - Title and description
+     - Upload date
+     - File size
+     - Actions (View, Download, Delete)
+  
+  Supported File Types:
+  - PDF documents (.pdf)
+  - Images (.png, .jpg, .jpeg)
+  - Maximum file size: 10MB per file
+  
+  Document Categories:
+  - Lab Results: Blood tests, HbA1c reports, glucose logs
+  - Prescription: Doctor prescriptions for medications
+  - Medical Record: Medical history, diagnosis reports
+  - Insurance: Insurance cards, coverage documents
+  - Other: General medical documents
+  
+  Upload Process:
+  1. Select document category
+  2. Enter document title and description
+  3. Choose file from computer
+  4. Click Upload button
+  5. Progress bar shows upload status
+  6. Document added to list after successful upload
+  
+  File Storage:
+  - Files stored in backend/uploads/patient_{id}/ directory
+  - Secure file naming (UUID + original extension)
+  - Database record with metadata (title, description, upload date)
+  
+  Security:
+  - Patient authentication required
+  - Only user's own documents accessible
+  - File type validation on frontend and backend
+  - File size limit enforcement
+  - Virus scanning recommended (backend)
+  
+  Form Validation:
+  - Document type selection required
+  - Title required (max 100 characters)
+  - File selection required
+  - File type must be PDF or image
+  - File size must be under 10MB
+  
+  Related Files:
+  - patient_dashboard.html (main dashboard with documents link)
+  - backend/app.py (POST /upload endpoint)
+  - js/api.js (uploadDocument API call)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 137 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,30 +80,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upload Documents</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css">  <!-- Main stylesheet -->
   <style>
+    /* Page heading styling */
     h1 {
-      color: #004080;
-      margin-bottom: 20px;
+      color: #004080;  /* Clinic blue for heading */
+      margin-bottom: 20px;  /* Space below heading */
     }
 
+    /* Form container styling */
     form {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background: white;  /* White background */
+      padding: 20px;  /* Internal spacing */
+      border-radius: 12px;  /* Rounded corners */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
     }
 
+    /* Form label styling */
     form label {
-      display: block;
-      margin: 15px 0 5px;
-      font-weight: bold;
+      display: block;  /* Stack labels above inputs */
+      margin: 15px 0 5px;  /* Spacing around labels */
+      font-weight: bold;  /* Emphasize labels */
     }
 
+    /* Form input styling */
     form input {
-      width: 100%;
-      padding: 8px;
-      border-radius: 6px;
+      width: 100%;  /* Full width inputs */
+      padding: 8px;  /* Internal padding */
+      border-radius: 6px;  /* Rounded corners */
       border: 1px solid #ccc;
     }
 

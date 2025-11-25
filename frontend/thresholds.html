@@ -1,3 +1,74 @@
+<!--
+  Blood Sugar Monitoring System - Glucose Thresholds Configuration
+  ==================================================================
+  This page allows clinic staff to configure glucose alert thresholds for patients.
+  
+  Features Overview:
+  - Configure low glucose threshold (hypoglycemia)
+  - Configure high glucose threshold (hyperglycemia)
+  - Set custom thresholds per patient or system-wide defaults
+  - View current threshold settings
+  - Test threshold alerts
+  
+  Key Components:
+  1. Navigation Bar - Home, Patient, Specialist, Clinic (active), Contact
+  2. Page Header with Back Button
+  3. Threshold Configuration Form:
+     - Low Glucose Threshold (mg/dL)
+     - High Glucose Threshold (mg/dL)
+     - Apply to: Dropdown (System-wide / Specific Patient)
+     - Patient Selector (if specific patient selected)
+     - Save button
+  
+  4. Current Settings Display:
+     - System-wide default thresholds
+     - Patient-specific overrides list
+     - Last modified date and by whom
+  
+  5. Threshold Guidelines:
+     - Normal range: 70-180 mg/dL (general)
+     - Fasting normal: 70-100 mg/dL
+     - Post-meal normal: 70-140 mg/dL (2 hours after eating)
+     - Critical low: <70 mg/dL (hypoglycemia)
+     - Critical high: >180 mg/dL (hyperglycemia)
+  
+  Threshold Types:
+  - System Default: Applied to all patients unless overridden
+  - Patient-Specific: Custom thresholds for individual patients
+  - Meal Type-Specific: Different thresholds for fasting vs post-meal
+  
+  Alert Behavior:
+  - Readings below low threshold trigger critical low alert
+  - Readings above high threshold trigger critical high alert
+  - Alerts sent to patient dashboard, assigned specialist, and clinic staff
+  - Email notifications for critical alerts
+  
+  Medical Considerations:
+  - Elderly patients may need higher thresholds
+  - Type 1 vs Type 2 diabetes may require different ranges
+  - Pregnancy requires stricter thresholds
+  - Athletes may have different normal ranges
+  
+  Form Validation:
+  - Low threshold must be positive number
+  - High threshold must be greater than low threshold
+  - Recommended range validation (e.g., low 60-80, high 140-200)
+  - Confirmation for non-standard thresholds
+  
+  Security:
+  - Staff/Admin role required
+  - Token-based authentication
+  - Audit log for threshold changes
+  - Medical justification recommended for custom thresholds
+  
+  Related Files:
+  - patient_dashboard.html (displays alerts based on thresholds)
+  - backend/ml_service.py (uses thresholds for predictions)
+  - backend/notification_service.py (sends threshold breach alerts)
+  - js/api.js (getThresholds, updateThresholds API calls)
+  
+  Page Size: 320 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,30 +76,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Clinic Staff – Thresholds</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="css/dasshboard.css" />
+    <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+    <link rel="stylesheet" href="css/dasshboard.css" />  <!-- Dashboard-specific styles -->
 </head>
 
 <body>
-    <!-- HEADER -->
+    <!-- HEADER - Top navigation bar -->
     <header>
         <nav>
             <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="patient.html">Patient</a></li>
-                <li><a href="specialist.html">Specialist</a></li>
-                <li><a href="clinic.html" class="active">Clinic</a></li>
-                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="index.html">Home</a></li>  <!-- Homepage -->
+                <li><a href="patient.html">Patient</a></li>  <!-- Patient login -->
+                <li><a href="specialist.html">Specialist</a></li>  <!-- Specialist login -->
+                <li><a href="clinic.html" class="active">Clinic</a></li>  <!-- Current page -->
+                <li><a href="contact.html">Contact Us</a></li>  <!-- Contact page -->
             </ul>
         </nav>
     </header>
 
-    <!-- MAIN -->
+    <!-- MAIN - Main content area -->
     <main class="container">
         <section class="dashboard-header">
+            <!-- Page header with title and back button -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h1>Clinic Staff – Manage Thresholds</h1>
-                <button onclick="history.back()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">← Back to Dashboard</button>
+                <h1>Clinic Staff – Manage Thresholds</h1>  <!-- Page title -->
+                <button onclick="history.back()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">← Back to Dashboard</button>  <!-- Back navigation -->
             </div>
             <p class="subtext">
                 Define blood sugar thresholds used to categorize readings into

@@ -1,21 +1,125 @@
+<!--
+  Blood Sugar Monitoring System - Assign Patients to Specialists Page
+  =====================================================================
+  This page allows clinic staff to assign patients to specialists.
+  
+  Features Overview:
+  - View list of all patients
+  - View list of all specialists
+  - Assign patients to specialists (one-to-many relationship)
+  - View current assignments
+  - Unassign patients from specialists
+  - Search and filter functionality
+  
+  Key Components:
+  1. Navigation Bar - Dashboard, Patient Records, Logout
+  2. Specialists List:
+     - Specialist name
+     - Specialty (Endocrinologist, Nutritionist, etc.)
+     - Email
+     - Assigned patients count
+     - Dropdown selector for assignment
+  
+  3. Patients Assignment Table:
+     - Patient ID
+     - Patient Name
+     - Patient Email
+     - Current Specialist (if assigned)
+     - Specialist Dropdown (select specialist to assign)
+     - Assign Button (confirm assignment)
+     - Assignment Status (Assigned/Unassigned)
+  
+  4. Current Assignments Display:
+     - Specialist name
+     - List of assigned patients
+     - Unassign buttons
+     - Last assignment date
+  
+  Assignment Features:
+  - One specialist can have multiple patients
+  - One patient can only be assigned to one specialist at a time
+  - Re-assignment allowed (changes specialist)
+  - Unassignment allowed (removes specialist)
+  - Assignment history tracking (future feature)
+  
+  Assignment Process:
+  1. Staff views patient list
+  2. Selects specialist from dropdown for patient
+  3. Clicks "Assign" button
+  4. Frontend validates selection
+  5. API call to backend (POST /assign)
+  6. Database updated with assignment
+  7. Success message displayed
+  8. Button changes to green "Assigned" status
+  
+  Table Features:
+  - Search patients by name or email
+  - Filter by assignment status (All, Assigned, Unassigned)
+  - Sort by patient name, assignment status
+  - Color-coded assignment indicators:
+    * Green button: Successfully assigned
+    * Blue button: Ready to assign
+    * Gray text: No specialist selected
+  
+  Specialist Dropdown:
+  - Populated from backend specialists list
+  - Shows specialist name and specialty
+  - Empty option: "Select Specialist"
+  - Disabled if patient already assigned (must unassign first)
+  
+  Form Validation:
+  - Specialist must be selected from dropdown
+  - Patient ID must be valid
+  - Confirmation dialog for re-assignment
+  - Confirmation dialog for unassignment
+  
+  Security:
+  - Staff authentication required
+  - Only staff/admin roles can assign patients
+  - Assignment logging for audit trail
+  - Validation on backend to prevent unauthorized assignments
+  
+  Button States:
+  - Default (Blue): Ready to assign
+  - Success (Green): Assignment successful
+  - Hover (Lighter Blue): Hover state
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - patient_records.html (patient list view)
+  - backend/app.py (POST /assign-patient endpoint)
+  - js/api.js (assignPatientToSpecialist API call)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 174 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assign Patients to Doctors</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/api.js"></script>
+    <link rel="stylesheet" href="css/style.css">  <!-- Main stylesheet -->
+    <script src="js/api.js"></script>  <!-- API client functions -->
     <style>
-        h1 { color: #004080; margin-bottom: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }
-        th { background: #004080; color: white; }
-        select { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; }
-        button.assign-btn { padding: 8px 12px; background: #004080; color: white; border: none; border-radius: 6px; cursor: pointer; }
-        button.assign-btn:hover { background: #0066cc; }
-        button.assigned { background: #10b981; } /* Green for assigned status */
+        /* Page heading styling */
+        h1 { color: #004080; margin-bottom: 20px; }  /* Clinic blue heading */
+        
+        /* Card component styling */
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }  /* White card with shadow */
+        
+        /* Table styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }  /* Full-width table */
+        th, td { padding: 12px; border-bottom: 1px solid #ccc; text-align: left; }  /* Cell padding and borders */
+        th { background: #004080; color: white; }  /* Blue table header */
+        
+        /* Specialist dropdown styling */
+        select { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; }  /* Dropdown styling */
+        
+        /* Assign button styling */
+        button.assign-btn { padding: 8px 12px; background: #004080; color: white; border: none; border-radius: 6px; cursor: pointer; }  /* Blue assign button */
+        button.assign-btn:hover { background: #0066cc; }  /* Lighter blue on hover */
+        button.assigned { background: #10b981; } /* Green for assigned status - indicates successful assignment */
     </style>
 </head>
 <body>

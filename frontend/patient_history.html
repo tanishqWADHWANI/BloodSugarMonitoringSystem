@@ -1,3 +1,89 @@
+<!--
+  Blood Sugar Monitoring System - Patient History Page
+  ======================================================
+  This page provides comprehensive historical view of patient glucose readings.
+  
+  Features Overview:
+  - Date range filtering (last 7/30/90 days or custom range)
+  - Historical glucose trend chart (Chart.js line graph)
+  - Readings table with full details (glucose, meal type, notes, timestamp)
+  - Statistical summary (average, min, max, standard deviation)
+  - Export functionality (CSV, PDF)
+  - Print-friendly view
+  
+  Key Components:
+  1. Navigation Bar - Back to Dashboard, Logout
+  2. Date Range Controls:
+     - Quick select buttons (7 days, 30 days, 90 days, All)
+     - Custom date picker (start date, end date)
+     - Apply filter button
+  
+  3. Trend Chart:
+     - Line graph showing glucose values over time
+     - Color-coded by glucose range (low/normal/high)
+     - Meal type indicators on data points
+     - Responsive canvas sizing
+     - X-axis: dates, Y-axis: glucose levels (mg/dL)
+  
+  4. Readings Table:
+     - Date & Time column (sorted newest first)
+     - Glucose Level (mg/dL with color coding)
+     - Meal Type (Fasting, Breakfast, Lunch, Dinner, Snack)
+     - Activity (pre/post exercise info)
+     - Notes (patient comments)
+     - Actions (View details, Export)
+  
+  5. Statistics Summary:
+     - Total readings count
+     - Average glucose level
+     - Minimum glucose (with date)
+     - Maximum glucose (with date)
+     - Standard deviation
+     - Time in range (% of readings in normal range)
+  
+  Chart Features (Chart.js):
+  - Responsive line chart
+  - Gradient fill under line
+  - Hover tooltips with full details
+  - Legend with range indicators
+  - Grid lines for readability
+  - Zoom/pan capabilities
+  
+  Export Options:
+  - CSV export (all filtered readings)
+  - PDF export (summary + chart)
+  - Email report (send to specialist)
+  - Print view (optimized layout)
+  
+  Data Filtering:
+  - Filter by date range
+  - Filter by meal type
+  - Filter by glucose range (low/normal/high)
+  - Filter by activity type
+  - Search by notes content
+  
+  Color Coding:
+  - Low (<70 mg/dL): Red background
+  - Normal (70-180 mg/dL): Green background
+  - High (>180 mg/dL): Orange/Red background
+  
+  Security:
+  - Patient authentication required
+  - User ID validation on API calls
+  - Token-based access control
+  - Only user's own data visible
+  
+  Related Files:
+  - patient_dashboard.html (main dashboard with add readings)
+  - view_reports.html (analytical reports)
+  - js/api.js (getReadings API call)
+  - css/style.css (main stylesheet)
+  
+  External Dependencies:
+  - Chart.js v3.x (trend visualization)
+  
+  Page Size: 382 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,30 +91,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Patient History - Blood Sugar Monitor</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/demo_users.js"></script>
+  <link rel="stylesheet" href="css/style.css">  <!-- Main stylesheet -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- Chart.js for trend visualization -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
+  <script src="js/demo_users.js"></script>  <!-- Demo account credentials -->
 
   <style>
-   
+   /* Main content container styling */
     main {
-      background: white;
-      margin: 20px auto;
-      padding: 20px;
-      max-width: 1000px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      background: white;  /* White background for content area */
+      margin: 20px auto;  /* Center horizontally with vertical spacing */
+      padding: 20px;  /* Internal spacing */
+      max-width: 1000px;  /* Maximum content width */
+      border-radius: 10px;  /* Rounded corners */
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
     }
 
+    /* Page heading styling */
     h1 {
-      color: #004080;
-      margin-bottom: 10px;
+      color: #004080;  /* Clinic blue for heading */
+      margin-bottom: 10px;  /* Space below heading */
     }
 
+    /* Date range controls container */
     .controls {
-      display: flex;
-      flex-wrap: wrap;
+      display: flex;  /* Flexbox layout */
+      flex-wrap: wrap;  /* Allow wrapping on small screens */
       gap: 10px;
       margin-bottom: 20px;
       align-items: center;

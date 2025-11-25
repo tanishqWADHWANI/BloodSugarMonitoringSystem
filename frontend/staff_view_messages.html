@@ -1,3 +1,124 @@
+<!--
+  Blood Sugar Monitoring System - Staff View Messages Page
+  ==========================================================
+  This page allows clinic staff to view and manage incoming contact messages.
+  
+  Features Overview:
+  - View all contact form submissions
+  - Filter messages by status (unread, read, archived)
+  - Search messages by sender name, email, or subject
+  - Mark messages as read/unread
+  - Reply to messages
+  - Archive or delete messages
+  - Export message history
+  
+  Key Components:
+  1. Back Button - Return to staff dashboard
+  2. Message Filters Bar:
+     - All Messages
+     - Unread (with count badge)
+     - Read
+     - Archived
+     - Search input (name/email/subject)
+  
+  3. Messages List:
+     - Message card for each submission:
+       * Sender name
+       * Sender email
+       * Subject line
+       * Message preview (first 100 characters)
+       * Timestamp (received date/time)
+       * Unread indicator (bold, blue dot)
+       * Status badge (New, Read, Replied, Archived)
+     
+     - Actions per message:
+       * View Full Message button
+       * Reply button
+       * Mark as Read/Unread toggle
+       * Archive button
+       * Delete button
+  
+  4. Message Detail Modal:
+     - Full message content
+     - Complete sender information
+     - Timestamp details
+     - Reply form:
+       * Subject (pre-filled: "Re: [original subject]")
+       * Message body textarea
+       * Send Reply button
+       * Attachments (optional)
+  
+  5. Statistics Summary:
+     - Total messages count
+     - Unread messages count
+     - Messages today count
+     - Average response time
+  
+  Message Types:
+  - General Inquiries: Questions about services
+  - Appointment Requests: Scheduling requests
+  - Technical Support: Portal/system issues
+  - Feedback: User feedback and suggestions
+  - Emergency: Urgent medical concerns (flagged)
+  
+  Filter Options:
+  - All: Display all messages
+  - Unread: Only show unread messages
+  - Read: Only show read messages
+  - Archived: Show archived messages
+  - Today: Messages received today
+  - This Week: Messages from last 7 days
+  
+  Search Functionality:
+  - Search by sender name
+  - Search by sender email
+  - Search by subject keywords
+  - Search by message content
+  - Real-time filtering as you type
+  
+  Message Actions:
+  - Mark as Read: Changes status to read, removes bold
+  - Mark as Unread: Changes back to unread status
+  - Reply: Opens reply form with sender's email pre-filled
+  - Archive: Moves message to archived folder
+  - Delete: Permanently removes message (confirmation required)
+  
+  Reply Functionality:
+  - Reply form appears in modal or inline
+  - Subject auto-filled with "Re: [original subject]"
+  - Original message quoted in reply body
+  - Send reply via email notification service
+  - Reply status tracked (replied, pending)
+  
+  Message Card Display:
+  - Unread messages: Bold text, blue dot indicator
+  - Read messages: Normal text, no indicator
+  - Replied messages: Green checkmark icon
+  - Archived messages: Gray background
+  - Urgent messages: Red border, flag icon
+  
+  Security:
+  - Staff authentication required
+  - Message access logging
+  - No message content visible to patients
+  - Reply emails sent through secure system
+  - HIPAA compliance for any medical content
+  
+  Design:
+  - Gradient background: Pink/Red (#f093fb to #f5576c)
+  - White container with shadow
+  - Blue headings (#2c5aa0)
+  - Card-based message layout
+  - Responsive design for mobile
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - contact.html (contact form submission source)
+  - backend/app.py (GET /messages, POST /reply endpoints)
+  - backend/notification_service.py (email reply sending)
+  
+  Page Size: 546 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,30 +126,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Contact Messages - Staff Dashboard</title>
     <style>
+        /* Global reset for consistent styling */
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            margin: 0;  /* Remove default margins */
+            padding: 0;  /* Remove default padding */
+            box-sizing: border-box;  /* Include padding/border in width calculations */
         }
 
+        /* Body styling with gradient background */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  /* Modern font stack */
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);  /* Pink/red gradient background */
+            min-height: 100vh;  /* Full viewport height */
+            padding: 20px;  /* Outer padding */
         }
 
+        /* Main container styling */
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 40px;
+            max-width: 1200px;  /* Maximum content width (wider for message list) */
+            margin: 0 auto;  /* Center horizontally */
+            background: white;  /* White background */
+            border-radius: 12px;  /* Rounded corners */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);  /* Prominent shadow for elevation */
+            padding: 40px;  /* Internal spacing */
         }
 
+        /* Heading styling */
         h1 {
-            color: #2c5aa0;
+            color: #2c5aa0;  /* Blue heading color */
             margin-bottom: 10px;
             font-size: 2rem;
         }

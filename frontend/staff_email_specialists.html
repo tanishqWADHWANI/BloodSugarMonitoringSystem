@@ -1,3 +1,123 @@
+<!--
+  Blood Sugar Monitoring System - Staff Email Specialists Page
+  ==============================================================
+  This page allows clinic staff to send emails to specialists.
+  
+  Features Overview:
+  - Send individual emails to specific specialists
+  - Send bulk emails to multiple specialists
+  - Email composition with subject and body
+  - Specialist selection with search
+  - Email templates for professional communication
+  - Email history tracking
+  
+  Key Components:
+  1. Back Button - Return to staff dashboard
+  2. Email Composition Form:
+     - Recipient Selection:
+       * Single specialist dropdown
+       * Multiple specialist checkboxes
+       * "Select All" option
+       * Search/filter specialists by name or specialty
+     
+     - Email Content:
+       * Subject line input (required)
+       * Message body textarea (required, rich text)
+       * Email template dropdown (optional pre-fill)
+       * Priority flag checkbox (high priority)
+       * Attachment support (optional)
+     
+     - Actions:
+       * Send Email button
+       * Save as Draft button
+       * Preview Email button
+       * Clear Form button
+  
+  3. Email Templates Dropdown:
+     - Patient Referral
+     - Consultation Request
+     - Lab Results Notification
+     - Patient Update
+     - Schedule Coordination
+     - General Communication
+     - Custom (blank template)
+  
+  4. Specialist List Display:
+     - Specialist name
+     - Specialty (Endocrinologist, Nutritionist, etc.)
+     - Email address
+     - Phone number
+     - Assigned patients count
+     - Selection checkbox
+  
+  5. Sent Emails History:
+     - Timestamp of sent emails
+     - Recipient(s)
+     - Subject line
+     - Priority indicator
+     - View email content option
+  
+  Email Templates:
+  - Patient Referral:
+    * Subject: "Patient Referral - [Patient Name]"
+    * Body: Pre-filled with patient ID, reason for referral
+  
+  - Consultation Request:
+    * Subject: "Consultation Request for Patient [ID]"
+    * Body: Patient details, consultation reason
+  
+  - Lab Results Notification:
+    * Subject: "New Lab Results Available"
+    * Body: Notification of available results for review
+  
+  - Patient Update:
+    * Subject: "Patient Status Update - [Patient Name]"
+    * Body: Recent readings, status changes
+  
+  - Schedule Coordination:
+    * Subject: "Schedule Coordination Request"
+    * Body: Appointment scheduling, availability check
+  
+  Bulk Email Features:
+  - Select multiple specialists via checkboxes
+  - "Select All" option for broadcast messages
+  - Preview recipient list before sending
+  - Confirmation dialog for bulk sends
+  - Progress indicator for sending
+  
+  Priority Email:
+  - High priority flag option
+  - Urgent email indicators
+  - Immediate notification to recipients
+  - Used for critical patient situations
+  
+  Form Validation:
+  - At least one recipient must be selected
+  - Subject line required (max 100 characters)
+  - Message body required (min 10 characters)
+  - Valid email addresses verification
+  
+  Security:
+  - Staff authentication required
+  - Only registered specialists can be emailed
+  - Email logging for accountability
+  - HIPAA-compliant email system
+  - PHI protection in email content
+  
+  Design:
+  - Gradient background: Purple (#667eea to #764ba2)
+  - White container with shadow
+  - Blue headings (#2c5aa0)
+  - Modern, professional interface
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - staff_email_patients.html (patient email functionality)
+  - backend/notification_service.py (email sending backend)
+  - backend/app.py (POST /send-email-specialist endpoint)
+  
+  Page Size: 387 lines
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,30 +125,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Specialists - Staff Dashboard</title>
     <style>
+        /* Global reset for consistent styling */
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            margin: 0;  /* Remove default margins */
+            padding: 0;  /* Remove default padding */
+            box-sizing: border-box;  /* Include padding/border in width calculations */
         }
 
+        /* Body styling with gradient background */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  /* Modern font stack */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  /* Purple gradient background */
+            min-height: 100vh;  /* Full viewport height */
+            padding: 20px;  /* Outer padding */
         }
 
+        /* Main container styling */
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 40px;
+            max-width: 900px;  /* Maximum content width */
+            margin: 0 auto;  /* Center horizontally */
+            background: white;  /* White background */
+            border-radius: 12px;  /* Rounded corners */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);  /* Prominent shadow for elevation */
+            padding: 40px;  /* Internal spacing */
         }
 
+        /* Heading styling */
         h1 {
-            color: #2c5aa0;
+            color: #2c5aa0;  /* Blue heading color */
             margin-bottom: 10px;
             font-size: 2rem;
         }
