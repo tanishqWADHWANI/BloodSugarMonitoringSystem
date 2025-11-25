@@ -145,6 +145,14 @@ def get_user(user_id):
         if not user:
             return jsonify({"error": "User not found"}), 404
         
+        # Log profile image info for debugging
+        if 'profile_image' in user:
+            img_data = user.get('profile_image', '')
+            if img_data:
+                logger.info(f"Fetching user {user_id} - profile image exists (length: {len(img_data)} chars)")
+            else:
+                logger.info(f"Fetching user {user_id} - profile image is NULL or empty")
+        
         # Remove sensitive data
         if 'password_hash' in user:
             del user['password_hash']
@@ -165,6 +173,14 @@ def update_user(user_id):
         user = db.get_user(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
+        
+        # Log profile image info for debugging
+        if 'profileImage' in data:
+            img_data = data.get('profileImage', '')
+            if img_data:
+                logger.info(f"Updating user {user_id} with profile image (length: {len(img_data)} chars)")
+            else:
+                logger.info(f"Updating user {user_id} - profile image is empty")
         
         # Only pass known fields
         updated = db.update_user(
