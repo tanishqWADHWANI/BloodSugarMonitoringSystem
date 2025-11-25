@@ -123,16 +123,28 @@
                 const response = await fetch(`${API_BASE}/api/assignments`, { headers });
                 
                 if (!response.ok) {
-                    console.error('Failed to fetch assignments:', response.status);
-                    return;
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Failed to fetch assignments:', response.status, errorData);
+                    
+                    if (response.status === 404) {
+                        // Endpoint might not exist, show empty state
+                        allAssignments = [];
+                        updateAssignmentCounts();
+                        renderAssignments();
+                        return;
+                    }
+                    
+                    throw new Error(`HTTP ${response.status}: ${errorData.error || 'Failed to fetch assignments'}`);
                 }
                 
                 const data = await response.json();
                 allAssignments = data.assignments || [];
+                console.log(`Loaded ${allAssignments.length} assignments`);
                 updateAssignmentCounts();
                 renderAssignments();
             } catch (error) {
                 console.error('Error fetching assignments:', error);
+                alert('Failed to load assignments. Please check the console for details.');
             }
         }
 
@@ -148,16 +160,25 @@
                 if (patientsRes.ok) {
                     const pData = await patientsRes.json();
                     allPatients = pData.patients || [];
+                    console.log(`Loaded ${allPatients.length} patients`);
                     populatePatientSelect();
+                } else {
+                    console.error('Failed to fetch patients:', patientsRes.status);
+                    alert('Failed to load patients');
                 }
                 
                 if (specialistsRes.ok) {
                     const sData = await specialistsRes.json();
                     allSpecialists = sData.specialists || [];
+                    console.log(`Loaded ${allSpecialists.length} specialists`);
                     populateSpecialistSelect();
+                } else {
+                    console.error('Failed to fetch specialists:', specialistsRes.status);
+                    alert('Failed to load specialists');
                 }
             } catch (error) {
                 console.error('Error fetching patients/specialists:', error);
+                alert('Failed to load data. Please check the console for details.');
             }
         }
 
@@ -166,10 +187,19 @@
             if (!select) return;
             
             select.innerHTML = '<option value="">-- Select Patient --</option>';
+            
+            if (allPatients.length === 0) {
+                select.innerHTML += '<option value="" disabled>No patients available</option>';
+                return;
+            }
+            
             allPatients.forEach(p => {
                 const option = document.createElement('option');
                 option.value = p.user_id;
-                option.textContent = `${p.first_name} ${p.last_name} (ID: ${p.user_id})`;
+                const firstName = p.first_name || '';
+                const lastName = p.last_name || '';
+                const displayName = `${firstName} ${lastName}`.trim() || 'Unknown';
+                option.textContent = `${displayName} (ID: ${p.user_id})`;
                 select.appendChild(option);
             });
         }
@@ -179,10 +209,19 @@
             if (!select) return;
             
             select.innerHTML = '<option value="">-- Select Specialist --</option>';
+            
+            if (allSpecialists.length === 0) {
+                select.innerHTML += '<option value="" disabled>No specialists available</option>';
+                return;
+            }
+            
             allSpecialists.forEach(s => {
                 const option = document.createElement('option');
                 option.value = s.user_id;
-                option.textContent = `${s.first_name} ${s.last_name} (ID: ${s.user_id})`;
+                const firstName = s.first_name || '';
+                const lastName = s.last_name || '';
+                const displayName = `${firstName} ${lastName}`.trim() || 'Unknown';
+                option.textContent = `${displayName} (ID: ${s.user_id})`;
                 select.appendChild(option);
             });
         }
@@ -345,10 +384,23 @@
 
         // Initial load
         document.addEventListener('DOMContentLoaded', async () => {
-            await Promise.all([
-                fetchAssignmentsFromAPI(),
-                fetchPatientsAndSpecialists()
-            ]);
+            // Show loading indicator
+            const tbody = document.querySelector('#assignTable tbody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 40px; text-align: center; color: #666;">Loading assignments...</td></tr>';
+            }
+            
+            try {
+                await Promise.all([
+                    fetchAssignmentsFromAPI(),
+                    fetchPatientsAndSpecialists()
+                ]);
+            } catch (error) {
+                console.error('Error during initial load:', error);
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding: 40px; text-align: center; color: #dc3545;">Failed to load data. Please refresh the page.</td></tr>';
+                }
+            }
         });
     </script>
 </body>
