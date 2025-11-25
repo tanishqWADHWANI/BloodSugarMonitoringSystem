@@ -1,3 +1,33 @@
+"""
+Blood Sugar Monitoring System - Update Demo Emails Script
+==========================================================
+Update demo patient email addresses to @x.com domain.
+
+Purpose:
+- Remove duplicate older demo users (user_id 201, 202)
+- Update email addresses for demo patients (315-319) to @x.com domain
+- Standardize demo account email format
+- Verify all updates successful
+
+Usage:
+    python update_demo_emails.py
+
+Email Updates:
+- Alice (315): alice@example.com → alice@x.com
+- Bob (316): bob@example.com → bob@x.com
+- Sarah (317): sarah@example.com → sarah@x.com
+- Michael (318): michael@example.com → michael@x.com
+- Emma (319): emma@example.com → emma@x.com
+
+Process:
+1. Delete old duplicate users (201, 202)
+2. Update emails for users 315-319
+3. Verify each update
+4. Display final email addresses
+
+NOTE: This is a database migration script with inline code, no functions.
+"""
+
 import mysql.connector
 
 # Connect to database

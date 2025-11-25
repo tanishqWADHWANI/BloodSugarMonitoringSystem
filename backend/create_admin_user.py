@@ -1,5 +1,47 @@
 #!/usr/bin/env python3
-"""Create or verify admin user in database"""
+"""
+Blood Sugar Monitoring System - Create Admin User Script
+=========================================================
+Create or verify demo admin user in database.
+
+Purpose:
+- Create demo admin user (user_id 999) if not exists
+- Set up admin credentials for testing
+- Avoid duplicate admin creation
+
+Usage:
+    python create_admin_user.py
+
+Admin Account Created:
+- User ID: 999
+- Email: admin@clinic.com
+- Password: demo123 (SHA256 hashed)
+- Role: admin
+- Name: Admin User
+
+FUNCTIONS SUMMARY (Total: 1 creation function)
+===============================================
+
+USER CREATION FUNCTIONS:
+------------------------
+- create_demo_admin():
+    Create demo admin user if not exists
+    Process:
+        1. Check if admin user 999 already exists
+        2. If exists, display message and exit
+        3. If not exists, create new admin user with:
+           - User ID: 999
+           - Email: admin@clinic.com
+           - Password: demo123 (SHA256 hashed)
+           - Role: admin
+           - First name: Admin
+           - Last name: User
+        4. Insert into users table
+        5. Commit transaction or rollback on error
+        6. Display success/failure message
+    Returns:
+        None (prints status messages)
+"""
 
 from models import Database
 import hashlib

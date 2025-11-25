@@ -1,3 +1,34 @@
+"""
+Blood Sugar Monitoring System - Rename DB Columns Script
+=========================================================
+Migrate database columns from working_id to license_id.
+
+Purpose:
+- Rename column working_id to license_id in multiple tables
+- Update specialists table schema
+- Update staff table schema
+- Verify column rename successful
+- Maintain data integrity during migration
+
+Usage:
+    python rename_db_columns.py
+
+Tables Updated:
+1. specialists:
+   - working_id → license_id (VARCHAR(50))
+
+2. staff:
+   - working_id → license_id (VARCHAR(50))
+
+Migration Steps:
+1. ALTER TABLE specialists CHANGE COLUMN working_id license_id
+2. ALTER TABLE staff CHANGE COLUMN working_id license_id
+3. Verify column structure
+4. Display updated schema
+
+NOTE: This is a database migration script with inline code, no functions.
+"""
+
 import mysql.connector
 
 # Connect to database

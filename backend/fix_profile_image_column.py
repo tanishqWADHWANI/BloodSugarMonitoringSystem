@@ -1,3 +1,43 @@
+"""
+Blood Sugar Monitoring System - Fix Profile Image Column Script
+================================================================
+Migrate profile_image column from VARCHAR(255) to MEDIUMTEXT.
+
+Purpose:
+- Fix profile_image column size limitation
+- Change from VARCHAR(255) (255 bytes) to MEDIUMTEXT (16MB)
+- Allow storing larger base64-encoded images
+- Prevent image upload failures due to size constraints
+
+Usage:
+    python fix_profile_image_column.py
+
+Database Migration:
+- Table: users
+- Column: profile_image
+- Before: VARCHAR(255) - max 255 bytes
+- After: MEDIUMTEXT - max 16MB
+
+FUNCTIONS SUMMARY (Total: 1 migration function)
+================================================
+
+MIGRATION FUNCTIONS:
+-------------------
+- fix_profile_image_column():
+    Alter profile_image column to support larger images
+    Process:
+        1. Connect to MySQL database
+        2. Execute ALTER TABLE statement:
+           ALTER TABLE users MODIFY COLUMN profile_image MEDIUMTEXT
+        3. Commit database changes
+        4. Display success message
+    Output:
+        - Migration status
+        - New column capacity (16MB)
+    Returns:
+        None (prints status messages)
+"""
+
 import mysql.connector
 from mysql.connector import Error
 

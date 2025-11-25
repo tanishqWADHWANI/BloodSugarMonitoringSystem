@@ -1,3 +1,28 @@
+"""
+Blood Sugar Monitoring System - Check Assignment Script
+========================================================
+Verify specialist-patient assignments in database.
+
+Purpose:
+- Find Dr. Christina Lee's specialist_id
+- Display all patients assigned to Dr. Christina Lee
+- Find Alice Johnson's patient_id
+- Display all specialists assigned to Alice
+- Verify assignment relationship exists
+
+Usage:
+    python check_assignment.py
+
+Output:
+- Dr. Christina Lee's specialist record
+- All patients assigned to Dr. Christina Lee
+- Alice Johnson's patient record
+- All specialists assigned to Alice
+- Assignment verification status
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import mysql.connector
 
 # Connect to database

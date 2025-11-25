@@ -1,3 +1,48 @@
+"""
+Blood Sugar Monitoring System - Verify Database Structure Script
+=================================================================
+Verify database structure for license_id (formerly working_id) support.
+
+Purpose:
+- Check table structures for license_id columns
+- Verify column types and constraints
+- Display sample data from each table
+- Confirm database migration successful
+
+Usage:
+    python verify_db_structure.py
+
+Tables Checked:
+1. specialists table:
+   - specialist_id (primary key)
+   - user_id (foreign key)
+   - license_id (unique identifier)
+   - specialization
+
+2. staff table:
+   - staff_id (primary key)
+   - user_id (foreign key)
+   - license_id (unique identifier)
+
+3. patients table:
+   - patient_id (primary key)
+   - user_id (foreign key)
+   - license_id (unique identifier)
+   - date_of_birth
+   - medical_history
+
+4. users table:
+   - All user accounts and roles
+
+Output:
+- Table structures with column details
+- Sample records from each table
+- license_id verification
+- Data integrity checks
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import mysql.connector
 
 conn = mysql.connector.connect(

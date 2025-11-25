@@ -1,3 +1,29 @@
+"""
+Blood Sugar Monitoring System - Check All Users Script
+=======================================================
+Display all users and their health records count from database.
+
+Purpose:
+- List all users grouped by role (admin, patient, specialist, staff)
+- Display user details (user_id, email, name)
+- Count health records for each patient
+- Verify user data and roles
+
+Usage:
+    python check_all_users.py
+
+Output:
+- All users organized by role:
+  * Admins
+  * Patients
+  * Specialists
+  * Staff
+- Health records count per patient
+- Total users per role
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import mysql.connector
 
 conn = mysql.connector.connect(

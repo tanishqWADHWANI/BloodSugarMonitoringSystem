@@ -1,3 +1,28 @@
+"""
+Blood Sugar Monitoring System - Check Alice Data Script
+========================================================
+Verify Alice's user account and blood sugar readings.
+
+Purpose:
+- Find Alice's user record by email (alice@x.com)
+- Count total blood sugar readings for Alice (user_id 315)
+- Display last 5 blood sugar readings
+- Verify demo data population for Alice
+
+Usage:
+    python check_alice_data.py
+
+Output:
+- Alice's user information (user_id, email)
+- Total count of blood sugar readings
+- Last 5 readings with:
+  * Date/time
+  * Blood sugar value
+  * Food intake
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import mysql.connector
 
 conn = mysql.connector.connect(

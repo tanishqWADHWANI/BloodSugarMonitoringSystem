@@ -1,3 +1,30 @@
+"""
+Blood Sugar Monitoring System - Update Passwords Script
+========================================================
+Update staff and admin password hashes using werkzeug hashing.
+
+Purpose:
+- Generate proper werkzeug password hashes for staff and admin
+- Update password_hash column for user_id 106 (staff)
+- Update password_hash column for user_id 999 (admin)
+- Verify hash generation successful
+
+Usage:
+    python update_passwords.py
+
+Password Updates:
+- Staff (user_id 106): demo123 → werkzeug pbkdf2 hash
+- Admin (user_id 999): admin123 → werkzeug pbkdf2 hash
+
+Process:
+1. Generate werkzeug hashes using generate_password_hash()
+2. Update users table with new hashes
+3. Commit changes to database
+4. Verify updates by retrieving and displaying hash prefixes
+
+NOTE: This is a database migration script with inline code, no functions.
+"""
+
 from werkzeug.security import generate_password_hash
 from models import Database
 

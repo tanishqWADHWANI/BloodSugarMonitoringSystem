@@ -1,3 +1,29 @@
+"""
+Blood Sugar Monitoring System - Check Admin Working ID Script
+==============================================================
+Display all users grouped by role with their working_id/license_id.
+
+Purpose:
+- Check admin users and their working_id from staff table
+- Check specialists and their working_id from specialists table
+- Check patients and their working_id from patients table
+- Verify working_id column exists and is populated
+- Display counts per role
+
+Usage:
+    python check_admin_workingid.py
+
+Output:
+- Admin users with working_id
+- Specialists with working_id
+- Patients with working_id
+- Counts per role category
+
+Note: working_id was later renamed to license_id in the schema.
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import mysql.connector
 
 conn = mysql.connector.connect(

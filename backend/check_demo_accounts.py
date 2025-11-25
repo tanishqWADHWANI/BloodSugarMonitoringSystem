@@ -1,3 +1,35 @@
+"""
+Blood Sugar Monitoring System - Check Demo Accounts Script
+===========================================================
+Verify all demo accounts exist and test password authentication.
+
+Purpose:
+- Test all demo account credentials
+- Verify password hashing works correctly
+- Display demo user information
+- Check account roles and IDs
+
+Usage:
+    python check_demo_accounts.py
+
+Demo Accounts Tested:
+- alice@x.com / password123
+- bob@x.com / password123
+- sarah@x.com / password123
+- michael@x.com / password123
+- emma@x.com / password123
+- alice@example.com / password123
+- bob@example.com / password123
+
+Output:
+- Account existence status
+- User ID, name, and role
+- Password verification result (✅ or ❌)
+- Account readiness for login
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import mysql.connector
 from werkzeug.security import check_password_hash
 

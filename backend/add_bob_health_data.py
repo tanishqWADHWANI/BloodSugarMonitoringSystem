@@ -1,3 +1,32 @@
+"""
+Blood Sugar Monitoring System - Add Bob Health Data Script
+===========================================================
+Create 8 days of health data for Bob with prediabetic profile.
+
+Purpose:
+- Generate 8 days of blood sugar readings for Bob (user_id 202)
+- Simulate prediabetic patterns (fasting 100-115 mg/dL)
+- Create morning and afternoon readings
+- Include food intake and meal types
+
+Usage:
+    python add_bob_health_data.py
+
+Health Profile (Prediabetic):
+- Fasting glucose: 100-115 mg/dL (borderline)
+- Post-meal readings: 120-145 mg/dL
+- Status: Normal readings, monitoring needed
+
+Data Generated:
+- 8 days × 2 readings per day = 16 total readings
+- Morning readings (fasting)
+- Afternoon readings (post-meal)
+- Realistic food intake descriptions
+- Activity levels
+
+NOTE: This is a data generation script with inline code, no functions.
+"""
+
 import mysql.connector
 from datetime import datetime, timedelta
 import random

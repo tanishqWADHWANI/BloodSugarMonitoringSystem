@@ -1,3 +1,40 @@
+"""
+Blood Sugar Monitoring System - List Patients Script
+=====================================================
+Display all patient accounts with email addresses.
+
+Purpose:
+- List all users with role='patient'
+- Display user ID, name, and email
+- Order by user_id
+- Verify patient accounts exist
+
+Usage:
+    python list_patients.py
+
+FUNCTIONS SUMMARY (Total: 1 listing function)
+==============================================
+
+LISTING FUNCTIONS:
+------------------
+- list_all_patient_emails():
+    Display all patient accounts from database
+    Process:
+        1. Connect to MySQL database
+        2. Query all users with role='patient'
+        3. Order results by user_id
+        4. Display formatted list with:
+           - User ID
+           - Full name
+           - Email address
+        5. Show total count
+    Output:
+        - Formatted patient list
+        - User details per patient
+    Returns:
+        None (prints to console)
+"""
+
 import mysql.connector
 from mysql.connector import Error
 

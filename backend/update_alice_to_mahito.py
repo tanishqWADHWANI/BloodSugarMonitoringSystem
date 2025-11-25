@@ -1,3 +1,40 @@
+"""
+Blood Sugar Monitoring System - Update Alice to Mahito Script
+==============================================================
+Change Alice's email address from alice@x.com to mahito@x.com.
+
+Purpose:
+- Update demo patient email address
+- Test email change functionality
+- Verify database update successful
+
+Usage:
+    python update_alice_to_mahito.py
+
+Email Change:
+- User: Alice Johnson (user_id 315)
+- Before: alice@x.com
+- After: mahito@x.com
+
+FUNCTIONS SUMMARY (Total: 1 update function)
+=============================================
+
+UPDATE FUNCTIONS:
+-----------------
+- update_alice_email():
+    Change Alice's email from alice@x.com to mahito@x.com
+    Process:
+        1. Connect to MySQL database
+        2. Find user with email 'alice@x.com'
+        3. Display current user information
+        4. Execute UPDATE query to change email to 'mahito@x.com'
+        5. Commit changes to database
+        6. Verify update successful
+        7. Display updated user information
+    Returns:
+        None (prints status messages)
+"""
+
 import mysql.connector
 from mysql.connector import Error
 

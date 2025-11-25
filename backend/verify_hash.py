@@ -1,3 +1,34 @@
+"""
+Blood Sugar Monitoring System - Verify Hash Script
+===================================================
+Check password hash format for admin and staff users.
+
+Purpose:
+- Verify password hash type (SHA256 vs werkzeug pbkdf2)
+- Check hash length and format
+- Display hash prefixes for debugging
+- Identify which hashing algorithm is in use
+
+Usage:
+    python verify_hash.py
+
+Users Checked:
+- Admin (user_id 999)
+- Staff (user_id 106)
+
+Hash Types:
+- SHA256: 64 character hexadecimal string
+- Werkzeug pbkdf2: Starts with 'pbkdf2:sha256:'
+
+Output:
+- Hash length
+- Hash prefix (first 50 characters)
+- Hash type identification
+- Format validation
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import sys
 from models import Database
 

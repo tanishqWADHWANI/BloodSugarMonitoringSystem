@@ -1,6 +1,81 @@
 """
-Populate health history data for all demo patients in the database
-Creates 8 entries per patient with varying blood sugar readings including abnormal values
+Blood Sugar Monitoring System - Demo Health Data Populator
+===========================================================
+Populate health history data for all demo patients in the database.
+Creates 8 entries per patient with varying blood sugar readings including abnormal values.
+
+Purpose:
+- Populates comprehensive health data for 5 demo patient accounts
+- Creates realistic blood sugar patterns based on health profiles
+- Includes abnormal readings for testing alert systems
+- Generates time-series data for testing charts and trends
+
+Usage:
+    python populate_demo_health_data.py
+
+Demo Patients:
+- Alice (user_id 315): Diabetic with strict monitoring, occasional spikes
+- Bob (user_id 316): Prediabetic, borderline readings
+- Sarah (user_id 317): Type 2 diabetes, moderate control
+- Michael (user_id 318): Well controlled diabetes
+- Emma (user_id 319): Newly diagnosed, learning patterns
+
+FUNCTIONS SUMMARY (Total: 6 data population functions)
+=======================================================
+
+DATA GENERATION:
+----------------
+- generate_reading_for_day(profile, day_number, is_abnormal_day):
+    Generate blood sugar reading for specific day based on health profile
+    Args:
+        profile (dict): Health profile with blood sugar ranges
+        day_number (int): Day number (1-8)
+        is_abnormal_day (bool): Whether to generate abnormal reading
+    Returns:
+        float: Blood sugar value in mg/dL
+
+- get_meal_type_for_day(day_number):
+    Determine meal type based on day number (rotating pattern)
+    Args:
+        day_number (int): Day number (1-8)
+    Returns:
+        str: Meal type (Breakfast/Lunch/Dinner/Snack/Fasting)
+
+- get_food_intake(meal_type):
+    Get appropriate food description for meal type
+    Args:
+        meal_type (str): Type of meal
+    Returns:
+        str: Food description
+
+- get_activity(day_number):
+    Get activity description for day
+    Args:
+        day_number (int): Day number
+    Returns:
+        str: Activity description
+
+DATABASE OPERATIONS:
+--------------------
+- populate_patient_data(connection, patient):
+    Populate 8 days of health data for single patient
+    Args:
+        connection: MySQL database connection
+        patient (dict): Patient info with user_id, name, profile
+    Returns:
+        None (commits to database)
+
+MAIN EXECUTION:
+---------------
+- main():
+    Main function to populate data for all demo patients
+    Process:
+        1. Connect to MySQL database
+        2. Delete existing readings for demo patients (clean slate)
+        3. Populate 8 entries per patient with realistic patterns
+        4. Include abnormal readings for testing
+        5. Commit all changes
+        6. Display summary
 """
 
 import mysql.connector

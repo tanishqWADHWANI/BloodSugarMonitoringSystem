@@ -1,6 +1,40 @@
 """
-Direct SQL update to add profile picture for Bob
+Blood Sugar Monitoring System - Update Bob Profile Picture Script
+==================================================================
+Add profile picture URL to Bob's account via direct SQL update.
+
+Purpose:
+- Add profile image to Bob's user record (user_id 316)
+- Use external image URL (Minion character)
+- Test profile_image column functionality
+- Verify image URL storage
+
+Usage:
+    python update_bob_sql.py
+
+Profile Image:
+- User: Bob (user_id 316)
+- Image: Minion character from Despicable Me
+- URL: https://i.pinimg.com/736x/8b/16/7a/8b167af653c2399dd93b952a48740620.jpg
+
+FUNCTIONS SUMMARY (Total: 1 update function)
+=============================================
+
+UPDATE FUNCTIONS:
+-----------------
+- update_bob_profile_picture():
+    Add profile picture to Bob's account
+    Process:
+        1. Connect to MySQL database
+        2. Prepare Minion image URL
+        3. Execute UPDATE query: SET profile_image = URL WHERE user_id = 316
+        4. Commit changes
+        5. Display success message with URL
+        6. Show rows affected count
+    Returns:
+        None (prints status messages)
 """
+
 import mysql.connector
 from mysql.connector import Error
 

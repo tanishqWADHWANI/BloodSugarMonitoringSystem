@@ -1,3 +1,25 @@
+"""
+Blood Sugar Monitoring System - Check Bob's Data Script
+========================================================
+Verify Bob's user account and health records in database.
+
+Purpose:
+- Find Bob's user record by email (bob@x.com)
+- Count Bob's blood sugar readings
+- Display all health records for Bob
+- Verify demo data population
+
+Usage:
+    python check_bob.py
+
+Output:
+- Bob's user information (user_id, email, first_name)
+- Total count of Bob's health records
+- All blood sugar readings with timestamps
+
+NOTE: This is a diagnostic script with inline code, no functions.
+"""
+
 import mysql.connector
 
 # Direct connection

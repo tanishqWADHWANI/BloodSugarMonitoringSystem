@@ -1,3 +1,41 @@
+"""
+Blood Sugar Monitoring System - Check All Specialists Script
+=============================================================
+Display all specialists and their patient assignments.
+
+Purpose:
+- List all users with 'specialist' role
+- Display specialist details (user_id, email, name, license_id)
+- Count assigned patients per specialist
+- Show profile image presence
+- Verify specialist data structure
+
+Usage:
+    python check_all_specialists.py
+
+FUNCTIONS SUMMARY (Total: 1 main function)
+===========================================
+
+DIAGNOSTIC FUNCTIONS:
+--------------------
+- check_specialists():
+    Display all specialists and their assignments
+    Process:
+        1. Connect to MySQL database
+        2. Query all users with role='specialist'
+        3. Join with specialists table for license_id
+        4. Count assigned patients per specialist
+        5. Check profile image presence
+        6. Display formatted results
+    Output:
+        - Specialist count
+        - Each specialist's details
+        - Patient assignment counts
+        - Profile image status
+    Returns:
+        None (prints to console)
+"""
+
 import mysql.connector
 from mysql.connector import Error
 

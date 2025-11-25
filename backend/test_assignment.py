@@ -1,3 +1,39 @@
+"""
+Blood Sugar Monitoring System - Assignment API Test Script
+===========================================================
+Test patient-to-specialist assignment API functionality.
+
+Purpose:
+- Test assignment API endpoint
+- Verify Alice (user_id 315) can be assigned to Dr. Christina Lee
+- Test database assignment operations
+- Validate API responses
+
+Usage:
+    python test_assignment.py
+
+Test Cases:
+- Assign patient to specialist via API
+- Verify assignment in database
+- Test GET endpoint for retrieving assignments
+
+FUNCTIONS SUMMARY (Total: 1 test function)
+===========================================
+
+TEST FUNCTIONS:
+---------------
+- test_assign_alice_to_christina():
+    Test assigning Alice (user_id 315) to Dr. Christina Lee
+    Process:
+        1. Connect to MySQL database directly
+        2. Find Christina's user_id from specialists table
+        3. Create assignment record
+        4. Test API endpoint to verify assignment
+        5. Print results and status
+    Returns:
+        None (prints test results)
+"""
+
 import requests
 import json
 

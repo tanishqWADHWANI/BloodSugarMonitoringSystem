@@ -1,3 +1,42 @@
+"""
+Blood Sugar Monitoring System - Check Bob Specialist Script
+============================================================
+Verify Bob's data and check for specialist assignments.
+
+Purpose:
+- Check Bob's user account details (bob@x.com)
+- Verify if Bob is a patient or specialist
+- Check patient record in patients table
+- Check specialist record in specialists table
+- Display profile image status
+- Verify role assignment
+
+Usage:
+    python check_bob_specialist.py
+
+FUNCTIONS SUMMARY (Total: 1 check function)
+============================================
+
+DIAGNOSTIC FUNCTIONS:
+--------------------
+- check_bob_specialist():
+    Check Bob's user data and role assignments
+    Process:
+        1. Connect to MySQL database
+        2. Query Bob's user record (email='bob@x.com')
+        3. Display user details and profile image status
+        4. Check patients table for Bob's patient record
+        5. Check specialists table for Bob's specialist record
+        6. Display role verification results
+    Output:
+        - Bob's user information
+        - Patient record status
+        - Specialist record status
+        - Profile image presence
+    Returns:
+        None (prints to console)
+"""
+
 import mysql.connector
 from mysql.connector import Error
 

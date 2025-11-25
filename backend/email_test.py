@@ -1,3 +1,34 @@
+"""
+Blood Sugar Monitoring System - SMTP Email Test Script
+=======================================================
+Test SMTP email configuration and sending capability.
+
+Purpose:
+- Verify SMTP server credentials are correct
+- Test email sending functionality
+- Validate environment variables are properly configured
+- Send test email to verify end-to-end email delivery
+
+Usage:
+    python email_test.py
+
+Environment Variables Required:
+- SMTP_SERVER: SMTP server address (e.g., smtp.gmail.com)
+- SMTP_PORT: SMTP port (e.g., 587 for TLS)
+- SMTP_USERNAME: Email account username
+- SMTP_PASSWORD: Email account password (App Password for Gmail)
+
+Test Process:
+1. Load environment variables from .env file
+2. Connect to SMTP server
+3. Start TLS encryption
+4. Login with credentials
+5. Send test email to configured email address
+6. Display success/error message
+
+NOTE: This is a simple test script with no functions, just inline code.
+"""
+
 import os
 import smtplib
 from dotenv import load_dotenv

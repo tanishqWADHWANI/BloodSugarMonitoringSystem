@@ -1,5 +1,47 @@
 #!/usr/bin/env python3
-"""Create missing staff and admin demo users"""
+"""
+Blood Sugar Monitoring System - Demo User Creator
+==================================================
+Create missing staff and admin demo users for the system.
+
+Purpose:
+- Creates staff user (user_id 106) if not exists
+- Creates admin user (user_id 999) if not exists
+- Sets up proper role-specific tables (staff table)
+- Uses default passwords for demo purposes
+
+Usage:
+    python create_demo_users.py
+
+Demo Accounts Created:
+- Staff: staff@clinic.com / demo123 (user_id 106)
+- Admin: admin@clinic.com / admin123 (user_id 999)
+
+FUNCTIONS SUMMARY (Total: 1 main function)
+===========================================
+
+USER CREATION:
+--------------
+- create_demo_users():
+    Create staff and admin demo users if they don't exist
+    Process:
+        1. Check if staff user 106 exists
+        2. If not, create staff user with:
+           - Email: staff@clinic.com
+           - Password: demo123 (SHA256 hashed)
+           - Role: staff
+           - License ID: STAFF-106
+        3. Check if admin user 999 exists
+        4. If not, create admin user with:
+           - Email: admin@clinic.com
+           - Password: admin123 (SHA256 hashed)
+           - Role: admin
+           - License ID: ADMIN-999
+        5. Insert into users and staff tables
+        6. Commit changes or rollback on error
+    Returns:
+        None (prints status messages)
+"""
 
 from models import Database
 import hashlib

@@ -1,3 +1,34 @@
+"""
+Blood Sugar Monitoring System - Assign Alice to Dr. Christina Script
+======================================================================
+Manually assign Alice Johnson as patient to Dr. Christina Lee.
+
+Purpose:
+- Test assignment API endpoint
+- Assign Alice (user_id 315) to Dr. Christina Lee (user_id 103)
+- Verify assignment in database
+- Display assignment results
+
+Usage:
+    python assign_alice_to_christina.py
+
+Process:
+1. Call POST /api/assignments/assign endpoint
+2. Send Alice's patientId (315) and Christina's specialistId (103)
+3. Verify API response
+4. Query database to confirm assignment
+5. Display all of Dr. Christina Lee's patients
+6. Show assignment details
+
+Output:
+- API response status and message
+- Assignment verification status
+- List of all Dr. Christina Lee's patients
+- Alice's assignment details
+
+NOTE: This is a setup script with inline code, no functions.
+"""
+
 import requests
 import json
 

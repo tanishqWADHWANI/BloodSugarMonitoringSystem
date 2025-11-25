@@ -1,3 +1,30 @@
+"""
+Blood Sugar Monitoring System - Test Login Script
+==================================================
+Test login API endpoint for staff and admin accounts.
+
+Purpose:
+- Verify staff login credentials work
+- Verify admin login credentials work
+- Test /api/login endpoint functionality
+- Display API responses for debugging
+
+Usage:
+    python test_login.py
+
+Test Accounts:
+- Staff: staff@clinic.com / demo123
+- Admin: admin@clinic.com / admin123
+
+Output:
+- HTTP status codes
+- API response messages
+- Login success/failure status
+- JWT tokens if successful
+
+NOTE: This is a test script with inline code, no functions.
+"""
+
 import requests
 import json
 

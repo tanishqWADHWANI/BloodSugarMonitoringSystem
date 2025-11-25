@@ -1,3 +1,35 @@
+"""
+Blood Sugar Monitoring System - Populate License IDs Script
+============================================================
+Generate and populate license_id for existing users without them.
+
+Purpose:
+- Generate fake license IDs for specialists, staff, and patients
+- Update existing records that have NULL license_id
+- Ensure all users have unique license identifiers
+- Display before/after state for verification
+
+Usage:
+    python populate_license_ids.py
+
+License ID Formats:
+- Specialists: SP##### (e.g., SP12345)
+- Staff: ST##### (e.g., ST67890)
+- Patients: PT##### (e.g., PT54321)
+
+Process:
+1. Find specialists without license_id
+2. Generate SP##### format IDs
+3. Find staff without license_id
+4. Generate ST##### format IDs
+5. Find patients without license_id
+6. Generate PT##### format IDs
+7. Update database with new IDs
+8. Display summary of updates
+
+NOTE: This is a database migration script with inline code, no functions.
+"""
+
 import mysql.connector
 import random
 
