@@ -1,53 +1,96 @@
 # Blood Sugar Monitoring System
 
+<!--
+  Project Documentation - README
+  ==============================
+  This file provides comprehensive documentation for the Blood Sugar Monitoring System.
+  Includes setup instructions, API reference, architecture overview, and usage guide.
+  
+  Sections:
+  - Project Overview: High-level description
+  - System Architecture: Technology stack and components
+  - Features: Functionality for each user role
+  - Setup Instructions: How to install and run
+  - API Reference: Complete endpoint documentation
+  - Database Schema: Table structures and relationships
+  - ML Training: How to train prediction models
+  - Testing: How to test the system
+  
+  Audience: Developers, system administrators, contributors
+-->
+
 ## Project Overview
 
 A comprehensive health monitoring platform that enables diabetic patients to track blood sugar levels and receive AI-powered insights. Healthcare specialists can monitor their assigned patients, track trends, and receive automated alerts for abnormal readings.
+
+**Key Value Propositions:**
+- Real-time blood sugar tracking with automatic classification
+- AI-powered pattern detection and risk assessment
+- Automated alerts for healthcare providers
+- Personalized diet and activity recommendations
+- Historical trend analysis and reporting
 
 ---
 
 ## System Architecture
 
 ### Backend (Flask REST API)
-- **Framework:** Flask 3.0.0
-- **Database:** MySQL 8.0 / MariaDB
-- **ML Engine:** Scikit-learn (Random Forest / Gradient Boosting)
-- **Notifications:** SMTP email service
-- **Scheduler:** Background task automation
+- **Framework:** Flask 3.0.0 - Lightweight Python web framework
+- **Database:** MySQL 8.0 / MariaDB - Relational database for data persistence
+- **ML Engine:** Scikit-learn - Random Forest & Gradient Boosting classifiers
+- **Notifications:** SMTP email service - Gmail/SMTP for alert emails
+- **Scheduler:** APScheduler - Background task automation for monitoring
 
 ### Key Components
-1. **API Layer** - RESTful endpoints for all operations
-2. **Database Layer** - MySQL with triggers and views
-3. **ML Service** - AI predictions and insights generation
-4. **Notification Service** - Email alerts for abnormal readings
-5. **Scheduler Service** - Hourly patient monitoring
+1. **API Layer** (`app.py`) - RESTful endpoints for all client-server operations
+2. **Database Layer** (`models.py`) - MySQL with triggers, views, and stored procedures
+3. **ML Service** (`ml_service.py`) - AI predictions and insights generation
+4. **Notification Service** (`notification_service.py`) - Email alerts for abnormal readings
+5. **Scheduler Service** (`scheduler_service.py`) - Hourly automated patient monitoring
+
+### Frontend (Vanilla JavaScript + HTML/CSS)
+- Pure HTML5, CSS3, JavaScript (no framework dependencies)
+- Responsive design with mobile support
+- Separate pages for each user role (Patient, Specialist, Staff, Admin)
+- Centralized API client library (`api.js`)
 
 ---
 
 ## Features
 
 ### For Patients
-- Track blood sugar readings with timestamps
-- Automatic AI classification (normal/low/high/prediabetic)
-- Personalized insights and recommendations
-- Trend analysis and pattern detection
-- Email alerts for concerning readings
-- Custom threshold settings
-- Diet recommendations
+- **Blood Sugar Tracking:** Record readings with timestamps, meal info, and activities
+- **AI Classification:** Automatic status determination (normal/low/high/prediabetic)
+- **Personalized Insights:** ML-powered recommendations based on personal history
+- **Trend Analysis:** Visual charts showing glucose patterns over time
+- **Pattern Detection:** Identifies which foods and activities affect blood sugar
+- **Email Alerts:** Notifications for concerning readings or trends
+- **Custom Thresholds:** Personalized normal/borderline/abnormal ranges
+- **Diet Recommendations:** Condition-specific meal suggestions
+- **Document Upload:** Store medical records and reports
 
 ### For Specialists
-- View all assigned patients
-- Monitor patient trends and patterns
-- Receive alerts for patients needing attention
-- Dashboard with patient statistics
-- Access to patient history and reports
+- **Patient Dashboard:** Overview of all assigned patients with key metrics
+- **Monitoring Tools:** Real-time access to patient readings and trends
+- **Alert System:** Notifications for patients needing immediate attention
+- **Historical Reports:** Access complete patient history and analytics
+- **Pattern Analysis:** View aggregate insights across patient population
+- **Communication:** Direct messaging with patients
+
+### For Staff/Admin
+- **User Management:** Create, update, and manage all user accounts
+- **Patient Assignment:** Assign patients to specialists for monitoring
+- **System Reports:** Generate monthly and annual statistics
+- **Bulk Operations:** Email all patients or specialists at once
+- **Data Analytics:** View system-wide trends and usage statistics
 
 ### Automated Intelligence
-- **AI Predictions:** Real-time blood sugar status classification
-- **Pattern Detection:** Identifies meal, activity, and time-based patterns
-- **Risk Assessment:** Evaluates diabetes risk based on reading history
+- **AI Predictions:** Real-time blood sugar status classification using trained ML models
+- **Pattern Detection:** Identifies meal-based, activity-based, and time-based patterns
+- **Risk Assessment:** Evaluates diabetes risk based on reading history and trends
 - **Smart Alerts:** Triggers notifications for 3+ abnormal readings in 7 days
-- **Trend Analysis:** Tracks improvement or deterioration over time
+- **Trend Analysis:** Tracks improvement or deterioration over time with statistical methods
+- **Personalization:** Adapts recommendations based on individual patient patterns
 
 ---
 
