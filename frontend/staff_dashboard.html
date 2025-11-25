@@ -679,19 +679,19 @@
 
   // Load staff profile data
   async function loadStaffProfile() {
+    const userId = localStorage.getItem('staffUserId') || localStorage.getItem('userId');
     const token = localStorage.getItem('bsm_token');
     
-    if (!token) {
-      console.error('No authentication token found');
+    if (!userId) {      console.warn('No staff user ID found');
       return;
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`http://127.0.0.1:5000/api/users/${userId}`, { headers });
       const userData = await response.json();
 
       if (response.ok && userData.user_id) {

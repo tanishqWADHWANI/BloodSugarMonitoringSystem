@@ -1204,22 +1204,23 @@
     });
 
     async function loadPatientInfo() {
+      const userId = localStorage.getItem('userId') || localStorage.getItem('patientId');
       const token = localStorage.getItem('bsm_token');
-      console.log('Loading patient info with token');
+      console.log('Loading patient info for userId:', userId);
       
-      if (!token) {
-        console.error('No authentication token found');
+      if (!userId) {
+        console.error('No userId found in localStorage');
         return;
       }
 
       try {
-        const url = `http://127.0.0.1:5000/api/me`;
+        const url = `http://127.0.0.1:5000/api/users/${userId}`;
         console.log('Fetching patient info from:', url);
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(url, { headers });
         console.log('Patient info response status:', response.status);
         
         if (response.ok) {
