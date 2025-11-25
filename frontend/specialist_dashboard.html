@@ -1,34 +1,124 @@
+<!--
+  Blood Sugar Monitoring System - Specialist Dashboard
+  ======================================================
+  This is the main interface for authenticated specialists to manage assigned patients.
+  
+  Features Overview:
+  - View all assigned patients with key health metrics
+  - Patient search and filtering functionality
+  - Individual patient detail view
+  - Glucose readings analysis
+  - Dietary recommendation suggestions
+  - Alert monitoring for critical readings
+  - Patient communication tools
+  
+  Key Components:
+  1. Navigation Bar - Home, Logout
+  2. Dashboard Header - Specialist welcome message
+  3. Patient Search - Search by name, ID, or email
+  4. Assigned Patients List:
+     - Patient name, ID, email
+     - Last reading date and value
+     - Average glucose level
+     - Alert indicators
+     - Action buttons (View Details, Send Message)
+  
+  5. Patient Detail Modal:
+     - Full patient profile
+     - Recent glucose readings (last 30 days)
+     - Trend analysis (line chart)
+     - Pattern detection
+     - Dietary recommendations
+     - Alert history
+  
+  6. Quick Actions:
+     - View patient readings
+     - Send dietary advice
+     - Respond to alerts
+     - Schedule follow-ups
+  
+  Patient List Features:
+  - Real-time data loading from API
+  - Search functionality (client-side filtering)
+  - Sort by last reading date, average glucose, name
+  - Color-coded alert indicators (red = critical, yellow = warning)
+  - Expandable patient cards
+  
+  Patient Detail View:
+  - 30-day glucose trend chart (Chart.js)
+  - Readings table with meal type, timestamp, notes
+  - Average, min, max glucose calculations
+  - Pattern analysis (morning highs, post-meal spikes)
+  - Food trigger detection
+  - Recommended diet modifications
+  
+  Dietary Recommendations:
+  - AI-powered suggestions based on glucose patterns
+  - Meal type-specific advice (breakfast, lunch, dinner, snacks)
+  - Food substitution recommendations
+  - Portion size guidance
+  - Hydration reminders
+  
+  Alert Management:
+  - Critical high/low glucose notifications
+  - Color-coded severity levels
+  - Alert timestamps
+  - Quick response actions
+  - Dismiss functionality
+  
+  Security:
+  - Specialist role verification required
+  - Token-based authentication
+  - Automatic redirect to specialist.html if unauthenticated
+  - Specialist token stored with "_specialist" suffix
+  - Patient data access limited to assigned patients only
+  
+  Data Management:
+  - Real-time API integration via api.js
+  - LocalStorage for authentication state
+  - Automatic patient list refresh
+  - Error handling with user-friendly messages
+  
+  Related Files:
+  - specialist.html (login page)
+  - specialist_patient_view.html (detailed patient view)
+  - js/api.js (API client library)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 576 lines (interactive specialist interface)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Specialist Dashboard - Online Blood Sugar Monitor</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
   <style>
-   
+   /* Logout button styling - red accent for visibility */
     .logout-btn {
-      background: #dc3545; 
-      border: none; 
-      border-radius: 6px; 
-      padding: 10px 20px; 
-      cursor: pointer;
-      color: white;
-      font-weight: 500;
-      font-size: 0.95rem;
+      background: #dc3545;  /* Red background */
+      border: none;  /* Remove default border */
+      border-radius: 6px;  /* Rounded corners */
+      padding: 10px 20px;  /* Button padding */
+      cursor: pointer;  /* Pointer cursor on hover */
+      color: white;  /* White text */
+      font-weight: 500;  /* Medium font weight */
+      font-size: 0.95rem;  /* Slightly smaller text */
     }
-    .logout-btn:hover { background: #c82333; }
+    .logout-btn:hover { background: #c82333; }  /* Darker red on hover */
 
-    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-    h1, h2, h3, h4, p { margin: 0 0 15px 0; }
-    .dashboard-section { margin-top: 30px; }
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }  /* Main container */
+    h1, h2, h3, h4, p { margin: 0 0 15px 0; }  /* Consistent heading margins */
+    .dashboard-section { margin-top: 30px; }  /* Section spacing */
 
-    .patient-search { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+    /* Patient search bar styling */
+    .patient-search { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }  /* Flexbox layout */
     .patient-search input, .patient-search button {
-      padding: 8px; border-radius: 5px; border: 1px solid #ccc;
+      padding: 8px; border-radius: 5px; border: 1px solid #ccc;  /* Input/button styling */
     }
     .patient-search button {
-      background: #004080; color: white; border: none; cursor: pointer;
+      background: #004080; color: white; border: none; cursor: pointer;  /* Blue search button */
     }
     .patient-search button:hover { background: #0066cc; }
 

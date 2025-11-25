@@ -1,34 +1,84 @@
+<!--
+  Blood Sugar Monitoring System - Contact Page
+  ==============================================
+  This page provides contact information and communication options for the clinic.
+  
+  Features:
+  - Emergency hotline banner with prominent display
+  - Multiple contact methods (phone, email, address, hours)
+  - Interactive contact form with validation
+  - Google Maps integration for clinic location
+  - Department-specific contact information
+  - Social media links
+  - FAQ section
+  
+  Contact Information Displayed:
+  - Emergency hotline: 1-800-EMERGENCY (dismissible banner)
+  - General phone: (555) 123-4567
+  - Emergency phone: (555) 987-6543
+  - Email: info@bloodsugarmonitor.com
+  - Physical address: 123 Health Blvd, Wellness City, WC 12345
+  - Business hours: Mon-Fri 8:00 AM - 6:00 PM, Sat 9:00 AM - 2:00 PM
+  
+  Contact Form Fields:
+  - Name (required)
+  - Email (required)
+  - Subject (required)
+  - Message (required, textarea)
+  - Submit button with validation
+  
+  Departments:
+  - Appointments: (555) 123-1001
+  - Billing: (555) 123-1002
+  - Medical Records: (555) 123-1003
+  
+  Design Features:
+  - Emergency banner with red color scheme (#ffdddd, #800000) for urgency
+  - Card-based layout for organized information display
+  - Responsive grid system for department cards
+  - Icon integration (Font Awesome) for visual communication
+  - Google Maps embed for location visualization
+  
+  Security Considerations:
+  - Form validation on client-side
+  - Backend validation required for submissions
+  - Email addresses obfuscated in production recommended
+  
+  Related Files:
+  - index.html (homepage navigation)
+  - css/style.css (main stylesheet)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact - Blood Sugar Monitor Clinic</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
 
   <!-- Internal CSS for Contact Page -->
   <style>
     /* ================================
-       Emergency Banner
+       Emergency Banner - High visibility alert for urgent contact
        ================================ */
     .emergency-banner {
       background-color: #ffdddd; /* Light red background for visibility */
-      color: #800000; /* Dark red text */
-      padding: 10px 15px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 1rem;
-      border-bottom: 2px solid #cc0000;
+      color: #800000; /* Dark red text for urgency */
+      padding: 10px 15px;  /* Comfortable padding */
+      display: flex;  /* Flexbox for alignment */
+      align-items: center;  /* Vertically center content */
+      justify-content: space-between;  /* Space between text and close button */
+      font-size: 1rem;  /* Readable font size */
+      border-bottom: 2px solid #cc0000;  /* Red border for emphasis */
     }
     .emergency-banner i {
-      margin-right: 8px;
-      font-size: 1.2rem;
+      margin-right: 8px;  /* Space between icon and text */
+      font-size: 1.2rem;  /* Slightly larger icon */
     }
     .close-btn {
-      background: none;
-      border: none;
-      font-size: 1.2rem;
+      background: none;  /* No button background */
+      border: none;  /* Remove button border */
+      font-size: 1.2rem;  /* Large close button */
       cursor: pointer;
       color: #800000;
       font-weight: bold;

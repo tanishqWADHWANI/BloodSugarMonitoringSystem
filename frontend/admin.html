@@ -1,3 +1,34 @@
+<!--
+  Blood Sugar Monitoring System - Admin Login Page
+  =================================================
+  This page provides authentication for system administrators.
+  
+  Features:
+  - Admin email/password login form
+  - Credentials validation against backend
+  - Session management with localStorage
+  - Demo account information display
+  - Redirects to admin_dashboard.html after successful login
+  
+  Admin Capabilities (after login):
+  - View and manage all users (patients, specialists, staff)
+  - Generate system reports (monthly/annual analytics)
+  - Manage patient-specialist assignments
+  - View system-wide statistics
+  - Bulk email operations
+  
+  Security:
+  - Admin role verification on backend
+  - Token-based authentication
+  - Password not stored in frontend
+  - Admin token stored with "_admin" suffix for easy identification
+  
+  Related Files:
+  - admin_dashboard.html (main admin interface)
+  - user_management.html (user CRUD operations)
+  - patient_assignments.html (assignment management)
+  - reports_management.html (analytics and reports)
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,21 +36,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Login</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <script src="js/api.js"></script>
-  <script src="js/demo_users.js"></script>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
+  <script src="js/demo_users.js"></script>  <!-- Demo account credentials -->
  
 </head>
 
 <body>
+  <!-- Top navigation bar -->
   <header>
     <nav>
       <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="patient.html">Patient</a></li>
-        <li><a href="specialist.html">Specialist</a></li>
-        <li><a href="clinic.html">Clinic</a></li>
-        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="index.html">Home</a></li>  <!-- Homepage -->
+        <li><a href="patient.html">Patient</a></li>  <!-- Patient login -->
+        <li><a href="specialist.html">Specialist</a></li>  <!-- Specialist login -->
+        <li><a href="clinic.html">Clinic</a></li>  <!-- Clinic info -->
+        <li><a href="contact.html">Contact Us</a></li>  <!-- Contact page -->
       </ul>
     </nav>
   </header>

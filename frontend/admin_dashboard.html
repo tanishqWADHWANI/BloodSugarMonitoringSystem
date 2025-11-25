@@ -1,3 +1,109 @@
+<!--
+  Blood Sugar Monitoring System - Admin Dashboard
+  =================================================
+  This is the main administrative interface for system administrators to manage users and view reports.
+  
+  Features Overview:
+  - User Management (CRUD operations for all user types)
+  - Patient-Specialist Assignment Management
+  - System Reports (monthly/annual analytics)
+  - User Statistics and Metrics
+  - Bulk Operations
+  - Demo Account Information
+  
+  Key Components:
+  1. Navigation Bar - Home, Clinic, Logout
+  2. Dashboard Header - Administrator title and subtitle
+  3. User Management Section:
+     - Create new users (patients, specialists, staff)
+     - User form with role selection, name, email, password, phone
+     - User list table (searchable, sortable)
+     - Edit/Delete user actions
+     - User statistics display
+  
+  4. Assignment Management:
+     - Assign patients to specialists
+     - View current assignments
+     - Unassign functionality
+     - Assignment history
+  
+  5. Reports Section:
+     - Monthly report generation
+     - Annual report generation
+     - Report filters (date range, user type)
+     - Export functionality
+     - Visual charts and statistics
+  
+  6. System Statistics:
+     - Total users by role
+     - Active patients count
+     - Specialist utilization
+     - Recent activity log
+  
+  User Management Features:
+  - Role-based user creation (patient, specialist, staff, admin)
+  - Form validation (email format, required fields)
+  - Password strength requirements
+  - Unique email enforcement
+  - Bulk user import (future enhancement)
+  
+  Assignment Features:
+  - Dropdown patient selector
+  - Dropdown specialist selector
+  - One-to-many assignment (one specialist, multiple patients)
+  - Assignment validation (prevent duplicates)
+  - Visual assignment table
+  
+  Reports Features:
+  - Monthly Summary:
+    * New users registered
+    * Total readings logged
+    * Active patients count
+    * Critical alerts generated
+  - Annual Summary:
+    * Yearly trends
+    * User growth metrics
+    * System usage statistics
+  
+  Security:
+  - Admin role verification required
+  - Token-based authentication
+  - Automatic redirect to admin.html if unauthenticated
+  - Admin token stored with "_admin" suffix
+  - All operations require admin privileges
+  
+  Data Management:
+  - Real-time API integration via api.js
+  - LocalStorage for authentication state
+  - Automatic data refresh after operations
+  - Error handling with user-friendly messages
+  
+  Charts (Chart.js):
+  - User growth line chart
+  - User distribution pie chart
+  - Monthly activity bar chart
+  - Responsive canvas sizing
+  
+  Demo Accounts (displayed on page):
+  - Admin: admin@example.com / admin123
+  - Specialist: bob@bobsmith.com / password456
+  - Patient: alice@johnson.com / password123
+  - Staff: staff@example.com / staff123
+  
+  Related Files:
+  - admin.html (login page)
+  - user_management.html (dedicated user management interface)
+  - patient_assignments.html (dedicated assignment management)
+  - reports_management.html (dedicated reports interface)
+  - js/api.js (API client library)
+  - js/demo_users.js (demo account credentials)
+  - css/style.css, css/dasshboard.css (stylesheets)
+  
+  External Dependencies:
+  - Chart.js v3.x (data visualization)
+  
+  Page Size: 1755 lines (comprehensive admin interface)
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,30 +111,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="stylesheet" href="css/dasshboard.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/demo_users.js"></script>
+    <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+    <link rel="stylesheet" href="css/dasshboard.css" />  <!-- Dashboard-specific styles -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- Chart.js for data visualization -->
+    <script src="js/api.js"></script>  <!-- API client functions -->
+    <script src="js/demo_users.js"></script>  <!-- Demo account credentials -->
 </head>
 
 <body>
+    <!-- Top navigation bar -->
     <header>
         <nav>
             <ul>
-                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html">Home</a></li>  <!-- Homepage link -->
                 
-                <li><a href="clinic.html">Clinic</a></li>
-                <li><button id="logoutBtn" class="logout-btn" style="background: #dc3545; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; color: white; font-weight: 500; font-size: 0.95rem;">Logout</button></li>
+                <li><a href="clinic.html">Clinic</a></li>  <!-- Clinic info page -->
+                <li><button id="logoutBtn" class="logout-btn" style="background: #dc3545; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; color: white; font-weight: 500; font-size: 0.95rem;">Logout</button></li>  <!-- Logout button -->
             </ul>
         </nav>
     </header>
 
     <main class="container">
+        <!-- Dashboard header with title and description -->
         <section class="dashboard-header">
-            <h1 style="color: #004080; font-size: 2rem; margin-bottom: 10px;">Administrator – User Management & Reports</h1>
+            <h1 style="color: #004080; font-size: 2rem; margin-bottom: 10px;">Administrator – User Management & Reports</h1>  <!-- Page title -->
             <p class="subtext" style="color: #666; font-size: 1rem;">
-                Create and manage users, assign patients to specialists, and view a simple operational report.
+                Create and manage users, assign patients to specialists, and view a simple operational report.  <!-- Page description -->
             </p>
         </section>
 

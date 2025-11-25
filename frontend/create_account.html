@@ -1,32 +1,82 @@
+<!--
+  Blood Sugar Monitoring System - Patient Registration Page
+  ==========================================================
+  This page allows new patients to create accounts for the monitoring system.
+  
+  Features:
+  - Multi-field patient registration form
+  - Personal information collection (name, DOB, gender)
+  - Contact details (email, phone, address)
+  - Medical information (blood type, emergency contact)
+  - Password creation with confirmation
+  - Optional profile photo upload
+  - Form validation and error handling
+  - Redirects to patient.html (login page) after successful registration
+  
+  Form Fields:
+  - Full Name (required)
+  - Date of Birth (required)
+  - Gender (required)
+  - Email (required, must be unique)
+  - Phone Number (required)
+  - Address (required)
+  - Blood Type (optional)
+  - Emergency Contact Name (required)
+  - Emergency Contact Phone (required)
+  - Password (required, min 6 characters)
+  - Confirm Password (required, must match)
+  - Profile Photo (optional, image upload)
+  
+  Validation:
+  - Email format validation
+  - Password strength check (minimum 6 characters)
+  - Password confirmation match
+  - Required field validation
+  - File type validation for profile photo
+  
+  Security:
+  - Passwords hashed on backend (bcrypt)
+  - Email uniqueness check
+  - HTTPS recommended for production
+  
+  Related Files:
+  - patient.html (login page after registration)
+  - patient_dashboard.html (user's dashboard after login)
+  - js/api.js (registerUser API call)
+  - backend/app.py (POST /user/register endpoint)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create Patient Account - Blood Sugar Monitor Clinic</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
 </head>
 
 <body>
+  <!-- Top navigation bar -->
   <header>
     <nav>
       <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="patient.html" class="active">Patient</a></li>
-        <li><a href="specialist.html">Specialist</a></li>
-        <li><a href="clinic.html">Clinic</a></li>
-        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="index.html">Home</a></li>  <!-- Homepage -->
+        <li><a href="patient.html" class="active">Patient</a></li>  <!-- Current page (patient section) -->
+        <li><a href="specialist.html">Specialist</a></li>  <!-- Specialist login -->
+        <li><a href="clinic.html">Clinic</a></li>  <!-- Clinic info -->
+        <li><a href="contact.html">Contact Us</a></li>  <!-- Contact page -->
       </ul>
     </nav>
   </header>
 
   <main class="container">
+    <!-- Registration form section with constrained width -->
     <section class="login-section" style="max-width: 600px; margin: 40px auto;">
-      <h2 style="color: #004080; text-align: center; margin-bottom: 10px;">Create Patient Account</h2>
+      <h2 style="color: #004080; text-align: center; margin-bottom: 10px;">Create Patient Account</h2>  <!-- Form title -->
       <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 0.95rem;">
-        Register for your patient portal to track your health readings and connect with specialists.
+        Register for your patient portal to track your health readings and connect with specialists.  <!-- Subtitle/description -->
       </p>
 
+      <!-- Registration form with file upload support -->
       <form id="registerForm" method="post" action="" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 18px;">
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">

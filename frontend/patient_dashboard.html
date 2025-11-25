@@ -1,3 +1,77 @@
+<!--
+  Blood Sugar Monitoring System - Patient Dashboard
+  ===================================================
+  This is the main interface for authenticated patients to manage their health data.
+  
+  Features Overview:
+  - User profile display with photo and greeting
+  - Blood glucose readings management (add, edit, delete, search)
+  - Interactive charts (line chart for trends, bar chart for daily patterns)
+  - AI-powered insights and recommendations
+  - Alert notifications for critical readings
+  - Pattern analysis (weekly, monthly trends)
+  - Dietary recommendations based on readings
+  - Document upload functionality
+  - Medical records view
+  - Specialist information display
+  
+  Key Components:
+  1. Navigation Bar - Dashboard, Medical Records, Reports, Upload Docs, Thresholds, Logout
+  2. Profile Section - User name, photo, role badge, welcome message
+  3. Add Reading Form - Glucose value, meal type, timestamp, activity, notes
+  4. Readings Table - Sortable, searchable, with edit/delete actions
+  5. Charts Section - Line chart (7-day trends), Bar chart (daily patterns)
+  6. AI Insights - Personalized health recommendations
+  7. Alerts Panel - Critical reading notifications
+  8. Patterns Analysis - Weekly/monthly statistics
+  9. Diet Recommendations - Personalized meal suggestions
+  10. Specialist Info - Assigned specialist contact details
+  
+  Data Management:
+  - Real-time CRUD operations for glucose readings
+  - Automatic chart updates after data changes
+  - LocalStorage authentication (user ID, token, role)
+  - API integration via api.js
+  
+  Charts (Chart.js):
+  - 7-day glucose trend line chart (color-coded by glucose range)
+  - Daily pattern bar chart (meal-based grouping)
+  - Responsive canvas sizing
+  - Gradient backgrounds for visual appeal
+  
+  AI Features:
+  - Pattern detection (morning highs, post-meal spikes)
+  - Food trigger analysis
+  - Activity recommendations
+  - Personalized insights based on historical data
+  
+  Alerts:
+  - Critical high/low glucose notifications
+  - Color-coded severity (red = critical, orange = warning)
+  - Dismissible with API synchronization
+  
+  Security:
+  - Token-based authentication required
+  - Role verification (patient role only)
+  - Automatic redirect to login if unauthenticated
+  - User ID validation on all API calls
+  
+  Related Files:
+  - patient.html (login page)
+  - patient_history.html (detailed historical view)
+  - upload_documents.html (document management)
+  - thresholds.html (glucose threshold configuration)
+  - view_reports.html (comprehensive reports)
+  - update_medical.html (medical profile updates)
+  - js/api.js (API client library)
+  - css/style.css, css/dasshboard.css (stylesheets)
+  
+  External Dependencies:
+  - Chart.js v3.x (data visualization)
+  - Font Awesome (icons)
+  
+  Page Size: 1641 lines (complex dashboard with extensive functionality)
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,29 +79,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Patient Dashboard</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/dasshboard.css" />
-  <script src="js/api.js"></script>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="css/dasshboard.css" />  <!-- Dashboard-specific styles -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
   <style>
-    /* Modern Card Design */
+    /* Modern Card Design - Container for dashboard cards */
     .container {
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 0 20px;
+      max-width: 1200px;  /* Maximum content width for readability */
+      margin: 40px auto;  /* Center horizontally with vertical spacing */
+      padding: 0 20px;  /* Horizontal padding for mobile */
     }
 
     .card {
-      background: white;
-      padding: 30px;
-      margin-bottom: 30px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: white;  /* White card background */
+      padding: 30px;  /* Internal spacing */
+      margin-bottom: 30px;  /* Space between cards */
+      border-radius: 12px;  /* Rounded corners */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);  /* Subtle shadow for depth */
     }
 
     .card h2 {
-      color: #004080;
-      font-size: 1.6rem;
-      margin-bottom: 10px;
+      color: #004080;  /* Clinic blue for headings */
+      font-size: 1.6rem;  /* Prominent heading size */
+      margin-bottom: 10px;  /* Space below heading */
     }
 
     .card p.description {

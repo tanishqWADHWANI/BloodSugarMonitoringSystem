@@ -1,3 +1,31 @@
+<!--
+  Blood Sugar Monitoring System - Patient Login & Portal
+  =======================================================
+  This page serves as the patient login page and dashboard entry point.
+  
+  Features:
+  - Email/password authentication for patients
+  - Login form with validation
+  - Remember me functionality
+  - Account creation link
+  - Redirects to patient_dashboard.html after successful login
+  
+  User Flow:
+  1. Patient enters email and password
+  2. Credentials validated against backend API
+  3. On success: User data saved to localStorage, redirect to dashboard
+  4. On failure: Error message displayed
+  
+  Security:
+  - Passwords sent over HTTPS (in production)
+  - Token-based authentication
+  - Session stored in browser localStorage
+  
+  Related Files:
+  - patient_dashboard.html (main patient interface)
+  - create_account.html (new patient registration)
+  - js/api.js (API client functions)
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,29 +33,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Patient Portal</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/dasshboard.css" />
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main styles -->
+  <link rel="stylesheet" href="css/dasshboard.css" />  <!-- Dashboard-specific styles -->
   <style>
-    /* New Section Styles for Patient Portal */
+    /* ========== Patient Portal Custom Styles ========== */
+    
+    /* Section container with light background */
     .section-box {
-      background-color: #f9f9f9;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      margin-bottom: 20px;
+      background-color: #f9f9f9;  /* Light gray background */
+      border-radius: 10px;  /* Rounded corners */
+      padding: 20px;  /* Internal spacing */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);  /* Subtle shadow effect */
+      margin-bottom: 20px;  /* Space between sections */
     }
 
-    /* Login Form Styles */
+    /* Login form container styling */
     .login-section {
-      background-color: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      padding: 40px;
-      max-width: 800px;
-      margin: 0 auto;
-	  margin-bottom: 20px;
+      background-color: #ffffff;  /* White background for form */
+      border-radius: 10px;  /* Rounded corners */
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);  /* Shadow for depth */
+      padding: 40px;  /* Internal spacing */
+      max-width: 800px;  /* Maximum width constraint */
+      margin: 0 auto;  /* Center horizontally */
+	  margin-bottom: 20px;  /* Space below form */
     }
 
+    /* Login section heading */
     .login-section h2 {
       font-size: 2rem;
       color: #004080;

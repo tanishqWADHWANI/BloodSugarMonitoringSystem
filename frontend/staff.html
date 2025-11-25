@@ -1,3 +1,34 @@
+<!--
+  Blood Sugar Monitoring System - Staff Login Page
+  ==================================================
+  This page provides authentication for clinic staff members.
+  
+  Features:
+  - Staff email/password login form
+  - Credentials validation against backend
+  - Session management with localStorage
+  - Redirects to staff_dashboard.html after successful login
+  
+  Staff Capabilities (after login):
+  - View and search patient records
+  - Send emails to patients and specialists
+  - View incoming messages/feedback
+  - Update patient contact information
+  - Assist with administrative tasks
+  
+  Security:
+  - Staff role verification on backend
+  - Token-based authentication
+  - Staff token stored with "_staff" suffix for role identification
+  - HTTPS recommended for production
+  
+  Related Files:
+  - staff_dashboard.html (main staff interface)
+  - staff_email_patients.html (patient email management)
+  - staff_email_specialists.html (specialist communication)
+  - staff_view_messages.html (inbox management)
+  - js/api.js (authentication API calls)
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,30 +36,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Staff Login</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <script src="js/api.js"></script>
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
+  <script src="js/api.js"></script>  <!-- API client functions -->
 </head>
 
 <body>
+  <!-- Top navigation bar -->
   <header>
     <nav>
       <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="patient.html">Patient</a></li>
-        <li><a href="specialist.html">Specialist</a></li>
-        <li><a href="clinic.html">Clinic</a></li>
-        <li><a href="staff.html" class="active">Staff</a></li>
-        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="index.html">Home</a></li>  <!-- Homepage -->
+        <li><a href="patient.html">Patient</a></li>  <!-- Patient login -->
+        <li><a href="specialist.html">Specialist</a></li>  <!-- Specialist login -->
+        <li><a href="clinic.html">Clinic</a></li>  <!-- Clinic info -->
+        <li><a href="staff.html" class="active">Staff</a></li>  <!-- Current page -->
+        <li><a href="contact.html">Contact Us</a></li>  <!-- Contact page -->
       </ul>
     </nav>
   </header>
 
   <main class="container">
     <section class="login-section">
-      <h2>Staff Login</h2>
-      <form id="staffLoginForm" class="form-grid">
+      <h2>Staff Login</h2>  <!-- Page title -->
+      <form id="staffLoginForm" class="form-grid">  <!-- Login form -->
         <div class="form-field">
-          <label for="staffEmail">Username or Email</label>
+          <label for="staffEmail">Username or Email</label>  <!-- Email input label -->
           <input id="staffEmail" name="email" type="text" placeholder="staff@x.com" required />
         </div>
         <div class="form-field">

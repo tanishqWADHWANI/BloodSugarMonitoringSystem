@@ -1,3 +1,35 @@
+<!--
+  Blood Sugar Monitoring System - Specialist Directory & Login Page
+  ===================================================================
+  This page serves dual purposes:
+  1. Public specialist directory (view specialist profiles)
+  2. Specialist login portal (authentication for medical professionals)
+  
+  Features:
+  - Specialist profile cards with photos, specializations, and experience
+  - Interactive card hover effects
+  - Login form with email/password authentication
+  - Session management with localStorage
+  - Redirects to specialist_dashboard.html after successful login
+  
+  Specialist Capabilities (after login):
+  - View assigned patients and their health data
+  - Monitor patient glucose readings and trends
+  - Provide personalized dietary recommendations
+  - Respond to critical alerts
+  - Track patient adherence and progress
+  
+  Security:
+  - Specialist role verification on backend
+  - Token-based authentication
+  - Specialist token stored with "_specialist" suffix
+  - HTTPS recommended for production
+  
+  Related Files:
+  - specialist_dashboard.html (main specialist interface)
+  - specialist_patient_view.html (individual patient details)
+  - js/api.js (authentication API calls)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,23 +41,23 @@
   <link rel="stylesheet" href="css/style.css">
   
   <style>
-    /* Specialists Table/Grid */
+    /* Specialists Table/Grid - Display specialist profiles in responsive card layout */
     .specialists {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-      justify-content: center;
-      padding: 40px 20px;
+      display: flex;  /* Flexbox for responsive layout */
+      flex-wrap: wrap;  /* Allow cards to wrap to new lines */
+      gap: 30px;  /* Space between cards */
+      justify-content: center;  /* Center cards horizontally */
+      padding: 40px 20px;  /* Add padding around grid */
     }
 
     .specialist-card {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 250px;
-      text-align: center;
-      padding: 20px;
-      transition: transform 0.3s, box-shadow 0.3s;
+      background: #fff;  /* White card background */
+      border-radius: 12px;  /* Rounded corners */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
+      max-width: 250px;  /* Fixed card width */
+      text-align: center;  /* Center text content */
+      padding: 20px;  /* Internal spacing */
+      transition: transform 0.3s, box-shadow 0.3s;  /* Smooth hover animation */
     }
 
     .specialist-card:hover {

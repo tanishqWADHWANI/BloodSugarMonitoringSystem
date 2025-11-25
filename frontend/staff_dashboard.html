@@ -1,3 +1,107 @@
+<!--
+  Blood Sugar Monitoring System - Staff Dashboard
+  =================================================
+  This is the main interface for authenticated clinic staff to manage administrative tasks.
+  
+  Features Overview:
+  - Patient records management (view, search, update)
+  - Email communication (patients and specialists)
+  - Message inbox management
+  - Patient contact information updates
+  - System notifications
+  - Quick access to common tasks
+  
+  Key Components:
+  1. Navigation Bar - Home, Patients, Email, Messages, Logout
+  2. Welcome Header - Staff greeting and role display
+  3. Summary Section - Quick statistics overview
+  4. Patient Search - Search by name, ID, email, or phone
+  5. Patient Records Table:
+     - Patient name, ID, email, phone
+     - Last visit date
+     - Assigned specialist
+     - Action buttons (View, Edit, Email)
+  
+  6. Quick Actions Panel:
+     - Send bulk emails to patients
+     - Send emails to specialists
+     - View incoming messages
+     - Update patient contacts
+     - View system alerts
+  
+  7. Message Inbox:
+     - Unread message count
+     - Message list with sender, subject, timestamp
+     - Mark as read/unread
+     - Reply functionality
+  
+  Patient Management Features:
+  - Search and filter patient records
+  - View patient profiles
+  - Update contact information
+  - View patient history
+  - Access patient documents
+  - View assigned specialist
+  
+  Email Management Features:
+  - Compose emails to individual patients
+  - Send bulk emails to patient groups
+  - Email specialists for coordination
+  - Email templates for common scenarios
+  - Email history tracking
+  
+  Message Inbox Features:
+  - View messages from patients and specialists
+  - Unread message notifications
+  - Reply to messages
+  - Archive messages
+  - Search message history
+  
+  Communication Tools:
+  - Patient Email Form:
+    * Recipient selector (single or multiple)
+    * Subject line
+    * Message body (rich text)
+    * Attachment support
+  
+  - Specialist Email Form:
+    * Specialist selector
+    * Subject line
+    * Message body
+    * Priority flag
+  
+  Summary Statistics:
+  - Total patients count
+  - Active patients (last 30 days)
+  - Unread messages count
+  - Pending tasks count
+  - Recent patient registrations
+  
+  Security:
+  - Staff role verification required
+  - Token-based authentication
+  - Automatic redirect to staff.html if unauthenticated
+  - Staff token stored with "_staff" suffix
+  - Access limited to administrative functions only
+  - No access to medical analysis or treatment data
+  
+  Data Management:
+  - Real-time API integration via api.js
+  - LocalStorage for authentication state
+  - Automatic data refresh
+  - Error handling with user-friendly messages
+  
+  Related Files:
+  - staff.html (login page)
+  - staff_email_patients.html (patient email interface)
+  - staff_email_specialists.html (specialist email interface)
+  - staff_view_messages.html (inbox interface)
+  - staff_view.html (patient records view)
+  - js/api.js (API client library)
+  - css/style.css (main stylesheet)
+  
+  Page Size: 803 lines (comprehensive staff interface)
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,30 +109,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Staff Dashboard</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css" />  <!-- Main stylesheet -->
   <style>
+    /* Main container styling - constrained width and centered */
     .container {
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 0 20px;
+      max-width: 1200px;  /* Maximum content width */
+      margin: 40px auto;  /* Center horizontally with vertical spacing */
+      padding: 0 20px;  /* Horizontal padding for mobile */
     }
 
+    /* Welcome header styling */
     .welcome-header h1 {
-      color: #004080;
-      font-size: 2rem;
-      margin-bottom: 10px;
+      color: #004080;  /* Clinic blue for heading */
+      font-size: 2rem;  /* Large heading size */
+      margin-bottom: 10px;  /* Space below heading */
     }
 
     .welcome-header p {
-      color: #666;
-      font-size: 1rem;
-      margin-bottom: 30px;
+      color: #666;  /* Gray text for subtitle */
+      font-size: 1rem;  /* Standard font size */
+      margin-bottom: 30px;  /* Space below paragraph */
     }
 
+    /* Summary section heading styling */
     .summary-section h2 {
-      color: #004080;
-      font-size: 1.5rem;
-      margin-bottom: 20px;
+      color: #004080;  /* Clinic blue for section heading */
+      font-size: 1.5rem;  /* Prominent section heading */
+      margin-bottom: 20px;  /* Space below heading */
     }
 
     .summary-grid {
