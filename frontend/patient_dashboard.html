@@ -1255,14 +1255,21 @@
           
           // Display profile image if available
           const imgElement = document.getElementById('profileImageDisplay');
+          console.log('Profile image data:', user.profile_image ? `${user.profile_image.substring(0, 50)}... (length: ${user.profile_image.length})` : 'No image');
+          
           if (user.profile_image && user.profile_image.trim() !== '') {
+            console.log('Setting profile image source');
             imgElement.src = user.profile_image;
             imgElement.style.display = 'block';
+            imgElement.onload = function() {
+              console.log('Profile image loaded successfully');
+            };
             imgElement.onerror = function() {
-              console.warn('Failed to load profile image:', user.profile_image);
+              console.error('Failed to load profile image - invalid data');
               this.style.display = 'none';
             };
           } else {
+            console.log('No profile image to display');
             imgElement.style.display = 'none';
           }
         }

@@ -391,6 +391,13 @@
 
         if (response.ok) {
           showMessage('✅ Profile updated successfully!', 'success');
+          
+          // Update the preview image if we just uploaded one
+          if (currentProfileImage) {
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.innerHTML = `<img src="${currentProfileImage}" class="profile-image-preview" alt="Profile Preview" />`;
+          }
+          
           setTimeout(() => {
             window.location.href = 'patient_dashboard.html';
           }, 1500);
