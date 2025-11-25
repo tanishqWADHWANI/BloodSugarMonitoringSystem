@@ -16,20 +16,10 @@
         
         /* Responsive navbar */
         @media (max-width: 900px) {
-            .navbar {
-                flex-direction: column;
-                padding: 15px 20px;
-                gap: 15px;
-            }
-            .navbar nav {
-                display: flex;
+            header nav ul {
                 flex-wrap: wrap;
                 gap: 10px;
                 justify-content: center;
-            }
-            .navbar nav a {
-                font-size: 0.9rem;
-                padding: 8px 12px;
             }
         }
         @media (max-width: 768px) {
@@ -66,17 +56,16 @@
     </style>
 </head>
 <body>
-    <header class="navbar">
-        <div class="logo">🩸 Blood Sugar Monitoring</div>
+    <header>
         <nav>
-            <a href="admin_dashboard.html">Dashboard</a>
-            <a href="user_management.html">Users</a>
-            <a href="patient_assignments.html">Assignments</a>
-            <a href="reports_management.html" class="active">Reports</a>
+            <ul>
+                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="user_management.html">Users</a></li>
+                <li><a href="patient_assignments.html">Assignments</a></li>
+                <li><a href="reports_management.html" style="color: #667eea; font-weight: 600;">Reports</a></li>
+                <li><button id="logoutBtn" class="logout-btn" style="background: #dc3545; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; color: white; font-weight: 500; font-size: 0.95rem;">Logout</button></li>
+            </ul>
         </nav>
-        <div>
-            <button id="logoutBtn" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Logout</button>
-        </div>
     </header>
 
     <main class="container">

@@ -1501,6 +1501,7 @@ def assignments_api():
             """)
             
             assignments = cursor.fetchall()
+            # No need for another fetchall() since cursor.fetchall() already consumed all results
             
             return jsonify({
                 "count": len(assignments),
