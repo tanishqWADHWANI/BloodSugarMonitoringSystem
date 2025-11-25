@@ -113,7 +113,9 @@ class Database:
                 user=os.environ.get('DB_USER', 'root'),
                 password=os.environ.get('DB_PASSWORD'),
                 database=os.environ.get('DB_NAME', 'blood_sugar_db'),
-                autocommit=False
+                autocommit=False,
+                connect_timeout=30,
+                use_pure=True
             )
             if self.connection.is_connected():
                 logger.info("Database connection established")
@@ -123,14 +125,40 @@ class Database:
     
     def _get_cursor(self):
         """Get a cursor, reconnecting if necessary"""
-        try:
-            if not self.connection or not self.connection.is_connected():
-                self.connect()
-        except:
-            # If connection check fails, reconnect
-            self.connect()
-        # Use non-buffered cursor to avoid "commands out of sync" errors
-        return self.connection.cursor(dictionary=True, buffered=False)
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                if not self.connection or not self.connection.is_connected():
+                    logger.warning("Database connection lost, reconnecting...")
+                    self.connect()
+                
+                # Ping the connection to ensure it's alive
+                self.connection.ping(reconnect=True, attempts=3, delay=1)
+                
+                # Use non-buffered cursor to avoid "commands out of sync" errors
+                return self.connection.cursor(dictionary=True, buffered=False)
+            
+            except (Error, AttributeError) as e:
+                retry_count += 1
+                logger.warning(f"Connection attempt {retry_count} failed: {e}")
+                
+                if retry_count >= max_retries:
+                    logger.error("Failed to establish database connection after multiple attempts")
+                    raise
+                
+                # Wait before retrying
+                import time
+                time.sleep(1)
+                
+                # Force reconnect
+                try:
+                    if self.connection:
+                        self.connection.close()
+                except:
+                    pass
+                self.connection = None
     
     # User Management
     def get_user(self, user_id):
