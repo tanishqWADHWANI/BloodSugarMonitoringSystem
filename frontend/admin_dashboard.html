@@ -1749,6 +1749,14 @@
                 const token = localStorage.getItem('bsm_token');
                 let userData = null;
                 
+                // Verify token matches admin role
+                if (token && !token.includes('_admin')) {
+                    console.error('Access denied: Not an admin user');
+                    alert('Access denied: Admin credentials required');
+                    window.location.href = 'admin.html';
+                    return;
+                }
+                
                 // Try to fetch from database using token first
                 if (token) {
                     try {
@@ -1757,6 +1765,15 @@
                         });
                         if (response.ok) {
                             userData = await response.json();
+                            
+                            // Verify user role is admin
+                            if (userData.role !== 'admin') {
+                                console.error('Access denied: User is not an admin');
+                                alert('Access denied: Admin credentials required');
+                                localStorage.clear();
+                                window.location.href = 'admin.html';
+                                return;
+                            }
                         }
                     } catch (error) {
                         console.warn('Failed to fetch from /api/me, falling back to localStorage', error);
@@ -1765,14 +1782,25 @@
                 
                 // Fallback to localStorage if /api/me failed
                 if (!userData) {
-                    const adminUserId = localStorage.getItem('adminUserId') || localStorage.getItem('userId');
+                    const adminUserId = localStorage.getItem('adminUserId');
                     if (!adminUserId) {
                         console.warn('No admin user ID found');
+                        alert('Please log in as admin');
+                        window.location.href = 'admin.html';
                         return;
                     }
                     try {
                         const response = await fetch(`${API_BASE}/api/users/${adminUserId}`);
                         userData = await response.json();
+                        
+                        // Verify user role is admin
+                        if (userData.role !== 'admin') {
+                            console.error('Access denied: User is not an admin');
+                            alert('Access denied: Admin credentials required');
+                            localStorage.clear();
+                            window.location.href = 'admin.html';
+                            return;
+                        }
                     } catch (error) {
                         console.error('Failed to load admin profile:', error);
                         return;
@@ -1900,6 +1928,18 @@
             // Start the inactivity timer
             resetInactivityTimer();
 
+            // Initial Security Check - Verify admin access
+            const token = localStorage.getItem('bsm_token');
+            const adminUserId = localStorage.getItem('adminUserId');
+            
+            if (!token || !token.includes('_admin')) {
+                console.error('Access denied: Invalid admin token');
+                alert('Access denied: Admin credentials required');
+                localStorage.clear();
+                window.location.href = 'admin.html';
+                throw new Error('Unauthorized access');
+            }
+            
             // Initial Load
                 // Load admin profile
                 loadAdminProfile();
