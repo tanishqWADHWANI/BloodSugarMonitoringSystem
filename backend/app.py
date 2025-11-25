@@ -920,6 +920,42 @@ def get_all_patients():
         logger.error(f"Error fetching all patients: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/specialists', methods=['GET'])
+def get_all_specialists():
+    """Get all specialists in the system (for admin/assignment purposes)"""
+    try:
+        cursor = db._get_cursor()
+        try:
+            cursor.execute("""
+                SELECT 
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.phone,
+                    u.date_of_birth,
+                    u.role,
+                    s.specialist_id,
+                    s.license_id,
+                    s.specialization
+                FROM users u
+                INNER JOIN specialists s ON u.user_id = s.user_id
+                WHERE u.role = 'specialist' AND u.account_status = 'Active'
+                ORDER BY u.last_name, u.first_name
+            """)
+            specialists = cursor.fetchall()
+            
+            return jsonify({
+                "specialists": specialists,
+                "count": len(specialists)
+            }), 200
+        finally:
+            cursor.close()
+    
+    except Exception as e:
+        logger.error(f"Error fetching all specialists: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/specialist/<int:specialist_id>/patients', methods=['GET'])
 def get_specialist_patients(specialist_id):
     """Get all patients assigned to a specialist
@@ -1296,9 +1332,30 @@ def assign_patient_api():
         logger.error(f"Error in assignment API: {str(e)}", exc_info=True)
         return jsonify({"error": "Failed to complete assignment."}), 500
 
-@app.route('/api/assignments', methods=['GET'])
-def get_all_assignments_api():
-    """API endpoint to get all patient-specialist assignments from database."""
+@app.route('/api/assignments', methods=['GET', 'POST'])
+def assignments_api():
+    """API endpoint to get all or create patient-specialist assignments."""
+    if request.method == 'POST':
+        # Create new assignment
+        try:
+            data = request.json
+            patient_id = data.get('patient_id')
+            specialist_id = data.get('specialist_id')
+
+            if not patient_id or not specialist_id:
+                return jsonify({"error": "Missing patient_id or specialist_id"}), 400
+
+            db.assign_patient_to_specialist(patient_id, specialist_id)
+
+            return jsonify({"message": "Assignment created successfully"}), 201
+
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 404
+        except Exception as e:
+            logger.error(f"Error creating assignment: {str(e)}", exc_info=True)
+            return jsonify({"error": "Failed to create assignment."}), 500
+    
+    # GET method - fetch all assignments
     try:
         cursor = db._get_cursor()
         try:
@@ -1309,10 +1366,13 @@ def get_all_assignments_api():
                     sp.created_at,
                     p.user_id as patient_user_id,
                     s.user_id as specialist_user_id,
-                    CONCAT(pu.first_name, ' ', pu.last_name) as patient_name,
+                    CONCAT(pu.first_name, ' ', pu.last_name) as patient_first_name,
+                    CONCAT(pu.last_name, '') as patient_last_name,
                     pu.email as patient_email,
-                    CONCAT(su.first_name, ' ', su.last_name) as specialist_name,
-                    su.email as specialist_email
+                    CONCAT(su.first_name, ' ', su.last_name) as specialist_first_name,
+                    CONCAT(su.last_name, '') as specialist_last_name,
+                    su.email as specialist_email,
+                    CONCAT(sp.specialist_id, '-', sp.patient_id) as assignment_id
                 FROM specialistpatient sp
                 JOIN patients p ON sp.patient_id = p.patient_id
                 JOIN specialists s ON sp.specialist_id = s.specialist_id
@@ -1334,6 +1394,40 @@ def get_all_assignments_api():
     except Exception as e:
         logger.error(f"Error fetching assignments: {str(e)}", exc_info=True)
         return jsonify({"error": "Failed to fetch assignments."}), 500
+
+@app.route('/api/assignments/<assignment_id>', methods=['DELETE'])
+def delete_assignment_by_id(assignment_id):
+    """Delete an assignment by its composite ID (specialist_id-patient_id)"""
+    try:
+        # Parse the composite ID
+        if '-' in str(assignment_id):
+            parts = str(assignment_id).split('-')
+            specialist_id = int(parts[0])
+            patient_id = int(parts[1])
+        else:
+            return jsonify({"error": "Invalid assignment ID format. Expected: specialist_id-patient_id"}), 400
+        
+        cursor = db._get_cursor()
+        try:
+            cursor.execute(
+                "DELETE FROM specialistpatient WHERE specialist_id = %s AND patient_id = %s",
+                (specialist_id, patient_id)
+            )
+            db.connection.commit()
+            
+            if cursor.rowcount == 0:
+                return jsonify({"error": "Assignment not found"}), 404
+            
+            return jsonify({"message": "Assignment deleted successfully"}), 200
+            
+        finally:
+            cursor.close()
+            
+    except ValueError:
+        return jsonify({"error": "Invalid assignment ID format"}), 400
+    except Exception as e:
+        logger.error(f"Error deleting assignment: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to delete assignment."}), 500
 
 @app.route('/api/assignments/<int:specialist_id>/<int:patient_id>', methods=['DELETE'])
 def remove_assignment_api(specialist_id, patient_id):
